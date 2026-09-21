@@ -1,0 +1,34 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env
+.env
+.env.local
+*.env
+
+# Build outputs
+dist/
+build/
+
+# Expo
+mobile/.expo/
+mobile/.expo-shared/
+mobile/web-build/
+mobile/dist/
+
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# TypeScript
+*.tsbuildinfo

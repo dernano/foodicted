@@ -1,0 +1,67 @@
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import React from "react";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import type { RootStackParamList } from "../navigation";
+
+type Props = NativeStackScreenProps<RootStackParamList, "Recipes">;
+
+export default function RecipesScreen({ route, navigation }: Props) {
+  const { recipes } = route.params;
+
+  return (
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+      data={recipes}
+      keyExtractor={(item, i) => `${item.title}-${i}`}
+      ListEmptyComponent={<Text style={styles.empty}>Keine Rezepte gefunden. Versuch es mit anderen Zutaten.</Text>}
+      renderItem={({ item }) => (
+        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("RecipeDetail", { recipe: item })}>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.description}>{item.description}</Text>
+          <View style={styles.metaRow}>
+            <Text style={styles.metaItem}>⏱ {item.prepTimeMinutes + item.cookTimeMinutes} min</Text>
+            <Text style={styles.metaItem}>🍽 {item.servings} Port.</Text>
+            <Text style={styles.metaItem}>🔥 {item.nutrition.calories} kcal</Text>
+            <Text style={styles.metaItem}>💪 {item.nutrition.proteinGrams}g Protein</Text>
+          </View>
+          {!!item.tags.length && (
+            <View style={styles.tagRow}>
+              {item.tags.slice(0, 4).map((tag) => (
+                <View key={tag} style={styles.tag}>
+                  <Text style={styles.tagText}>{tag}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+          {!!item.missingIngredients.length && (
+            <Text style={styles.missing}>Fehlt noch: {item.missingIngredients.join(", ")}</Text>
+          )}
+        </TouchableOpacity>
+      )}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#fff" },
+  empty: { textAlign: "center", color: "#7a8f83", marginTop: 32 },
+  card: {
+    backgroundColor: "#f6fbf6",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  title: { fontSize: 17, fontWeight: "800", color: "#1b4332" },
+  description: { fontSize: 13, color: "#40616b", marginTop: 6, lineHeight: 18 },
+  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 10 },
+  metaItem: { fontSize: 12, color: "#40616b" },
+  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 10 },
+  tag: { backgroundColor: "#d8f0dc", borderRadius: 12, paddingVertical: 4, paddingHorizontal: 10 },
+  tagText: { fontSize: 11, color: "#1b4332", fontWeight: "600" },
+  missing: { fontSize: 12, color: "#966b1f", marginTop: 10 },
+});

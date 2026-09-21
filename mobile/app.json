@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "Foodicted",
+    "slug": "foodicted",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "foodicted",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.foodicted.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Foodicted nutzt die Kamera, um den Inhalt deines Kühlschranks zu erfassen und passende Rezepte vorzuschlagen.",
+        "NSPhotoLibraryUsageDescription": "Foodicted braucht Zugriff auf deine Fotos, um ein Kühlschrankfoto auszuwählen."
+      }
+    },
+    "android": {
+      "package": "com.foodicted.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["CAMERA", "READ_MEDIA_IMAGES"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Foodicted nutzt die Kamera, um den Inhalt deines Kühlschranks zu erfassen."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Foodicted braucht Zugriff auf deine Fotos, um ein Kühlschrankfoto auszuwählen."
+        }
+      ]
+    ],
+    "extra": {
+      "apiBaseUrl": "http://localhost:4000"
+    }
+  }
+}
