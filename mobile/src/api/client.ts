@@ -1,5 +1,5 @@
 import Constants from "expo-constants";
-import type { FridgeAnalysis, FridgeItem, RecipeGenerationResult, RecipePreferences } from "../types";
+import type { FridgeAnalysis, FridgeItem, Recipe, RecipeGenerationResult, RecipePreferences } from "../types";
 
 function getApiBaseUrl(): string {
   const fromExtra = Constants.expoConfig?.extra?.apiBaseUrl as string | undefined;
@@ -48,6 +48,27 @@ export async function generateRecipes(
     body: JSON.stringify({ items, preferences }),
   });
   return handleResponse<RecipeGenerationResult>(res);
+}
+
+export interface RecipeDraft {
+  title: string;
+  ingredientLines: string[];
+  preparationNotes: string;
+  servings?: number;
+}
+
+/**
+ * Turns a user's own rough recipe idea into a complete, structured recipe via AI -
+ * used when manually adding a recipe to favorites.
+ */
+export async function refineRecipe(draft: RecipeDraft): Promise<Recipe> {
+  const res = await fetch(`${API_BASE_URL}/api/recipes/refine`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(draft),
+  });
+  const data = await handleResponse<{ recipe: Recipe }>(res);
+  return data.recipe;
 }
 
 export interface FoodProduct {

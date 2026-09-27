@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { FridgeItemSchema } from "../schemas/fridgeItems.js";
-import { generateRecipes } from "../services/claudeService.js";
+import { generateRecipes, refineRecipe } from "../services/claudeService.js";
 
 export const recipesRouter = Router();
 
@@ -38,6 +38,32 @@ recipesRouter.post("/generate", async (req, res, next) => {
     const { items, preferences } = parsed.data;
     const result = await generateRecipes(items, preferences);
     res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+const refineRequestSchema = z.object({
+  title: z.string().min(1),
+  ingredientLines: z.array(z.string().min(1)).min(1),
+  preparationNotes: z.string().optional().default(""),
+  servings: z.number().int().positive().optional(),
+});
+
+/**
+ * POST /api/recipes/refine
+ * Body: { title, ingredientLines, preparationNotes?, servings? }
+ * Turns a user's own rough recipe idea into a complete, structured recipe.
+ */
+recipesRouter.post("/refine", async (req, res, next) => {
+  try {
+    const parsed = refineRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid request body", details: parsed.error.flatten() });
+      return;
+    }
+    const recipe = await refineRecipe(parsed.data);
+    res.json({ recipe });
   } catch (err) {
     next(err);
   }

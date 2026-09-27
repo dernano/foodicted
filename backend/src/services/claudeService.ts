@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { config } from "../config.js";
 import { FridgeAnalysisSchema, type FridgeAnalysis } from "../schemas/fridgeItems.js";
-import { RecipeGenerationResultSchema, type RecipeGenerationResult } from "../schemas/recipe.js";
+import { RecipeGenerationResultSchema, RecipeSchema, type RecipeGenerationResult, type Recipe } from "../schemas/recipe.js";
 import type { FridgeItem } from "../schemas/fridgeItems.js";
 import type { RecipePreferences } from "../types.js";
 
@@ -120,6 +120,56 @@ export async function generateRecipes(
 
   if (!response.parsed_output) {
     throw new Error("Claude did not return parsable recipes.");
+  }
+  return response.parsed_output;
+}
+
+export interface RecipeDraft {
+  title: string;
+  ingredientLines: string[];
+  preparationNotes: string;
+  servings?: number;
+}
+
+/**
+ * Turns a user's own rough recipe idea (title, free-text ingredient lines, a short note on
+ * how it's prepared) into a complete, well-structured recipe - used for manually adding a
+ * recipe to favorites without going through fridge detection first.
+ */
+export async function refineRecipe(draft: RecipeDraft): Promise<Recipe> {
+  const ingredientList = draft.ingredientLines.map((line) => `- ${line}`).join("\n");
+
+  const response = await getClient().messages.parse({
+    model: MODEL,
+    max_tokens: 4096,
+    system:
+      "You are a professional recipe editor. The user gives you their own recipe idea: a " +
+      "title, a rough free-text ingredient list (parse each line into a structured " +
+      "ingredient with a name and an amount), and brief notes on how it's prepared. Turn " +
+      "this into a complete, polished recipe: sensible step-by-step instructions, a " +
+      "reasonable difficulty, prep/cook time estimates, and honest nutrition estimates per " +
+      "serving. This is the user's own recipe, not a fridge-based suggestion, so mark every " +
+      "ingredient fromFridge: true and leave missingIngredients empty. Keep their original " +
+      "title and intent - refine and complete it, don't reinvent it. Respond entirely in " +
+      "German.",
+    messages: [
+      {
+        role: "user",
+        content:
+          `Rezepttitel: ${draft.title}\n\n` +
+          `Zutaten:\n${ingredientList}\n\n` +
+          `Zubereitung (Notizen des Nutzers): ${draft.preparationNotes || "(keine weiteren Angaben)"}\n\n` +
+          (draft.servings ? `Portionen: ${draft.servings}\n\n` : "") +
+          "Vervollständige dieses Rezept.",
+      },
+    ],
+    output_config: {
+      format: zodOutputFormat(RecipeSchema),
+    },
+  });
+
+  if (!response.parsed_output) {
+    throw new Error("Claude did not return a parsable recipe.");
   }
   return response.parsed_output;
 }

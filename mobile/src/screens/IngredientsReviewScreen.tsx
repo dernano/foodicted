@@ -1,6 +1,17 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useState } from "react";
-import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import type { RootStackParamList } from "../navigation";
 import { CATEGORY_LABELS, type FridgeItem } from "../types";
 import { generateRecipes } from "../api/client";
@@ -41,7 +52,11 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+    >
       {!!route.params.notes && <Text style={styles.notes}>{route.params.notes}</Text>}
 
       <FlatList
@@ -89,7 +104,7 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
           <Text style={styles.generateButtonText}>🍳 Rezepte vorschlagen</Text>
         )}
       </TouchableOpacity>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

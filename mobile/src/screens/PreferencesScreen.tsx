@@ -1,6 +1,15 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import type { RootStackParamList } from "../navigation";
 import { usePreferences } from "../context/PreferencesContext";
 import { DIET_PRESETS, GOAL_PRESETS } from "../types";
@@ -15,13 +24,28 @@ function Chip({ label, selected, onPress }: { label: string; selected: boolean; 
   );
 }
 
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {children}
+    </View>
+  );
+}
+
 export default function PreferencesScreen({ navigation }: Props) {
   const { preferences, updatePreferences } = usePreferences();
   const [allergiesText, setAllergiesText] = useState((preferences.allergies ?? []).join(", "));
   const [dislikedText, setDislikedText] = useState((preferences.dislikedIngredients ?? []).join(", "));
   const [cuisinesText, setCuisinesText] = useState((preferences.cuisines ?? []).join(", "));
 
-  function commitListField(text: string, field: "allergies" | "dislikedIngredients" | "cuisines") {
+  // Commit on every keystroke (not just onBlur) so a preference is never lost if the
+  // user navigates away without the field losing focus first.
+  function handleListChange(text: string, field: "allergies" | "dislikedIngredients" | "cuisines") {
+    if (field === "allergies") setAllergiesText(text);
+    else if (field === "dislikedIngredients") setDislikedText(text);
+    else setCuisinesText(text);
+
     const values = text
       .split(",")
       .map((v) => v.trim())
@@ -30,98 +54,125 @@ export default function PreferencesScreen({ navigation }: Props) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
-      <Text style={styles.sectionTitle}>Ziel</Text>
-      <View style={styles.chipRow}>
-        {GOAL_PRESETS.map((goal) => (
-          <Chip
-            key={goal}
-            label={goal}
-            selected={preferences.goal === goal}
-            onPress={() => updatePreferences({ goal })}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+    >
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom: 48 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Section title="Ziel">
+          <View style={styles.chipRow}>
+            {GOAL_PRESETS.map((goal) => (
+              <Chip
+                key={goal}
+                label={goal}
+                selected={preferences.goal === goal}
+                onPress={() => updatePreferences({ goal })}
+              />
+            ))}
+          </View>
+        </Section>
+
+        <Section title="Ernährungsstil">
+          <View style={styles.chipRow}>
+            {DIET_PRESETS.map((diet) => (
+              <Chip
+                key={diet}
+                label={diet}
+                selected={preferences.diet === diet}
+                onPress={() => updatePreferences({ diet })}
+              />
+            ))}
+          </View>
+        </Section>
+
+        <Section title="Portionen">
+          <View style={styles.stepperRow}>
+            <TouchableOpacity
+              style={styles.stepperButton}
+              onPress={() => updatePreferences({ servings: Math.max(1, (preferences.servings ?? 2) - 1) })}
+            >
+              <Text style={styles.stepperButtonText}>−</Text>
+            </TouchableOpacity>
+            <Text style={styles.stepperValue}>{preferences.servings ?? 2}</Text>
+            <TouchableOpacity
+              style={styles.stepperButton}
+              onPress={() => updatePreferences({ servings: Math.min(12, (preferences.servings ?? 2) + 1) })}
+            >
+              <Text style={styles.stepperButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </Section>
+
+        <Section title="Maximale Zubereitungszeit (Minuten)">
+          <TextInput
+            style={styles.input}
+            keyboardType="number-pad"
+            placeholder="z. B. 30"
+            value={preferences.maxTimeMinutes ? String(preferences.maxTimeMinutes) : ""}
+            onChangeText={(t) => updatePreferences({ maxTimeMinutes: t ? Number(t) : undefined })}
           />
-        ))}
-      </View>
+        </Section>
 
-      <Text style={styles.sectionTitle}>Ernährungsstil</Text>
-      <View style={styles.chipRow}>
-        {DIET_PRESETS.map((diet) => (
-          <Chip key={diet} label={diet} selected={preferences.diet === diet} onPress={() => updatePreferences({ diet })} />
-        ))}
-      </View>
+        <Section title="Allergien / strikt vermeiden">
+          <TextInput
+            style={styles.input}
+            placeholder="z. B. Nüsse, Laktose, Gluten"
+            value={allergiesText}
+            onChangeText={(t) => handleListChange(t, "allergies")}
+          />
+        </Section>
 
-      <Text style={styles.sectionTitle}>Portionen</Text>
-      <View style={styles.stepperRow}>
-        <TouchableOpacity
-          style={styles.stepperButton}
-          onPress={() => updatePreferences({ servings: Math.max(1, (preferences.servings ?? 2) - 1) })}
-        >
-          <Text style={styles.stepperButtonText}>−</Text>
+        <Section title="Mag ich nicht so gerne">
+          <TextInput
+            style={styles.input}
+            placeholder="z. B. Koriander, Oliven"
+            value={dislikedText}
+            onChangeText={(t) => handleListChange(t, "dislikedIngredients")}
+          />
+        </Section>
+
+        <Section title="Bevorzugte Küchen">
+          <TextInput
+            style={styles.input}
+            placeholder="z. B. Italienisch, Thailändisch"
+            value={cuisinesText}
+            onChangeText={(t) => handleListChange(t, "cuisines")}
+          />
+        </Section>
+
+        <Section title="Weitere Notizen">
+          <TextInput
+            style={[styles.input, styles.multiline]}
+            placeholder="z. B. mag es scharf, keine Frittierpfanne vorhanden ..."
+            value={preferences.notes ?? ""}
+            onChangeText={(notes) => updatePreferences({ notes })}
+            multiline
+          />
+        </Section>
+
+        <TouchableOpacity style={styles.doneButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.doneButtonText}>Fertig</Text>
         </TouchableOpacity>
-        <Text style={styles.stepperValue}>{preferences.servings ?? 2}</Text>
-        <TouchableOpacity
-          style={styles.stepperButton}
-          onPress={() => updatePreferences({ servings: Math.min(12, (preferences.servings ?? 2) + 1) })}
-        >
-          <Text style={styles.stepperButtonText}>+</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.sectionTitle}>Maximale Zubereitungszeit (Minuten)</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="number-pad"
-        placeholder="z. B. 30"
-        value={preferences.maxTimeMinutes ? String(preferences.maxTimeMinutes) : ""}
-        onChangeText={(t) => updatePreferences({ maxTimeMinutes: t ? Number(t) : undefined })}
-      />
-
-      <Text style={styles.sectionTitle}>Allergien / strikt vermeiden</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="z. B. Nüsse, Laktose, Gluten"
-        value={allergiesText}
-        onChangeText={setAllergiesText}
-        onBlur={() => commitListField(allergiesText, "allergies")}
-      />
-
-      <Text style={styles.sectionTitle}>Mag ich nicht so gerne</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="z. B. Koriander, Oliven"
-        value={dislikedText}
-        onChangeText={setDislikedText}
-        onBlur={() => commitListField(dislikedText, "dislikedIngredients")}
-      />
-
-      <Text style={styles.sectionTitle}>Bevorzugte Küchen</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="z. B. Italienisch, Thailändisch"
-        value={cuisinesText}
-        onChangeText={setCuisinesText}
-        onBlur={() => commitListField(cuisinesText, "cuisines")}
-      />
-
-      <Text style={styles.sectionTitle}>Weitere Notizen</Text>
-      <TextInput
-        style={[styles.input, styles.multiline]}
-        placeholder="z. B. mag es scharf, keine Frittierpfanne vorhanden ..."
-        value={preferences.notes ?? ""}
-        onChangeText={(notes) => updatePreferences({ notes })}
-        multiline
-      />
-
-      <TouchableOpacity style={styles.doneButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.doneButtonText}>Fertig</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
-  sectionTitle: { fontSize: 15, fontWeight: "700", color: "#1b4332", marginTop: 20, marginBottom: 10 },
+  section: {
+    backgroundColor: "#f9fcf9",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#eef5ef",
+  },
+  sectionTitle: { fontSize: 14, fontWeight: "700", color: "#1b4332", marginBottom: 10 },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: {
     borderWidth: 1,
@@ -131,7 +182,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     marginRight: 8,
     marginBottom: 8,
-    backgroundColor: "#f6fbf6",
+    backgroundColor: "#fff",
   },
   chipSelected: { backgroundColor: "#2f9e44", borderColor: "#2f9e44" },
   chipText: { color: "#1b4332", fontSize: 13, fontWeight: "600" },
@@ -144,7 +195,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 14,
     color: "#1b4332",
-    backgroundColor: "#fafffb",
+    backgroundColor: "#fff",
   },
   multiline: { minHeight: 80, textAlignVertical: "top" },
   stepperRow: { flexDirection: "row", alignItems: "center", gap: 20 },
@@ -159,11 +210,16 @@ const styles = StyleSheet.create({
   stepperButtonText: { color: "#fff", fontSize: 22, fontWeight: "700", lineHeight: 24 },
   stepperValue: { fontSize: 18, fontWeight: "700", color: "#1b4332", minWidth: 24, textAlign: "center" },
   doneButton: {
-    marginTop: 32,
+    marginTop: 8,
     backgroundColor: "#2f9e44",
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
+    shadowColor: "#2f9e44",
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   doneButtonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 });

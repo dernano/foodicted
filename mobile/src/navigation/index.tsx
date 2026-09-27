@@ -1,7 +1,12 @@
 import { NavigationContainer, type CompositeScreenProps, type NavigatorScreenParams } from "@react-navigation/native";
-import { createNativeStackNavigator, type NativeStackScreenProps } from "@react-navigation/native-stack";
+import {
+  createNativeStackNavigator,
+  type NativeStackNavigationProp,
+  type NativeStackScreenProps,
+} from "@react-navigation/native-stack";
 import { createBottomTabNavigator, type BottomTabScreenProps } from "@react-navigation/bottom-tabs";
-import { Image, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 import type { FridgeItem, Recipe } from "../types";
 import HomeScreen from "../screens/HomeScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
@@ -10,6 +15,7 @@ import PreferencesScreen from "../screens/PreferencesScreen";
 import IngredientsReviewScreen from "../screens/IngredientsReviewScreen";
 import RecipesScreen from "../screens/RecipesScreen";
 import RecipeDetailScreen from "../screens/RecipeDetailScreen";
+import AddFavoriteRecipeScreen from "../screens/AddFavoriteRecipeScreen";
 
 export type MainTabsParamList = {
   Start: undefined;
@@ -23,6 +29,7 @@ export type RootStackParamList = {
   IngredientsReview: { items: FridgeItem[]; notes?: string };
   Recipes: { recipes: Recipe[] };
   RecipeDetail: { recipe: Recipe };
+  AddFavoriteRecipe: undefined;
 };
 
 export type MainTabsScreenProps<T extends keyof MainTabsParamList> = CompositeScreenProps<
@@ -57,9 +64,11 @@ function MainTabs() {
       screenOptions={{
         headerStyle: { backgroundColor: THEME_COLOR },
         headerTintColor: "#fff",
+        headerShadowVisible: false,
         tabBarActiveTintColor: ACCENT_COLOR,
         tabBarInactiveTintColor: "#9db5a6",
-        tabBarStyle: { backgroundColor: "#fff", borderTopColor: "#e6f0e8" },
+        tabBarStyle: { backgroundColor: "#fff", borderTopColor: "#eef5ef", height: 62, paddingBottom: 8, paddingTop: 6 },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
       }}
     >
       <Tab.Screen
@@ -68,17 +77,32 @@ function MainTabs() {
         options={{
           headerTitle: () => <HeaderLogo title="Foodicted" />,
           tabBarLabel: "Start",
-          tabBarIcon: ({ color, size }) => <Text style={{ color, fontSize: size }}>🏠</Text>,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "home" : "home-outline"} size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
         name="Favoriten"
         component={FavoritesScreen}
-        options={{
+        options={({ navigation }) => ({
           title: "Lieblingsrezepte",
           tabBarLabel: "Favoriten",
-          tabBarIcon: ({ color, size }) => <Text style={{ color, fontSize: size }}>❤️</Text>,
-        }}
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "heart" : "heart-outline"} size={size} color={color} />
+          ),
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() =>
+                navigation.getParent<NativeStackNavigationProp<RootStackParamList>>()?.navigate("AddFavoriteRecipe")
+              }
+              hitSlop={12}
+              style={{ marginRight: 16 }}
+            >
+              <Ionicons name="add-circle-outline" size={26} color="#fff" />
+            </TouchableOpacity>
+          ),
+        })}
       />
     </Tab.Navigator>
   );
@@ -93,6 +117,7 @@ export default function AppNavigator() {
           headerStyle: { backgroundColor: THEME_COLOR },
           headerTintColor: "#fff",
           headerTitleStyle: { fontWeight: "700" },
+          headerShadowVisible: false,
         }}
       >
         <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
@@ -105,6 +130,11 @@ export default function AppNavigator() {
         />
         <Stack.Screen name="Recipes" component={RecipesScreen} options={{ title: "Rezeptvorschläge" }} />
         <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} options={{ title: "Rezept" }} />
+        <Stack.Screen
+          name="AddFavoriteRecipe"
+          component={AddFavoriteRecipeScreen}
+          options={{ title: "Rezept hinzufügen" }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

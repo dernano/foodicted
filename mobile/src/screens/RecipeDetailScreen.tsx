@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
+import { useRecentRecipes } from "../context/RecentRecipesContext";
 import { DIFFICULTY_LABELS } from "../types";
 
 type Props = RootStackScreenProps<"RecipeDetail">;
@@ -9,7 +10,13 @@ type Props = RootStackScreenProps<"RecipeDetail">;
 export default function RecipeDetailScreen({ route }: Props) {
   const { recipe } = route.params;
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { addRecent } = useRecentRecipes();
   const favorite = isFavorite(recipe);
+
+  useEffect(() => {
+    addRecent(recipe);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipe.title]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
