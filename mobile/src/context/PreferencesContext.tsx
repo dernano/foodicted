@@ -20,6 +20,7 @@ const DEFAULT_PREFERENCES: RecipePreferences = {
   allergies: [],
   dislikedIngredients: [],
   cuisines: [],
+  recipeCount: 7,
 };
 
 export function PreferencesProvider({ children }: { children: React.ReactNode }) {

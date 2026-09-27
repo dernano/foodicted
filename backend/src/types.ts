@@ -18,4 +18,6 @@ export interface RecipePreferences {
   targetCaloriesPerServing?: number;
   /** Any other free-text preference */
   notes?: string;
+  /** Desired number of recipe suggestions (1-14). The AI may return fewer if quality would suffer. */
+  recipeCount?: number;
 }

@@ -32,6 +32,8 @@ export interface RecipePreferences {
   servings?: number;
   targetCaloriesPerServing?: number;
   notes?: string;
+  /** Desired number of recipe suggestions (1-14). The AI may return fewer if quality would suffer. */
+  recipeCount?: number;
 }
 
 export interface Nutrition {

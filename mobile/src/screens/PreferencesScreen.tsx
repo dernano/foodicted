@@ -140,6 +140,28 @@ export default function PreferencesScreen({ navigation }: Props) {
           </View>
         </Section>
 
+        <Section title="Anzahl Rezeptvorschläge">
+          <View style={styles.stepperRow}>
+            <TouchableOpacity
+              style={styles.stepperButton}
+              onPress={() => updatePreferences({ recipeCount: Math.max(1, (preferences.recipeCount ?? 7) - 1) })}
+            >
+              <Text style={styles.stepperButtonText}>−</Text>
+            </TouchableOpacity>
+            <Text style={styles.stepperValue}>{preferences.recipeCount ?? 7}</Text>
+            <TouchableOpacity
+              style={styles.stepperButton}
+              onPress={() => updatePreferences({ recipeCount: Math.min(14, (preferences.recipeCount ?? 7) + 1) })}
+            >
+              <Text style={styles.stepperButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.hint}>
+            Ziel-Anzahl (max. 14). Die KI schlägt bewusst weniger vor, wenn keine sinnvolle Vielfalt an guten
+            Rezepten möglich ist.
+          </Text>
+        </Section>
+
         <Section title="Maximale Zubereitungszeit (Minuten)">
           <TextInput
             style={styles.input}
@@ -242,6 +264,7 @@ const styles = StyleSheet.create({
   },
   stepperButtonText: { color: "#fff", fontSize: 22, fontWeight: "700", lineHeight: 24 },
   stepperValue: { fontSize: 18, fontWeight: "700", color: "#1b4332", minWidth: 24, textAlign: "center" },
+  hint: { fontSize: 12, color: "#7a8f83", marginTop: 10, lineHeight: 17 },
   doneButton: {
     marginTop: 8,
     backgroundColor: "#2f9e44",

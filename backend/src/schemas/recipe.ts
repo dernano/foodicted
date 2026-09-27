@@ -50,9 +50,10 @@ export const RecipeGenerationResultSchema = z.object({
   recipes: z
     .array(RecipeSchema)
     .describe(
-      "3-5 recipe suggestions. Order matters: first all recipes fully makeable from the given " +
-        "ingredients alone (missingIngredients empty), then additional recipes that need a few " +
-        "more ingredients (listed in missingIngredients)."
+      "Recipe suggestions, up to the target count given in the system prompt - fewer is fine " +
+        "if that many good, distinct ideas aren't possible. Order matters: first all recipes " +
+        "fully makeable from the given ingredients alone (missingIngredients empty), then " +
+        "additional recipes that need a few more ingredients (listed in missingIngredients)."
     ),
 });
 

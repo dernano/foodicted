@@ -16,6 +16,7 @@ const preferencesSchema = z
     servings: z.number().int().positive().optional(),
     targetCaloriesPerServing: z.number().int().positive().optional(),
     notes: z.string().optional(),
+    recipeCount: z.number().int().min(1).max(14).optional(),
   })
   .default({});
 

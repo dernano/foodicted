@@ -13,6 +13,7 @@ function preferenceLines(preferences: ReturnType<typeof usePreferences>["prefere
   lines.push(`Ziel: ${preferences.goal || "-"}`);
   lines.push(`Diät: ${preferences.diet || "-"}`);
   lines.push(`Portionen: ${preferences.servings ?? 2}`);
+  lines.push(`Rezeptvorschläge: bis zu ${preferences.recipeCount ?? 7}`);
   if (preferences.maxTimeMinutes) lines.push(`Max. Zubereitungszeit: ${preferences.maxTimeMinutes} min`);
   if (preferences.allergies?.length) lines.push(`Allergien: ${preferences.allergies.join(", ")}`);
   if (preferences.dislikedIngredients?.length) lines.push(`Mag nicht: ${preferences.dislikedIngredients.join(", ")}`);

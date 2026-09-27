@@ -93,13 +93,15 @@ export async function generateRecipes(
     .map((item) => `- ${item.name} (${item.estimatedQuantity}, ${item.category})`)
     .join("\n");
 
+  const targetCount = Math.min(14, Math.max(1, preferences.recipeCount ?? 7));
+
   const response = await getClient().messages.parse({
     model: MODEL,
-    max_tokens: 8192,
+    max_tokens: 16000,
     system:
       "You are a creative, practical home-cooking assistant. Given a list of ingredients a " +
-      "person has available and their preferences, propose 3-5 realistic recipes they can " +
-      "actually cook, split into two groups:\n" +
+      "person has available and their preferences, propose realistic recipes they can " +
+      `actually cook - up to ${targetCount} of them, split into two groups:\n` +
       "1. First, one or more recipes that can be made using ONLY the given ingredients (plus " +
       "basic staples like water, salt, pepper, oil which never count as missing). For these, " +
       "missingIngredients MUST be an empty array. Include as many of these as realistically " +
@@ -108,6 +110,10 @@ export async function generateRecipes(
       "have - list exactly what's missing in missingIngredients for those, and always include " +
       "the amount needed for each (e.g. '2 Zucchini', '500g Tomaten'), never just the bare name, " +
       "since this list is used to build a shopping list.\n" +
+      `Aim for ${targetCount} recipes total, but it is fine - and preferred - to return fewer if ` +
+      "you can't find that many genuinely distinct, worthwhile ideas for these ingredients and " +
+      "preferences. Never pad the list with repetitive, near-duplicate, or low-quality recipes " +
+      "just to hit the number; a shorter list of good recipes beats a longer list of filler.\n" +
       "Order the recipes array with group 1 first, then group 2. Respect allergies and disliked " +
       "ingredients absolutely; treat other preferences as strong guidance. Keep instructions " +
       "clear and numbered. Give honest, reasonable nutrition estimates per serving. Assign each " +
