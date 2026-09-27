@@ -32,7 +32,8 @@ export async function analyzeFridgeImage(
     max_tokens: 4096,
     system:
       "You are a meticulous kitchen inventory assistant. Look carefully at the photo of a " +
-      "fridge, freezer, or pantry and list every distinct food item you can identify. " +
+      "fridge, freezer, pantry, kitchen cupboard, or other food storage and list every " +
+      "distinct food item you can identify. " +
       "Group identical items together instead of listing them multiple times. Ignore " +
       "non-food objects (containers, shelves, packaging brands) unless the food inside is " +
       "identifiable. If the image is blurry or a shelf is hard to see, do your best and use " +

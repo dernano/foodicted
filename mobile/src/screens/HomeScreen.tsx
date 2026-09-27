@@ -29,14 +29,16 @@ export default function HomeScreen({ navigation }: Props) {
     <ScrollView contentContainerStyle={styles.container}>
       <Image source={require("../../assets/logo-full.png")} style={styles.logo} resizeMode="contain" />
 
+      <Text style={styles.slogan}>Erst scannen, dann schlemmen.</Text>
+
       <Text style={styles.subtitle}>
-        Fotografiere deinen Kühlschrank und lass dir passende Rezepte vorschlagen - passend zu dem, was du
-        wirklich zuhause hast.
+        Fotografiere deinen Kühlschrank, deine Vorratskammer oder den Küchenschrank und lass dir passende
+        Rezepte vorschlagen - passend zu dem, was du wirklich zuhause hast.
       </Text>
 
       <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate("Camera")}>
         <Ionicons name="camera" size={20} color="#fff" />
-        <Text style={styles.primaryButtonText}>Kühlschrank scannen</Text>
+        <Text style={styles.primaryButtonText}>Vorrat scannen</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -93,6 +95,7 @@ export default function HomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flexGrow: 1, alignItems: "center", padding: 24, backgroundColor: "#f6fbf6" },
   logo: { width: 220, height: 170, marginTop: 12, marginBottom: 4 },
+  slogan: { fontSize: 15, color: "#2f9e44", fontWeight: "800", textAlign: "center", marginBottom: 10 },
   subtitle: { fontSize: 15, color: "#40616b", textAlign: "center", marginTop: 4, marginBottom: 28, lineHeight: 21 },
   primaryButton: {
     flexDirection: "row",

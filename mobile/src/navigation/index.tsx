@@ -181,7 +181,7 @@ export default function AppNavigator() {
       >
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-        <Stack.Screen name="Camera" component={CameraScreen} options={{ title: "Kühlschrank scannen" }} />
+        <Stack.Screen name="Camera" component={CameraScreen} options={{ title: "Vorrat scannen" }} />
         <Stack.Screen name="Preferences" component={PreferencesScreen} options={{ title: "Präferenzen" }} />
         <Stack.Screen
           name="IngredientsReview"

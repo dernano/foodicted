@@ -11,8 +11,8 @@ type Props = RootStackScreenProps<"Onboarding">;
 const FEATURES: { icon: keyof typeof Ionicons.glyphMap; title: string; text: string }[] = [
   {
     icon: "camera",
-    title: "Kühlschrank scannen",
-    text: "Foto machen, die KI erkennt automatisch, welche Lebensmittel du zuhause hast.",
+    title: "Vorrat scannen",
+    text: "Foto von Kühlschrank, Vorratskammer oder Schrank - die KI erkennt automatisch, welche Lebensmittel du zuhause hast.",
   },
   {
     icon: "restaurant",

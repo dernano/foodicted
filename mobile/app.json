@@ -11,8 +11,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.foodicted.app",
       "infoPlist": {
-        "NSCameraUsageDescription": "Foodicted nutzt die Kamera, um den Inhalt deines Kühlschranks zu erfassen und passende Rezepte vorzuschlagen.",
-        "NSPhotoLibraryUsageDescription": "Foodicted braucht Zugriff auf deine Fotos, um ein Kühlschrankfoto auszuwählen."
+        "NSCameraUsageDescription": "Foodicted nutzt die Kamera, um den Inhalt deines Kühlschranks, deiner Vorratskammer oder deines Küchenschranks zu erfassen und passende Rezepte vorzuschlagen.",
+        "NSPhotoLibraryUsageDescription": "Foodicted braucht Zugriff auf deine Fotos, um ein Foto deines Vorrats auszuwählen."
       }
     },
     "android": {
@@ -39,13 +39,13 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Foodicted nutzt die Kamera, um den Inhalt deines Kühlschranks zu erfassen."
+          "cameraPermission": "Foodicted nutzt die Kamera, um den Inhalt deines Kühlschranks, deiner Vorratskammer oder deines Küchenschranks zu erfassen."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Foodicted braucht Zugriff auf deine Fotos, um ein Kühlschrankfoto auszuwählen."
+          "photosPermission": "Foodicted braucht Zugriff auf deine Fotos, um ein Foto deines Vorrats auszuwählen."
         }
       ]
     ],

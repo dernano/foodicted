@@ -56,7 +56,7 @@ export default function CameraScreen({ navigation }: Props) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#2f9e44" />
-        <Text style={styles.loadingText}>Analysiere deinen Kühlschrank …</Text>
+        <Text style={styles.loadingText}>Analysiere deinen Vorrat …</Text>
       </View>
     );
   }
