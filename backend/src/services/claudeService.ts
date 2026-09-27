@@ -105,7 +105,9 @@ export async function generateRecipes(
       "missingIngredients MUST be an empty array. Include as many of these as realistically " +
       "possible - this group matters most.\n" +
       "2. Then, additional recipes that would need a few more ingredients the person doesn't " +
-      "have - list exactly what's missing in missingIngredients for those.\n" +
+      "have - list exactly what's missing in missingIngredients for those, and always include " +
+      "the amount needed for each (e.g. '2 Zucchini', '500g Tomaten'), never just the bare name, " +
+      "since this list is used to build a shopping list.\n" +
       "Order the recipes array with group 1 first, then group 2. Respect allergies and disliked " +
       "ingredients absolutely; treat other preferences as strong guidance. Keep instructions " +
       "clear and numbered. Give honest, reasonable nutrition estimates per serving. Assign each " +

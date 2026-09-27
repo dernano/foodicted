@@ -37,7 +37,11 @@ export const RecipeSchema = z.object({
   ingredients: z.array(RecipeIngredientSchema),
   missingIngredients: z
     .array(z.string())
-    .describe("Ingredients required but NOT present among the detected fridge items"),
+    .describe(
+      "Ingredients required but NOT present among the detected fridge items. Each entry must " +
+        "include the amount needed, e.g. '2 Zucchini', '500g Tomaten', '1 Bund Petersilie' - " +
+        "never just the bare ingredient name, since this is used to build a shopping list."
+    ),
   instructions: z.array(z.string()).describe("Ordered step-by-step cooking instructions"),
   nutrition: NutritionSchema,
 });
