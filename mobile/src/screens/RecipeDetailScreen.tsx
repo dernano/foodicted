@@ -1,23 +1,34 @@
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import type { RootStackParamList } from "../navigation";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import type { RootStackScreenProps } from "../navigation";
+import { useFavorites } from "../context/FavoritesContext";
+import { DIFFICULTY_LABELS } from "../types";
 
-type Props = NativeStackScreenProps<RootStackParamList, "RecipeDetail">;
+type Props = RootStackScreenProps<"RecipeDetail">;
 
 export default function RecipeDetailScreen({ route }: Props) {
   const { recipe } = route.params;
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorite = isFavorite(recipe);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
-      <Text style={styles.title}>{recipe.title}</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>{recipe.title}</Text>
+        <TouchableOpacity onPress={() => toggleFavorite(recipe)} hitSlop={10} style={styles.favoriteButton}>
+          <Text style={styles.heart}>{favorite ? "❤️" : "🤍"}</Text>
+        </TouchableOpacity>
+      </View>
       <Text style={styles.description}>{recipe.description}</Text>
+      <Text style={styles.favoriteHint}>
+        {favorite ? "In deinen Lieblingsrezepten gespeichert" : "Tippe auf das Herz, um es zu speichern"}
+      </Text>
 
       <View style={styles.metaRow}>
         <MetaBox label="Vorbereitung" value={`${recipe.prepTimeMinutes} min`} />
         <MetaBox label="Kochzeit" value={`${recipe.cookTimeMinutes} min`} />
         <MetaBox label="Portionen" value={String(recipe.servings)} />
-        <MetaBox label="Schwierigkeit" value={recipe.difficulty} />
+        <MetaBox label="Schwierigkeit" value={DIFFICULTY_LABELS[recipe.difficulty]} />
       </View>
 
       <View style={styles.nutritionCard}>
@@ -74,11 +85,15 @@ function NutritionBox({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
-  title: { fontSize: 24, fontWeight: "800", color: "#1b4332" },
+  titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  title: { fontSize: 24, fontWeight: "800", color: "#1b4332", flex: 1, marginRight: 12 },
+  favoriteButton: { paddingTop: 4 },
+  heart: { fontSize: 26 },
   description: { fontSize: 14, color: "#40616b", marginTop: 8, lineHeight: 20 },
+  favoriteHint: { fontSize: 12, color: "#9db5a6", marginTop: 6, fontStyle: "italic" },
   metaRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 20 },
   metaBox: { alignItems: "center", flex: 1 },
-  metaValue: { fontSize: 15, fontWeight: "700", color: "#1b4332", textTransform: "capitalize" },
+  metaValue: { fontSize: 15, fontWeight: "700", color: "#1b4332" },
   metaLabel: { fontSize: 11, color: "#7a8f83", marginTop: 2 },
   nutritionCard: { backgroundColor: "#f6fbf6", borderRadius: 14, padding: 16, marginTop: 24 },
   nutritionRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },

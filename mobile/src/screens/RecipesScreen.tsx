@@ -1,12 +1,14 @@
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import type { RootStackParamList } from "../navigation";
+import type { RootStackScreenProps } from "../navigation";
+import { useFavorites } from "../context/FavoritesContext";
+import type { Recipe } from "../types";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Recipes">;
+type Props = RootStackScreenProps<"Recipes">;
 
 export default function RecipesScreen({ route, navigation }: Props) {
   const { recipes } = route.params;
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   return (
     <FlatList
@@ -15,30 +17,41 @@ export default function RecipesScreen({ route, navigation }: Props) {
       data={recipes}
       keyExtractor={(item, i) => `${item.title}-${i}`}
       ListEmptyComponent={<Text style={styles.empty}>Keine Rezepte gefunden. Versuch es mit anderen Zutaten.</Text>}
-      renderItem={({ item }) => (
-        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("RecipeDetail", { recipe: item })}>
-          <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.description}>{item.description}</Text>
-          <View style={styles.metaRow}>
-            <Text style={styles.metaItem}>⏱ {item.prepTimeMinutes + item.cookTimeMinutes} min</Text>
-            <Text style={styles.metaItem}>🍽 {item.servings} Port.</Text>
-            <Text style={styles.metaItem}>🔥 {item.nutrition.calories} kcal</Text>
-            <Text style={styles.metaItem}>💪 {item.nutrition.proteinGrams}g Protein</Text>
-          </View>
-          {!!item.tags.length && (
-            <View style={styles.tagRow}>
-              {item.tags.slice(0, 4).map((tag) => (
-                <View key={tag} style={styles.tag}>
-                  <Text style={styles.tagText}>{tag}</Text>
-                </View>
-              ))}
+      renderItem={({ item }: { item: Recipe }) => {
+        const favorite = isFavorite(item);
+        return (
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => navigation.navigate("RecipeDetail", { recipe: item })}
+          >
+            <View style={styles.cardHeader}>
+              <Text style={styles.title}>{item.title}</Text>
+              <TouchableOpacity onPress={() => toggleFavorite(item)} hitSlop={10}>
+                <Text style={styles.heart}>{favorite ? "❤️" : "🤍"}</Text>
+              </TouchableOpacity>
             </View>
-          )}
-          {!!item.missingIngredients.length && (
-            <Text style={styles.missing}>Fehlt noch: {item.missingIngredients.join(", ")}</Text>
-          )}
-        </TouchableOpacity>
-      )}
+            <Text style={styles.description}>{item.description}</Text>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaItem}>⏱ {item.prepTimeMinutes + item.cookTimeMinutes} min</Text>
+              <Text style={styles.metaItem}>🍽 {item.servings} Port.</Text>
+              <Text style={styles.metaItem}>🔥 {item.nutrition.calories} kcal</Text>
+              <Text style={styles.metaItem}>💪 {item.nutrition.proteinGrams}g Protein</Text>
+            </View>
+            {!!item.tags.length && (
+              <View style={styles.tagRow}>
+                {item.tags.slice(0, 4).map((tag) => (
+                  <View key={tag} style={styles.tag}>
+                    <Text style={styles.tagText}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            {!!item.missingIngredients.length && (
+              <Text style={styles.missing}>Fehlt noch: {item.missingIngredients.join(", ")}</Text>
+            )}
+          </TouchableOpacity>
+        );
+      }}
     />
   );
 }
@@ -56,7 +69,9 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 1,
   },
-  title: { fontSize: 17, fontWeight: "800", color: "#1b4332" },
+  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  title: { fontSize: 17, fontWeight: "800", color: "#1b4332", flex: 1, marginRight: 8 },
+  heart: { fontSize: 20 },
   description: { fontSize: 13, color: "#40616b", marginTop: 6, lineHeight: 18 },
   metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 10 },
   metaItem: { fontSize: 12, color: "#40616b" },

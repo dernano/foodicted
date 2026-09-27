@@ -2,7 +2,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import type { RootStackParamList } from "../navigation";
-import type { FridgeItem } from "../types";
+import { CATEGORY_LABELS, type FridgeItem } from "../types";
 import { generateRecipes } from "../api/client";
 import { usePreferences } from "../context/PreferencesContext";
 
@@ -54,7 +54,7 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
             <View style={{ flex: 1 }}>
               <Text style={styles.itemName}>{item.name}</Text>
               <Text style={styles.itemMeta}>
-                {item.category}
+                {CATEGORY_LABELS[item.category]}
                 {item.estimatedQuantity ? ` · ${item.estimatedQuantity}` : ""}
               </Text>
             </View>

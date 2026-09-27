@@ -36,7 +36,9 @@ export async function analyzeFridgeImage(
       "Group identical items together instead of listing them multiple times. Ignore " +
       "non-food objects (containers, shelves, packaging brands) unless the food inside is " +
       "identifiable. If the image is blurry or a shelf is hard to see, do your best and use " +
-      "the notes field to say so - never refuse to answer.",
+      "the notes field to say so - never refuse to answer. Respond entirely in German " +
+      "(item names, categories are fixed enum values, quantity estimates, and any notes must " +
+      "be in natural German).",
     messages: [
       {
         role: "user",
@@ -99,7 +101,9 @@ export async function generateRecipes(
       "actually cook. Prioritize recipes that use mostly what they already have - list any " +
       "additional required ingredients in missingIngredients. Respect allergies and disliked " +
       "ingredients absolutely; treat other preferences as strong guidance. Keep instructions " +
-      "clear and numbered. Give honest, reasonable nutrition estimates per serving.",
+      "clear and numbered. Give honest, reasonable nutrition estimates per serving. Respond " +
+      "entirely in German - titles, descriptions, ingredient names and amounts, tags, " +
+      "missingIngredients, and every instruction step must be written in natural German.",
     messages: [
       {
         role: "user",

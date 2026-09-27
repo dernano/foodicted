@@ -65,6 +65,33 @@ export interface RecipeGenerationResult {
   recipes: Recipe[];
 }
 
+/** A recipe the user has saved, with a stable id and save timestamp. */
+export interface FavoriteRecipe extends Recipe {
+  id: string;
+  savedAt: number;
+}
+
+/** German display labels for food categories. */
+export const CATEGORY_LABELS: Record<FoodCategory, string> = {
+  vegetable: "Gemüse",
+  fruit: "Obst",
+  dairy: "Milchprodukt",
+  meat: "Fleisch",
+  fish: "Fisch",
+  grain: "Getreide",
+  condiment: "Gewürz/Sauce",
+  beverage: "Getränk",
+  spice: "Gewürz",
+  other: "Sonstiges",
+};
+
+/** German display labels for recipe difficulty. */
+export const DIFFICULTY_LABELS: Record<Recipe["difficulty"], string> = {
+  easy: "Einfach",
+  medium: "Mittel",
+  hard: "Anspruchsvoll",
+};
+
 /** Preset goals shown as quick-pick chips in the preferences screen. */
 export const GOAL_PRESETS = [
   "Gesund & ausgewogen",
