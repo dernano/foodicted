@@ -86,6 +86,14 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
     setNewItemName("");
   }
 
+  function clearAll() {
+    if (!items.length) return;
+    Alert.alert("Alle Zutaten entfernen?", "Das leert deine gesamte Liste (deinen Vorrat).", [
+      { text: "Abbrechen", style: "cancel" },
+      { text: "Entfernen", style: "destructive", onPress: () => setItems([]) },
+    ]);
+  }
+
   async function handleGenerate() {
     setLoading(true);
     try {
@@ -108,10 +116,18 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
       <View style={styles.topSection}>
         {!!notes && <Text style={styles.notes}>{notes}</Text>}
 
-        <TouchableOpacity style={styles.addPhotoButton} onPress={() => navigation.navigate("Camera")}>
-          <Ionicons name="camera-outline" size={17} color="#2f9e44" />
-          <Text style={styles.addPhotoButtonText}>Weiteres Foto scannen (z. B. zweites Fach, Vorratsschrank)</Text>
-        </TouchableOpacity>
+        <View style={styles.topButtonsRow}>
+          <TouchableOpacity style={styles.addPhotoButton} onPress={() => navigation.navigate("Camera")}>
+            <Ionicons name="camera-outline" size={17} color="#2f9e44" />
+            <Text style={styles.addPhotoButtonText}>Weiteres Foto scannen</Text>
+          </TouchableOpacity>
+          {!!items.length && (
+            <TouchableOpacity style={styles.clearAllButton} onPress={clearAll}>
+              <Ionicons name="trash-outline" size={14} color="#c92a2a" />
+              <Text style={styles.clearAllButtonText}>Alle entfernen</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         <View style={styles.addRow}>
           <TextInput
@@ -207,14 +223,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   notes: { fontSize: 13, color: "#966b1f", backgroundColor: "#fff7e0", padding: 10, borderRadius: 8, marginBottom: 12 },
-  addPhotoButton: {
+  topButtonsRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    alignSelf: "flex-start",
+    justifyContent: "space-between",
     marginBottom: 14,
   },
+  addPhotoButton: { flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 },
   addPhotoButtonText: { color: "#2f9e44", fontSize: 13, fontWeight: "700", flexShrink: 1 },
+  clearAllButton: { flexDirection: "row", alignItems: "center", gap: 4, paddingLeft: 10 },
+  clearAllButtonText: { color: "#c92a2a", fontSize: 12, fontWeight: "700" },
   empty: { textAlign: "center", color: "#7a8f83", marginTop: 32 },
   itemRow: {
     flexDirection: "row",
