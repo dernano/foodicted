@@ -33,11 +33,20 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+const GOAL_PRESET_SET = new Set<string>(GOAL_PRESETS);
+const DIET_PRESET_SET = new Set<string>(DIET_PRESETS);
+
 export default function PreferencesScreen({ navigation }: Props) {
   const { preferences, updatePreferences } = usePreferences();
   const [allergiesText, setAllergiesText] = useState((preferences.allergies ?? []).join(", "));
   const [dislikedText, setDislikedText] = useState((preferences.dislikedIngredients ?? []).join(", "));
   const [cuisinesText, setCuisinesText] = useState((preferences.cuisines ?? []).join(", "));
+  const [goalCustomMode, setGoalCustomMode] = useState(
+    !!preferences.goal && !GOAL_PRESET_SET.has(preferences.goal)
+  );
+  const [dietCustomMode, setDietCustomMode] = useState(
+    !!preferences.diet && !DIET_PRESET_SET.has(preferences.diet)
+  );
 
   // Commit on every keystroke (not just onBlur) so a preference is never lost if the
   // user navigates away without the field losing focus first.
@@ -69,11 +78,23 @@ export default function PreferencesScreen({ navigation }: Props) {
               <Chip
                 key={goal}
                 label={goal}
-                selected={preferences.goal === goal}
-                onPress={() => updatePreferences({ goal })}
+                selected={!goalCustomMode && preferences.goal === goal}
+                onPress={() => {
+                  setGoalCustomMode(false);
+                  updatePreferences({ goal });
+                }}
               />
             ))}
+            <Chip label="✏️ Eigenes ..." selected={goalCustomMode} onPress={() => setGoalCustomMode(true)} />
           </View>
+          {goalCustomMode && (
+            <TextInput
+              style={[styles.input, { marginTop: 10 }]}
+              placeholder="z. B. Muskelaufbau, Darmfreundlich ..."
+              value={preferences.goal ?? ""}
+              onChangeText={(goal) => updatePreferences({ goal })}
+            />
+          )}
         </Section>
 
         <Section title="Ernährungsstil">
@@ -82,11 +103,23 @@ export default function PreferencesScreen({ navigation }: Props) {
               <Chip
                 key={diet}
                 label={diet}
-                selected={preferences.diet === diet}
-                onPress={() => updatePreferences({ diet })}
+                selected={!dietCustomMode && preferences.diet === diet}
+                onPress={() => {
+                  setDietCustomMode(false);
+                  updatePreferences({ diet });
+                }}
               />
             ))}
+            <Chip label="✏️ Eigenes ..." selected={dietCustomMode} onPress={() => setDietCustomMode(true)} />
           </View>
+          {dietCustomMode && (
+            <TextInput
+              style={[styles.input, { marginTop: 10 }]}
+              placeholder="z. B. Histaminarm, Paleo ..."
+              value={preferences.diet ?? ""}
+              onChangeText={(diet) => updatePreferences({ diet })}
+            />
+          )}
         </Section>
 
         <Section title="Portionen">

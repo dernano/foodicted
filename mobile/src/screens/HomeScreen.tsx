@@ -163,5 +163,5 @@ const styles = StyleSheet.create({
   },
   summaryTitle: { fontWeight: "700", fontSize: 15, marginBottom: 8, color: "#1b4332" },
   summaryLine: { fontSize: 14, color: "#40616b", marginBottom: 4 },
-  copyright: { fontSize: 11, color: "#c3d6c8", marginTop: 20, marginBottom: 4 },
+  copyright: { fontSize: 13, color: "#7a8f83", marginTop: 20, marginBottom: 4, fontWeight: "600" },
 });

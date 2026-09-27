@@ -36,6 +36,7 @@ export default function ShoppingListScreen() {
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
       <FlatList
+        style={{ flex: 1 }}
         contentContainerStyle={{ padding: 16, paddingBottom: 8, flexGrow: 1 }}
         data={sorted}
         keyExtractor={(item) => item.id}
