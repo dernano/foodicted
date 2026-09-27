@@ -77,6 +77,8 @@ export default function CameraScreen({ navigation }: Props) {
       }
     } catch (err) {
       Alert.alert("Fehler", "Foto konnte nicht aufgenommen werden.");
+    } finally {
+      setTorchOn(false);
     }
   }
 

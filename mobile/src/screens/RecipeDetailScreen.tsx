@@ -125,7 +125,9 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
       </View>
       {recipe.ingredients.map((ing, i) => (
         <View key={i} style={styles.ingredientRow}>
-          <Text style={styles.ingredientBullet}>{ing.fromFridge ? "✅" : "🛒"}</Text>
+          <Text style={styles.ingredientBullet}>
+            {recipe.missingIngredients.length ? (ing.fromFridge ? "✅" : "🛒") : "•"}
+          </Text>
           <Text style={styles.ingredientText}>
             {ing.amount} {ing.name}
           </Text>

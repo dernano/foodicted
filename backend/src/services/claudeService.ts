@@ -164,8 +164,9 @@ export async function refineRecipe(draft: RecipeDraft): Promise<Recipe> {
       "ingredient with a name and an amount), and brief notes on how it's prepared. Turn " +
       "this into a complete, polished recipe: sensible step-by-step instructions, a " +
       "reasonable difficulty, prep/cook time estimates, and honest nutrition estimates per " +
-      "serving. This is the user's own recipe, not a fridge-based suggestion, so mark every " +
-      "ingredient fromFridge: true and leave missingIngredients empty. Assign the meal-type " +
+      "serving. This is the user's own recipe, not a fridge-based suggestion - nothing was " +
+      "actually detected in a fridge photo, so mark every ingredient fromFridge: false and " +
+      "leave missingIngredients empty. Assign the meal-type " +
       "category that fits best. Keep their original " +
       "title and intent - refine and complete it, don't reinvent it. Respond entirely in " +
       "German.",

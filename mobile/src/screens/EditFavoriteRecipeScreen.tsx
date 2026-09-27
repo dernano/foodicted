@@ -117,7 +117,7 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
       prepTimeMinutes: Number(prepTimeMinutes) || 0,
       cookTimeMinutes: Number(cookTimeMinutes) || 0,
       difficulty,
-      ingredients: ingredientLines.map((line) => ({ name: line, amount: "", fromFridge: true })),
+      ingredients: ingredientLines.map((line) => ({ name: line, amount: "", fromFridge: false })),
       missingIngredients: recipe.missingIngredients,
       instructions: instructionLines.length ? instructionLines : ["Keine detaillierte Zubereitung hinterlegt."],
     };

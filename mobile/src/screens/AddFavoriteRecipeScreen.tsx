@@ -104,7 +104,7 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
       servings: preferences.servings ?? 2,
       difficulty: "medium",
       tags,
-      ingredients: ingredientLines.map((line) => ({ name: line, amount: "", fromFridge: true })),
+      ingredients: ingredientLines.map((line) => ({ name: line, amount: "", fromFridge: false })),
       missingIngredients: [],
       instructions,
       nutrition: { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 },
