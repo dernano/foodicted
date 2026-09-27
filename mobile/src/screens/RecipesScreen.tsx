@@ -37,7 +37,7 @@ export default function RecipesScreen({ route, navigation }: Props) {
   }
 
   function addMissingToShoppingList(recipe: Recipe) {
-    addItems(recipe.missingIngredients);
+    addItems(recipe.missingIngredients, recipe.title);
     Alert.alert("Hinzugefügt", "Die fehlenden Zutaten wurden zu deiner Einkaufsliste hinzugefügt.");
   }
 

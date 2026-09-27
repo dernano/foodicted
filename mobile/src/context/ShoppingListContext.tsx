@@ -10,8 +10,8 @@ interface ShoppingListContextValue {
   items: ShoppingListItem[];
   loaded: boolean;
   shared: boolean;
-  addItem: (text: string) => Promise<void>;
-  addItems: (texts: string[]) => Promise<void>;
+  addItem: (text: string, source?: string) => Promise<void>;
+  addItems: (texts: string[], source?: string) => Promise<void>;
   toggleChecked: (id: string) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   clearChecked: () => Promise<void>;
@@ -27,11 +27,18 @@ interface ShoppingRow {
   id: string;
   text: string;
   checked: boolean;
+  source: string | null;
   created_at: string;
 }
 
 function rowToItem(row: ShoppingRow): ShoppingListItem {
-  return { id: row.id, text: row.text, checked: row.checked, addedAt: new Date(row.created_at).getTime() };
+  return {
+    id: row.id,
+    text: row.text,
+    checked: row.checked,
+    addedAt: new Date(row.created_at).getTime(),
+    source: row.source ?? undefined,
+  };
 }
 
 export function ShoppingListProvider({ children }: { children: React.ReactNode }) {
@@ -99,6 +106,7 @@ export function ShoppingListProvider({ children }: { children: React.ReactNode }
                 added_by: session?.user.id ?? null,
                 text: i.text,
                 checked: i.checked,
+                source: i.source ?? null,
               }))
             )
             .select("*");
@@ -132,14 +140,21 @@ export function ShoppingListProvider({ children }: { children: React.ReactNode }
   const items = shared ? remoteItems : localItems;
 
   const addItems = useCallback(
-    async (texts: string[]) => {
+    async (texts: string[], source?: string) => {
       const clean = texts.map((t) => t.trim()).filter(Boolean);
       if (!clean.length) return;
 
       if (shared && household) {
         const { data, error } = await supabase
           .from("shopping_list_items")
-          .insert(clean.map((text) => ({ household_id: household.id, added_by: session?.user.id ?? null, text })))
+          .insert(
+            clean.map((text) => ({
+              household_id: household.id,
+              added_by: session?.user.id ?? null,
+              text,
+              source: source ?? null,
+            }))
+          )
           .select("*");
         if (!error && data) {
           setRemoteItems((prev) => [...prev, ...(data as ShoppingRow[]).map(rowToItem)]);
@@ -149,13 +164,19 @@ export function ShoppingListProvider({ children }: { children: React.ReactNode }
         return;
       }
 
-      const newItems: ShoppingListItem[] = clean.map((text) => ({ id: makeId(), text, checked: false, addedAt: Date.now() }));
+      const newItems: ShoppingListItem[] = clean.map((text) => ({
+        id: makeId(),
+        text,
+        checked: false,
+        addedAt: Date.now(),
+        source,
+      }));
       persistLocal([...localItems, ...newItems]);
     },
     [shared, household, localItems, persistLocal, session]
   );
 
-  const addItem = useCallback((text: string) => addItems([text]), [addItems]);
+  const addItem = useCallback((text: string, source?: string) => addItems([text], source), [addItems]);
 
   const toggleChecked = useCallback(
     async (id: string) => {

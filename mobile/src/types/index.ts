@@ -88,6 +88,8 @@ export interface ShoppingListItem {
   text: string;
   checked: boolean;
   addedAt: number;
+  /** Name of the recipe this item was added from, if any. */
+  source?: string;
 }
 
 /** German display labels for food categories. */

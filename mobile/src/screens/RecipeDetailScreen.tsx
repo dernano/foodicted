@@ -45,7 +45,7 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
   const favoriteEntry = favorites.find((f) => sameRecipe(f, recipe));
 
   function addToShoppingList() {
-    addItems(shoppingItemsFor(recipe));
+    addItems(shoppingItemsFor(recipe), recipe.title);
     Alert.alert("Hinzugefügt", "Die Zutaten wurden zu deiner Einkaufsliste hinzugefügt.");
   }
 

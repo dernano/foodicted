@@ -74,7 +74,10 @@ export default function ShoppingListScreen() {
               size={22}
               color={item.checked ? "#2f9e44" : "#c3d6c8"}
             />
-            <Text style={[styles.rowText, item.checked && styles.rowTextChecked]}>{item.text}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.rowText, item.checked && styles.rowTextChecked]}>{item.text}</Text>
+              {!!item.source && <Text style={styles.rowSource}>aus: {item.source}</Text>}
+            </View>
             <TouchableOpacity onPress={() => removeItem(item.id)} hitSlop={10}>
               <Ionicons name="close" size={18} color="#c92a2a" />
             </TouchableOpacity>
@@ -127,8 +130,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     marginBottom: 8,
   },
-  rowText: { flex: 1, fontSize: 15, color: "#1b4332", fontWeight: "600" },
+  rowText: { fontSize: 15, color: "#1b4332", fontWeight: "600" },
   rowTextChecked: { color: "#9db5a6", textDecorationLine: "line-through" },
+  rowSource: { fontSize: 11, color: "#7a8f83", marginTop: 2, fontStyle: "italic" },
   addRow: { flexDirection: "row", gap: 8 },
   addInput: {
     flex: 1,

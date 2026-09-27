@@ -47,6 +47,7 @@ create table if not exists shopping_list_items (
   added_by uuid references auth.users(id) on delete set null,
   text text not null,
   checked boolean not null default false,
+  source text,
   created_at timestamptz not null default now()
 );
 
