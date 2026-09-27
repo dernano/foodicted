@@ -1,24 +1,57 @@
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackParamList } from "../navigation";
 import { analyzeFridgePhoto } from "../api/client";
 import LoadingLogo from "../components/LoadingLogo";
+import type { FridgeItem } from "../types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Camera">;
+
+const LAST_SCAN_KEY = "foodicted.lastScan";
+
+interface LastScan {
+  items: FridgeItem[];
+  notes?: string;
+  scannedAt: number;
+}
+
+function formatRelativeTime(timestamp: number): string {
+  const diffMinutes = Math.round((Date.now() - timestamp) / 60000);
+  if (diffMinutes < 1) return "gerade eben";
+  if (diffMinutes < 60) return `vor ${diffMinutes} Min.`;
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) return `vor ${diffHours} Std.`;
+  const diffDays = Math.round(diffHours / 24);
+  return `vor ${diffDays} Tag${diffDays === 1 ? "" : "en"}`;
+}
 
 export default function CameraScreen({ navigation }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [facing] = useState<"back" | "front">("back");
+  const [torchOn, setTorchOn] = useState(false);
+  const [lastScan, setLastScan] = useState<LastScan | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem(LAST_SCAN_KEY)
+      .then((raw) => {
+        if (raw) setLastScan(JSON.parse(raw) as LastScan);
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleImageBase64(base64: string) {
     setAnalyzing(true);
     try {
       const analysis = await analyzeFridgePhoto(base64);
+      const scan: LastScan = { items: analysis.items, notes: analysis.notes, scannedAt: Date.now() };
+      AsyncStorage.setItem(LAST_SCAN_KEY, JSON.stringify(scan)).catch(() => {});
       navigation.navigate("IngredientsReview", { items: analysis.items, notes: analysis.notes });
     } catch (err) {
       Alert.alert(
@@ -28,6 +61,11 @@ export default function CameraScreen({ navigation }: Props) {
     } finally {
       setAnalyzing(false);
     }
+  }
+
+  function openLastScan() {
+    if (!lastScan) return;
+    navigation.navigate("IngredientsReview", { items: lastScan.items, notes: lastScan.notes });
   }
 
   async function takePhoto() {
@@ -82,7 +120,26 @@ export default function CameraScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <CameraView ref={cameraRef} style={styles.camera} facing={facing} />
+      <CameraView ref={cameraRef} style={styles.camera} facing={facing} enableTorch={torchOn} />
+
+      <View style={styles.topBar}>
+        {lastScan ? (
+          <TouchableOpacity style={styles.topBarPill} onPress={openLastScan}>
+            <Ionicons name="time-outline" size={15} color="#fff" />
+            <Text style={styles.topBarPillText}>Letzter Scan · {formatRelativeTime(lastScan.scannedAt)}</Text>
+          </TouchableOpacity>
+        ) : (
+          <View />
+        )}
+        <TouchableOpacity
+          style={[styles.torchButton, torchOn && styles.torchButtonActive]}
+          onPress={() => setTorchOn((v) => !v)}
+          hitSlop={8}
+        >
+          <Ionicons name={torchOn ? "flash" : "flash-off"} size={20} color={torchOn ? "#1b4332" : "#fff"} />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.controls}>
         <TouchableOpacity style={styles.galleryButton} onPress={pickFromGallery}>
           <Text style={styles.galleryButtonText}>Galerie</Text>
@@ -99,6 +156,34 @@ export default function CameraScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
   camera: { flex: 1 },
+  topBar: {
+    position: "absolute",
+    top: 16,
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  topBarPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  topBarPillText: { color: "#fff", fontSize: 12, fontWeight: "700" },
+  torchButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  torchButtonActive: { backgroundColor: "#fff" },
   controls: {
     flexDirection: "row",
     alignItems: "center",
