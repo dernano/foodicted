@@ -1,15 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import {
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useShoppingList } from "../context/ShoppingListContext";
 import type { ShoppingListItem } from "../types";
 
@@ -30,38 +21,49 @@ export default function ShoppingListScreen() {
   const hasChecked = checkedItems.length > 0;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
+    <View style={styles.container}>
+      {/* Input pinned to the top, below the header - the keyboard can never
+          cover it here, unlike a bottom-pinned input inside a tab screen. */}
+      <View style={styles.topSection}>
+        {shared && (
+          <View style={styles.sharedBanner}>
+            <Ionicons name="people" size={15} color="#2f9e44" />
+            <Text style={styles.sharedBannerText}>Geteilt mit deinem Haushalt - live synchron</Text>
+          </View>
+        )}
+        <View style={styles.addRow}>
+          <TextInput
+            style={styles.addInput}
+            placeholder="Artikel hinzufügen"
+            value={draft}
+            onChangeText={setDraft}
+            onSubmitEditing={handleAdd}
+            returnKeyType="done"
+          />
+          <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
+            <Text style={styles.addButtonText}>+</Text>
+          </TouchableOpacity>
+        </View>
+        {hasChecked && (
+          <TouchableOpacity style={styles.clearButton} onPress={() => clearChecked()}>
+            <Ionicons name="trash-outline" size={14} color="#966b1f" />
+            <Text style={styles.clearButtonText}>Erledigte löschen ({checkedItems.length})</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
       <FlatList
         style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 16, paddingBottom: 8, flexGrow: 1 }}
+        contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: 24, flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
         data={sorted}
         keyExtractor={(item) => item.id}
-        ListHeaderComponent={
-          <View>
-            {shared && (
-              <View style={styles.sharedBanner}>
-                <Ionicons name="people" size={15} color="#2f9e44" />
-                <Text style={styles.sharedBannerText}>Geteilt mit deinem Haushalt - live synchron</Text>
-              </View>
-            )}
-            {hasChecked && (
-              <TouchableOpacity style={styles.clearButton} onPress={() => clearChecked()}>
-                <Ionicons name="trash-outline" size={14} color="#966b1f" />
-                <Text style={styles.clearButtonText}>Erledigte löschen ({checkedItems.length})</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        }
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>🛒</Text>
             <Text style={styles.emptyTitle}>Einkaufsliste ist leer</Text>
             <Text style={styles.emptyText}>
-              Füge unten Artikel hinzu, oder tippe bei einem Rezept auf „Zur Einkaufsliste hinzufügen".
+              Füge oben Artikel hinzu, oder tippe bei einem Rezept auf „Zur Einkaufsliste".
             </Text>
           </View>
         }
@@ -79,25 +81,19 @@ export default function ShoppingListScreen() {
           </TouchableOpacity>
         )}
       />
-
-      <View style={styles.addRow}>
-        <TextInput
-          style={styles.addInput}
-          placeholder="Artikel hinzufügen"
-          value={draft}
-          onChangeText={setDraft}
-          onSubmitEditing={handleAdd}
-        />
-        <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
-          <Text style={styles.addButtonText}>+</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  topSection: {
+    padding: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eef5ef",
+    backgroundColor: "#fff",
+  },
   sharedBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -114,10 +110,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     alignSelf: "flex-start",
-    marginBottom: 12,
+    marginTop: 10,
   },
   clearButtonText: { fontSize: 12, color: "#966b1f", fontWeight: "600" },
-  emptyState: { alignItems: "center", justifyContent: "center", paddingTop: 64, paddingHorizontal: 32 },
+  emptyState: { alignItems: "center", justifyContent: "center", paddingTop: 48, paddingHorizontal: 32 },
   emptyEmoji: { fontSize: 44, marginBottom: 14 },
   emptyTitle: { fontSize: 16, fontWeight: "700", color: "#1b4332", marginBottom: 6 },
   emptyText: { fontSize: 13, color: "#7a8f83", textAlign: "center", lineHeight: 19 },
@@ -133,15 +129,7 @@ const styles = StyleSheet.create({
   },
   rowText: { flex: 1, fontSize: 15, color: "#1b4332", fontWeight: "600" },
   rowTextChecked: { color: "#9db5a6", textDecorationLine: "line-through" },
-  addRow: {
-    flexDirection: "row",
-    gap: 8,
-    padding: 16,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#eef5ef",
-    backgroundColor: "#fff",
-  },
+  addRow: { flexDirection: "row", gap: 8 },
   addInput: {
     flex: 1,
     borderWidth: 1,
