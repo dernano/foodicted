@@ -1,5 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -19,11 +20,30 @@ import { usePreferences } from "../context/PreferencesContext";
 
 type Props = NativeStackScreenProps<RootStackParamList, "IngredientsReview">;
 
+function mergeItems(existing: FridgeItem[], incoming: FridgeItem[]): FridgeItem[] {
+  const existingNames = new Set(existing.map((i) => i.name.trim().toLowerCase()));
+  const newOnes = incoming.filter((i) => !existingNames.has(i.name.trim().toLowerCase()));
+  return [...existing, ...newOnes];
+}
+
 export default function IngredientsReviewScreen({ route, navigation }: Props) {
   const { preferences } = usePreferences();
   const [items, setItems] = useState<FridgeItem[]>(route.params.items);
+  const [notes, setNotes] = useState<string | undefined>(route.params.notes);
   const [newItemName, setNewItemName] = useState("");
   const [loading, setLoading] = useState(false);
+  const lastMergedItemsRef = useRef(route.params.items);
+
+  // If this screen is already open and the user scans another photo, Camera
+  // navigates back here with a fresh batch of items - merge it in instead of
+  // replacing, so multiple shelves/photos build up one combined list.
+  useEffect(() => {
+    if (route.params.items !== lastMergedItemsRef.current) {
+      lastMergedItemsRef.current = route.params.items;
+      setItems((prev) => mergeItems(prev, route.params.items));
+      if (route.params.notes) setNotes(route.params.notes);
+    }
+  }, [route.params.items, route.params.notes]);
 
   function removeItem(index: number) {
     setItems((prev) => prev.filter((_, i) => i !== index));
@@ -57,27 +77,35 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
-      {!!route.params.notes && <Text style={styles.notes}>{route.params.notes}</Text>}
+      {!!notes && <Text style={styles.notes}>{notes}</Text>}
+
+      <TouchableOpacity style={styles.addPhotoButton} onPress={() => navigation.navigate("Camera")}>
+        <Ionicons name="camera-outline" size={17} color="#2f9e44" />
+        <Text style={styles.addPhotoButtonText}>Weiteres Foto scannen (z. B. zweites Fach, Vorratsschrank)</Text>
+      </TouchableOpacity>
 
       <FlatList
         data={items}
         keyExtractor={(_, i) => String(i)}
         contentContainerStyle={{ paddingBottom: 16 }}
         ListEmptyComponent={<Text style={styles.empty}>Keine Zutaten erkannt - füge unten welche hinzu.</Text>}
-        renderItem={({ item, index }) => (
-          <View style={styles.itemRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.itemName}>{item.name}</Text>
-              <Text style={styles.itemMeta}>
-                {CATEGORY_LABELS[item.category]}
-                {item.estimatedQuantity ? ` · ${item.estimatedQuantity}` : ""}
-              </Text>
+        renderItem={({ item, index }) => {
+          const metaParts = [
+            item.category !== "other" ? CATEGORY_LABELS[item.category] : null,
+            item.estimatedQuantity || null,
+          ].filter(Boolean);
+          return (
+            <View style={styles.itemRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.itemName}>{item.name}</Text>
+                {!!metaParts.length && <Text style={styles.itemMeta}>{metaParts.join(" · ")}</Text>}
+              </View>
+              <TouchableOpacity onPress={() => removeItem(index)} style={styles.removeButton}>
+                <Text style={styles.removeButtonText}>✕</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => removeItem(index)} style={styles.removeButton}>
-              <Text style={styles.removeButtonText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+          );
+        }}
       />
 
       <View style={styles.addRow}>
@@ -111,6 +139,14 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 16 },
   notes: { fontSize: 13, color: "#966b1f", backgroundColor: "#fff7e0", padding: 10, borderRadius: 8, marginBottom: 12 },
+  addPhotoButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    alignSelf: "flex-start",
+    marginBottom: 14,
+  },
+  addPhotoButtonText: { color: "#2f9e44", fontSize: 13, fontWeight: "700", flexShrink: 1 },
   empty: { textAlign: "center", color: "#7a8f83", marginTop: 32 },
   itemRow: {
     flexDirection: "row",
