@@ -43,7 +43,13 @@ export const RecipeSchema = z.object({
 });
 
 export const RecipeGenerationResultSchema = z.object({
-  recipes: z.array(RecipeSchema).describe("2-4 recipe suggestions ranked best-match first"),
+  recipes: z
+    .array(RecipeSchema)
+    .describe(
+      "3-5 recipe suggestions. Order matters: first all recipes fully makeable from the given " +
+        "ingredients alone (missingIngredients empty), then additional recipes that need a few " +
+        "more ingredients (listed in missingIngredients)."
+    ),
 });
 
 export type Recipe = z.infer<typeof RecipeSchema>;

@@ -98,9 +98,15 @@ export async function generateRecipes(
     max_tokens: 8192,
     system:
       "You are a creative, practical home-cooking assistant. Given a list of ingredients a " +
-      "person has available and their preferences, propose 2-4 realistic recipes they can " +
-      "actually cook. Prioritize recipes that use mostly what they already have - list any " +
-      "additional required ingredients in missingIngredients. Respect allergies and disliked " +
+      "person has available and their preferences, propose 3-5 realistic recipes they can " +
+      "actually cook, split into two groups:\n" +
+      "1. First, one or more recipes that can be made using ONLY the given ingredients (plus " +
+      "basic staples like water, salt, pepper, oil which never count as missing). For these, " +
+      "missingIngredients MUST be an empty array. Include as many of these as realistically " +
+      "possible - this group matters most.\n" +
+      "2. Then, additional recipes that would need a few more ingredients the person doesn't " +
+      "have - list exactly what's missing in missingIngredients for those.\n" +
+      "Order the recipes array with group 1 first, then group 2. Respect allergies and disliked " +
       "ingredients absolutely; treat other preferences as strong guidance. Keep instructions " +
       "clear and numbered. Give honest, reasonable nutrition estimates per serving. Assign each " +
       "recipe the meal-type category that fits it best. Respond " +
