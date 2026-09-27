@@ -1,10 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Alert, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
+import { usePantry } from "../context/PantryContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
 import { useShoppingList } from "../context/ShoppingListContext";
+import { ingredientPresent } from "../utils/ingredientMatch";
 import { DIFFICULTY_LABELS, RECIPE_CATEGORY_LABELS, type Nutrition, type Recipe } from "../types";
 
 function sameRecipe(a: { title: string }, b: { title: string }): boolean {
@@ -17,20 +19,28 @@ function hasNutritionData(nutrition: Nutrition): boolean {
   return nutrition.calories > 0 || nutrition.proteinGrams > 0 || nutrition.carbsGrams > 0 || nutrition.fatGrams > 0;
 }
 
-function shoppingItemsFor(recipe: Recipe): string[] {
+/** When we know the user's current pantry, use that to decide what's still
+ * missing (live, always up to date). Otherwise fall back to whatever was
+ * known at the time this recipe was generated/saved. */
+function shoppingItemsFor(recipe: Recipe, pantryNames: string[]): string[] {
+  if (pantryNames.length) {
+    return recipe.ingredients
+      .filter((ing) => !ingredientPresent(ing.name, pantryNames))
+      .map((ing) => `${ing.amount} ${ing.name}`.trim());
+  }
   return recipe.missingIngredients.length
     ? recipe.missingIngredients
     : recipe.ingredients.map((ing) => `${ing.amount} ${ing.name}`.trim());
 }
 
-function buildShoppingListText(recipe: Recipe): string {
-  const items = shoppingItemsFor(recipe);
+function buildShoppingListText(recipe: Recipe, pantryNames: string[]): string {
+  const items = shoppingItemsFor(recipe, pantryNames);
   return `Einkaufsliste für "${recipe.title}":\n\n${items.map((item) => `- ${item}`).join("\n")}`;
 }
 
-async function shareShoppingList(recipe: Recipe) {
+async function shareShoppingList(recipe: Recipe, pantryNames: string[]) {
   try {
-    await Share.share({ message: buildShoppingListText(recipe) });
+    await Share.share({ message: buildShoppingListText(recipe, pantryNames) });
   } catch {
     // User cancelled the share sheet - nothing to do.
   }
@@ -39,13 +49,26 @@ async function shareShoppingList(recipe: Recipe) {
 export default function RecipeDetailScreen({ route, navigation }: Props) {
   const { recipe } = route.params;
   const { favorites, isFavorite, toggleFavorite } = useFavorites();
+  const { pantry } = usePantry();
   const { addRecent } = useRecentRecipes();
   const { addItems } = useShoppingList();
   const favorite = isFavorite(recipe);
   const favoriteEntry = favorites.find((f) => sameRecipe(f, recipe));
 
+  const pantryNames = useMemo(() => pantry.items.map((i) => i.name), [pantry.items]);
+  const ingredientChecks = useMemo(
+    () =>
+      recipe.ingredients.map((ingredient) => ({
+        ingredient,
+        present: pantryNames.length ? ingredientPresent(ingredient.name, pantryNames) : null,
+      })),
+    [recipe.ingredients, pantryNames]
+  );
+  const presentCount = ingredientChecks.filter((c) => c.present).length;
+  const missingNames = ingredientChecks.filter((c) => c.present === false).map((c) => c.ingredient.name);
+
   function addToShoppingList() {
-    addItems(shoppingItemsFor(recipe), recipe.title);
+    addItems(shoppingItemsFor(recipe, pantryNames), recipe.title);
     Alert.alert("Hinzugefügt", "Die Zutaten wurden zu deiner Einkaufsliste hinzugefügt.");
   }
 
@@ -118,7 +141,7 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
           <Ionicons name="cart-outline" size={15} color="#2f9e44" />
           <Text style={styles.shareListButtonText}>Zur Einkaufsliste</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.shareListButton} onPress={() => shareShoppingList(recipe)}>
+        <TouchableOpacity style={styles.shareListButton} onPress={() => shareShoppingList(recipe, pantryNames)}>
           <Ionicons name="share-outline" size={15} color="#2f9e44" />
           <Text style={styles.shareListButtonText}>Teilen</Text>
         </TouchableOpacity>
@@ -130,18 +153,27 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
           <Text style={styles.shareListButtonText}>Foto-Abgleich</Text>
         </TouchableOpacity>
       </View>
-      {recipe.ingredients.map((ing, i) => (
+      {pantryNames.length ? (
+        <Text style={styles.pantrySummary}>
+          {presentCount} von {recipe.ingredients.length} Zutaten in deinem Vorrat
+        </Text>
+      ) : null}
+      {ingredientChecks.map(({ ingredient, present }, i) => (
         <View key={i} style={styles.ingredientRow}>
-          <Text style={styles.ingredientBullet}>
-            {recipe.missingIngredients.length ? (ing.fromFridge ? "✅" : "🛒") : "•"}
-          </Text>
+          <Text style={styles.ingredientBullet}>{present === null ? "•" : present ? "✅" : "🛒"}</Text>
           <Text style={styles.ingredientText}>
-            {ing.amount} {ing.name}
+            {ingredient.amount} {ingredient.name}
           </Text>
         </View>
       ))}
-      {!!recipe.missingIngredients.length && (
-        <Text style={styles.missingNote}>🛒 = musst du noch besorgen: {recipe.missingIngredients.join(", ")}</Text>
+      {pantryNames.length ? (
+        !!missingNames.length && (
+          <Text style={styles.missingNote}>🛒 = fehlt in deinem Vorrat: {missingNames.join(", ")}</Text>
+        )
+      ) : (
+        !!recipe.missingIngredients.length && (
+          <Text style={styles.missingNote}>🛒 = musst du noch besorgen: {recipe.missingIngredients.join(", ")}</Text>
+        )
       )}
 
       <Text style={styles.sectionTitle}>Zubereitung</Text>
@@ -199,6 +231,7 @@ const styles = StyleSheet.create({
   shoppingActionsRow: { flexDirection: "row", flexWrap: "wrap", gap: 14, marginBottom: 4 },
   shareListButton: { flexDirection: "row", alignItems: "center", gap: 5 },
   shareListButtonText: { color: "#2f9e44", fontSize: 12, fontWeight: "700" },
+  pantrySummary: { fontSize: 12, color: "#2f9e44", fontWeight: "700", marginBottom: 10 },
   ingredientRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 8, gap: 8 },
   ingredientBullet: { fontSize: 14 },
   ingredientText: { fontSize: 14, color: "#1b4332", flex: 1 },

@@ -7,26 +7,44 @@ import { CATEGORY_LABELS, type FridgeItem } from "../types";
 import { generateRecipes } from "../api/client";
 import { usePreferences } from "../context/PreferencesContext";
 import { useFavorites } from "../context/FavoritesContext";
+import { usePantry } from "../context/PantryContext";
 import { matchRatio } from "../utils/ingredientMatch";
+import { mergeFridgeItems } from "../utils/fridgeItems";
 
 type Props = NativeStackScreenProps<RootStackParamList, "IngredientsReview">;
 
 const MATCH_THRESHOLD = 0.8;
 
-function mergeItems(existing: FridgeItem[], incoming: FridgeItem[]): FridgeItem[] {
-  const existingNames = new Set(existing.map((i) => i.name.trim().toLowerCase()));
-  const newOnes = incoming.filter((i) => !existingNames.has(i.name.trim().toLowerCase()));
-  return [...existing, ...newOnes];
-}
-
 export default function IngredientsReviewScreen({ route, navigation }: Props) {
   const { preferences } = usePreferences();
   const { favorites } = useFavorites();
+  const { pantry, loaded: pantryLoaded, updatePantry } = usePantry();
   const [items, setItems] = useState<FridgeItem[]>(route.params.items);
   const [notes, setNotes] = useState<string | undefined>(route.params.notes);
   const [newItemName, setNewItemName] = useState("");
   const [loading, setLoading] = useState(false);
   const lastMergedItemsRef = useRef(route.params.items);
+  const pantryMergedRef = useRef(false);
+
+  // Merge in the persisted pantry (previously scanned/entered ingredients)
+  // once on load, so this list always reflects what the user already told
+  // the app about - not just what was just scanned or typed this visit.
+  useEffect(() => {
+    if (pantryLoaded && !pantryMergedRef.current) {
+      pantryMergedRef.current = true;
+      setItems((prev) => mergeFridgeItems(pantry.items, prev));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pantryLoaded]);
+
+  // Keep the persisted pantry in sync with whatever's currently in the list -
+  // this is what lets any recipe's detail page later show "already have it".
+  useEffect(() => {
+    if (pantryMergedRef.current) {
+      updatePantry(items, notes);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, notes]);
 
   // Free, local check (no AI call): which saved favorites could already be
   // cooked with what's currently in the list.
@@ -52,7 +70,7 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
   useEffect(() => {
     if (route.params.items !== lastMergedItemsRef.current) {
       lastMergedItemsRef.current = route.params.items;
-      setItems((prev) => mergeItems(prev, route.params.items));
+      setItems((prev) => mergeFridgeItems(prev, route.params.items));
       if (route.params.notes) setNotes(route.params.notes);
     }
   }, [route.params.items, route.params.notes]);

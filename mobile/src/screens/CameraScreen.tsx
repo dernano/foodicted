@@ -1,24 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackParamList } from "../navigation";
 import { analyzeFridgePhoto } from "../api/client";
 import LoadingLogo from "../components/LoadingLogo";
-import type { FridgeItem } from "../types";
+import { usePantry } from "../context/PantryContext";
+import { mergeFridgeItems } from "../utils/fridgeItems";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Camera">;
-
-const LAST_SCAN_KEY = "foodicted.lastScan";
-
-interface LastScan {
-  items: FridgeItem[];
-  notes?: string;
-  scannedAt: number;
-}
 
 function formatRelativeTime(timestamp: number): string {
   const diffMinutes = Math.round((Date.now() - timestamp) / 60000);
@@ -32,31 +24,23 @@ function formatRelativeTime(timestamp: number): string {
 
 export default function CameraScreen({ navigation, route }: Props) {
   const matchRecipe = route.params?.matchRecipe;
+  const { pantry, loaded: pantryLoaded, updatePantry } = usePantry();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [facing] = useState<"back" | "front">("back");
   const [torchOn, setTorchOn] = useState(false);
-  const [lastScan, setLastScan] = useState<LastScan | null>(null);
-
-  useEffect(() => {
-    AsyncStorage.getItem(LAST_SCAN_KEY)
-      .then((raw) => {
-        if (raw) setLastScan(JSON.parse(raw) as LastScan);
-      })
-      .catch(() => {});
-  }, []);
 
   async function handleImageBase64(base64: string) {
     setAnalyzing(true);
     try {
       const analysis = await analyzeFridgePhoto(base64);
+      const mergedItems = mergeFridgeItems(pantry.items, analysis.items);
+      updatePantry(mergedItems, analysis.notes ?? pantry.notes);
       if (matchRecipe) {
         navigation.replace("IngredientMatch", { recipe: matchRecipe, detectedItems: analysis.items });
         return;
       }
-      const scan: LastScan = { items: analysis.items, notes: analysis.notes, scannedAt: Date.now() };
-      AsyncStorage.setItem(LAST_SCAN_KEY, JSON.stringify(scan)).catch(() => {});
       navigation.navigate("IngredientsReview", { items: analysis.items, notes: analysis.notes });
     } catch (err) {
       Alert.alert(
@@ -68,9 +52,8 @@ export default function CameraScreen({ navigation, route }: Props) {
     }
   }
 
-  function openLastScan() {
-    if (!lastScan) return;
-    navigation.navigate("IngredientsReview", { items: lastScan.items, notes: lastScan.notes });
+  function openPantry() {
+    navigation.navigate("IngredientsReview", { items: pantry.items, notes: pantry.notes });
   }
 
   async function takePhoto() {
@@ -138,10 +121,10 @@ export default function CameraScreen({ navigation, route }: Props) {
       )}
 
       <View style={styles.topBar}>
-        {!matchRecipe && lastScan ? (
-          <TouchableOpacity style={styles.topBarPill} onPress={openLastScan}>
+        {!matchRecipe && pantryLoaded && pantry.items.length ? (
+          <TouchableOpacity style={styles.topBarPill} onPress={openPantry}>
             <Ionicons name="time-outline" size={15} color="#fff" />
-            <Text style={styles.topBarPillText}>Letzter Scan · {formatRelativeTime(lastScan.scannedAt)}</Text>
+            <Text style={styles.topBarPillText}>Mein Vorrat · {formatRelativeTime(pantry.updatedAt)}</Text>
           </TouchableOpacity>
         ) : (
           <View />
