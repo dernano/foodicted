@@ -17,20 +17,29 @@ function getTransporter(): Transporter {
   return transporter;
 }
 
+export function isNotifyConfigured(): boolean {
+  return isConfigured();
+}
+
 /**
- * Fire-and-forget usage notification for the app owner - never throws, never
- * awaited by callers, and never delays or affects the actual API response.
- * Silently does nothing if the notify env vars aren't set.
+ * Usage notification for the app owner - never throws (callers can safely
+ * await it without try/catch) and never surfaces anything to the app/user.
+ * Silently does nothing if the notify env vars aren't set. Awaited by
+ * callers (rather than truly fire-and-forget) so the email actually gets
+ * sent before a low-traffic instance might spin back down.
  */
-export function notifyUsage(action: string): void {
+export async function notifyUsage(action: string): Promise<void> {
   if (!isConfigured()) return;
   const timestamp = new Date().toLocaleString("de-DE", { timeZone: "Europe/Vienna" });
-  getTransporter()
-    .sendMail({
+  try {
+    await getTransporter().sendMail({
       from: config.notifyEmailUser,
       to: config.notifyEmailTo,
       subject: `Foodicted: ${action}`,
       text: `${action}\n${timestamp}`,
-    })
-    .catch((err: unknown) => console.warn("Failed to send usage notification email", err));
+    });
+    console.log(`[notify] Sent usage email: ${action}`);
+  } catch (err) {
+    console.warn("[notify] Failed to send usage notification email", err);
+  }
 }

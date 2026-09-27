@@ -39,7 +39,7 @@ recipesRouter.post("/generate", async (req, res, next) => {
     }
     const { items, preferences } = parsed.data;
     const result = await generateRecipes(items, preferences);
-    notifyUsage("Rezepte generiert");
+    await notifyUsage("Rezepte generiert");
     res.json(result);
   } catch (err) {
     next(err);
@@ -66,7 +66,7 @@ recipesRouter.post("/refine", async (req, res, next) => {
       return;
     }
     const recipe = await refineRecipe(parsed.data);
-    notifyUsage("Eigenes Rezept vervollständigt");
+    await notifyUsage("Eigenes Rezept vervollständigt");
     res.json({ recipe });
   } catch (err) {
     next(err);

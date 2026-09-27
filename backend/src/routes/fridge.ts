@@ -42,7 +42,7 @@ fridgeRouter.post("/analyze", imageUpload.single("image"), async (req, res, next
     }
 
     const analysis = await analyzeFridgeImage(imageBase64, mediaType);
-    notifyUsage("Foto gescannt");
+    await notifyUsage("Foto gescannt");
     res.json(analysis);
   } catch (err) {
     next(err);

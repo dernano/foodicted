@@ -5,6 +5,7 @@ import { fridgeRouter } from "./routes/fridge.js";
 import { recipesRouter } from "./routes/recipes.js";
 import { foodRouter } from "./routes/food.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { isNotifyConfigured } from "./services/notifyService.js";
 
 const app = express();
 
@@ -29,6 +30,7 @@ function start() {
     console.warn(`[foodicted] Warning: ${(err as Error).message}`);
     console.warn("[foodicted] The server will start, but /api/fridge and /api/recipes will fail until it is set.");
   }
+  console.log(`[notify] Usage email notifications ${isNotifyConfigured() ? "enabled" : "disabled (env vars not set)"}`);
   app.listen(config.port, () => {
     console.log(`Foodicted backend listening on http://localhost:${config.port}`);
   });
