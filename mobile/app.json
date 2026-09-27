@@ -29,6 +29,12 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "updates": {
+      "url": "https://u.expo.dev/3f4bcee0-2545-4975-bfef-d07d7d46e453"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "plugins": [
       [
         "expo-camera",
@@ -44,7 +50,10 @@
       ]
     ],
     "extra": {
-      "apiBaseUrl": "https://foodicted-vh9o.onrender.com"
+      "apiBaseUrl": "https://foodicted-vh9o.onrender.com",
+      "eas": {
+        "projectId": "3f4bcee0-2545-4975-bfef-d07d7d46e453"
+      }
     }
   }
 }
