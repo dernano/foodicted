@@ -30,7 +30,8 @@ function formatRelativeTime(timestamp: number): string {
   return `vor ${diffDays} Tag${diffDays === 1 ? "" : "en"}`;
 }
 
-export default function CameraScreen({ navigation }: Props) {
+export default function CameraScreen({ navigation, route }: Props) {
+  const matchRecipe = route.params?.matchRecipe;
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -50,6 +51,10 @@ export default function CameraScreen({ navigation }: Props) {
     setAnalyzing(true);
     try {
       const analysis = await analyzeFridgePhoto(base64);
+      if (matchRecipe) {
+        navigation.replace("IngredientMatch", { recipe: matchRecipe, detectedItems: analysis.items });
+        return;
+      }
       const scan: LastScan = { items: analysis.items, notes: analysis.notes, scannedAt: Date.now() };
       AsyncStorage.setItem(LAST_SCAN_KEY, JSON.stringify(scan)).catch(() => {});
       navigation.navigate("IngredientsReview", { items: analysis.items, notes: analysis.notes });
@@ -124,8 +129,16 @@ export default function CameraScreen({ navigation }: Props) {
     <View style={styles.container}>
       <CameraView ref={cameraRef} style={styles.camera} facing={facing} enableTorch={torchOn} />
 
+      {!!matchRecipe && (
+        <View style={styles.matchBanner}>
+          <Text style={styles.matchBannerText}>
+            Fotografiere deinen Vorrat, um zu sehen, was dir für „{matchRecipe.title}" noch fehlt.
+          </Text>
+        </View>
+      )}
+
       <View style={styles.topBar}>
-        {lastScan ? (
+        {!matchRecipe && lastScan ? (
           <TouchableOpacity style={styles.topBarPill} onPress={openLastScan}>
             <Ionicons name="time-outline" size={15} color="#fff" />
             <Text style={styles.topBarPillText}>Letzter Scan · {formatRelativeTime(lastScan.scannedAt)}</Text>
@@ -177,6 +190,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   topBarPillText: { color: "#fff", fontSize: 12, fontWeight: "700" },
+  matchBanner: {
+    position: "absolute",
+    top: 64,
+    left: 16,
+    right: 16,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  matchBannerText: { color: "#fff", fontSize: 13, fontWeight: "600", lineHeight: 18 },
   torchButton: {
     width: 40,
     height: 40,

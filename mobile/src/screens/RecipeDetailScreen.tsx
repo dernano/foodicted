@@ -122,6 +122,13 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
           <Ionicons name="share-outline" size={15} color="#2f9e44" />
           <Text style={styles.shareListButtonText}>Teilen</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.shareListButton}
+          onPress={() => navigation.navigate("Camera", { matchRecipe: recipe })}
+        >
+          <Ionicons name="camera-outline" size={15} color="#2f9e44" />
+          <Text style={styles.shareListButtonText}>Foto-Abgleich</Text>
+        </TouchableOpacity>
       </View>
       {recipe.ingredients.map((ing, i) => (
         <View key={i} style={styles.ingredientRow}>
@@ -189,7 +196,7 @@ const styles = StyleSheet.create({
   nutritionValue: { fontSize: 14, fontWeight: "700", color: "#1b4332" },
   nutritionLabel: { fontSize: 11, color: "#7a8f83", marginTop: 2 },
   sectionTitle: { fontSize: 16, fontWeight: "700", color: "#1b4332", marginTop: 28, marginBottom: 12 },
-  shoppingActionsRow: { flexDirection: "row", gap: 18, marginBottom: 4 },
+  shoppingActionsRow: { flexDirection: "row", flexWrap: "wrap", gap: 14, marginBottom: 4 },
   shareListButton: { flexDirection: "row", alignItems: "center", gap: 5 },
   shareListButtonText: { color: "#2f9e44", fontSize: 12, fontWeight: "700" },
   ingredientRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 8, gap: 8 },

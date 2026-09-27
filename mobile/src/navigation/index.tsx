@@ -25,6 +25,7 @@ import EditFavoriteRecipeScreen from "../screens/EditFavoriteRecipeScreen";
 import AccountScreen from "../screens/AccountScreen";
 import ShoppingListScreen from "../screens/ShoppingListScreen";
 import RecentRecipesScreen from "../screens/RecentRecipesScreen";
+import IngredientMatchScreen from "../screens/IngredientMatchScreen";
 import OnboardingScreen, { ONBOARDING_SEEN_KEY } from "../screens/OnboardingScreen";
 import { useAuth } from "../context/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -40,7 +41,7 @@ export type MainTabsParamList = {
 export type RootStackParamList = {
   Onboarding: undefined;
   MainTabs: NavigatorScreenParams<MainTabsParamList>;
-  Camera: undefined;
+  Camera: { matchRecipe?: Recipe } | undefined;
   Preferences: undefined;
   IngredientsReview: { items: FridgeItem[]; notes?: string };
   Recipes: { recipes: Recipe[] };
@@ -49,6 +50,7 @@ export type RootStackParamList = {
   EditFavoriteRecipe: { recipe: FavoriteRecipe };
   Account: undefined;
   RecentRecipes: undefined;
+  IngredientMatch: { recipe: Recipe; detectedItems: FridgeItem[] };
 };
 
 export type MainTabsScreenProps<T extends keyof MainTabsParamList> = CompositeScreenProps<
@@ -193,7 +195,11 @@ export default function AppNavigator() {
       >
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-        <Stack.Screen name="Camera" component={CameraScreen} options={{ title: "Vorrat scannen" }} />
+        <Stack.Screen
+          name="Camera"
+          component={CameraScreen}
+          options={({ route }) => ({ title: route.params?.matchRecipe ? "Zutaten abgleichen" : "Vorrat scannen" })}
+        />
         <Stack.Screen name="Preferences" component={PreferencesScreen} options={{ title: "Präferenzen" }} />
         <Stack.Screen
           name="IngredientsReview"
@@ -214,6 +220,7 @@ export default function AppNavigator() {
           options={{ title: "Rezept bearbeiten" }}
         />
         <Stack.Screen name="RecentRecipes" component={RecentRecipesScreen} options={{ title: "Verlauf" }} />
+        <Stack.Screen name="IngredientMatch" component={IngredientMatchScreen} options={{ title: "Zutaten-Check" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

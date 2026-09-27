@@ -1,13 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import type { RootStackParamList } from "../navigation";
 import { CATEGORY_LABELS, type FridgeItem } from "../types";
 import { generateRecipes } from "../api/client";
 import { usePreferences } from "../context/PreferencesContext";
+import { useFavorites } from "../context/FavoritesContext";
+import { matchRatio } from "../utils/ingredientMatch";
 
 type Props = NativeStackScreenProps<RootStackParamList, "IngredientsReview">;
+
+const MATCH_THRESHOLD = 0.8;
 
 function mergeItems(existing: FridgeItem[], incoming: FridgeItem[]): FridgeItem[] {
   const existingNames = new Set(existing.map((i) => i.name.trim().toLowerCase()));
@@ -17,11 +21,30 @@ function mergeItems(existing: FridgeItem[], incoming: FridgeItem[]): FridgeItem[
 
 export default function IngredientsReviewScreen({ route, navigation }: Props) {
   const { preferences } = usePreferences();
+  const { favorites } = useFavorites();
   const [items, setItems] = useState<FridgeItem[]>(route.params.items);
   const [notes, setNotes] = useState<string | undefined>(route.params.notes);
   const [newItemName, setNewItemName] = useState("");
   const [loading, setLoading] = useState(false);
   const lastMergedItemsRef = useRef(route.params.items);
+
+  // Free, local check (no AI call): which saved favorites could already be
+  // cooked with what's currently in the list.
+  const matchedFavorites = useMemo(() => {
+    if (!items.length || !favorites.length) return [];
+    const detectedNames = items.map((i) => i.name);
+    return favorites
+      .map((favorite) => ({
+        favorite,
+        score: matchRatio(
+          favorite.ingredients.map((ing) => ing.name),
+          detectedNames
+        ),
+      }))
+      .filter(({ score }) => score >= MATCH_THRESHOLD)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+  }, [items, favorites]);
 
   // If this screen is already open and the user scans another photo, Camera
   // navigates back here with a fresh batch of items - merge it in instead of
@@ -94,6 +117,28 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
         data={items}
         keyExtractor={(_, i) => String(i)}
         ListEmptyComponent={<Text style={styles.empty}>Keine Zutaten erkannt - füge oben welche hinzu.</Text>}
+        ListFooterComponent={
+          !!matchedFavorites.length ? (
+            <View style={styles.matchSection}>
+              <Text style={styles.matchTitle}>💚 Das kannst du bereits kochen</Text>
+              {matchedFavorites.map(({ favorite, score }) => (
+                <TouchableOpacity
+                  key={favorite.id}
+                  style={styles.matchRow}
+                  onPress={() => navigation.navigate("RecipeDetail", { recipe: favorite })}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.matchRowTitle}>{favorite.title}</Text>
+                    <Text style={styles.matchRowMeta}>
+                      {score >= 0.999 ? "Alle Zutaten vorhanden" : `${Math.round(score * 100)}% der Zutaten vorhanden`}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="#c3d6c8" />
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null
+        }
         renderItem={({ item, index }) => {
           const metaParts = [
             item.category !== "other" ? CATEGORY_LABELS[item.category] : null,
@@ -166,6 +211,24 @@ const styles = StyleSheet.create({
   itemMeta: { fontSize: 12, color: "#7a8f83", marginTop: 2, textTransform: "capitalize" },
   removeButton: { padding: 6 },
   removeButtonText: { color: "#c92a2a", fontSize: 16, fontWeight: "700" },
+  matchSection: {
+    marginTop: 8,
+    backgroundColor: "#f6fbf6",
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#e6f0e8",
+  },
+  matchTitle: { fontSize: 13, fontWeight: "700", color: "#1b4332", marginBottom: 8 },
+  matchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 9,
+    borderTopWidth: 1,
+    borderTopColor: "#e6f0e8",
+  },
+  matchRowTitle: { fontSize: 14, fontWeight: "700", color: "#1b4332" },
+  matchRowMeta: { fontSize: 11, color: "#7a8f83", marginTop: 2 },
   addRow: { flexDirection: "row", gap: 8, marginBottom: 14 },
   addInput: {
     flex: 1,
