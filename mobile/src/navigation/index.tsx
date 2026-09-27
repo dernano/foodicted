@@ -24,6 +24,7 @@ import AddFavoriteRecipeScreen from "../screens/AddFavoriteRecipeScreen";
 import EditFavoriteRecipeScreen from "../screens/EditFavoriteRecipeScreen";
 import AccountScreen from "../screens/AccountScreen";
 import ShoppingListScreen from "../screens/ShoppingListScreen";
+import RecentRecipesScreen from "../screens/RecentRecipesScreen";
 import OnboardingScreen, { ONBOARDING_SEEN_KEY } from "../screens/OnboardingScreen";
 import { useAuth } from "../context/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -47,6 +48,7 @@ export type RootStackParamList = {
   AddFavoriteRecipe: undefined;
   EditFavoriteRecipe: { recipe: FavoriteRecipe };
   Account: undefined;
+  RecentRecipes: undefined;
 };
 
 export type MainTabsScreenProps<T extends keyof MainTabsParamList> = CompositeScreenProps<
@@ -211,6 +213,7 @@ export default function AppNavigator() {
           component={EditFavoriteRecipeScreen}
           options={{ title: "Rezept bearbeiten" }}
         />
+        <Stack.Screen name="RecentRecipes" component={RecentRecipesScreen} options={{ title: "Verlauf" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

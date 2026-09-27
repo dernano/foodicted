@@ -3,7 +3,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import type { Recipe } from "../types";
 
 const STORAGE_KEY = "foodicted.recentRecipes";
-const MAX_RECENT = 8;
+const MAX_RECENT = 20;
 
 interface RecentRecipesContextValue {
   recent: Recipe[];

@@ -64,7 +64,14 @@ export default function HomeScreen({ navigation }: Props) {
 
         {!!recent.length && (
           <View style={styles.recentCard}>
-            <Text style={styles.recentTitle}>Zuletzt angesehen</Text>
+            <View style={styles.recentTitleRow}>
+              <Text style={styles.recentTitle}>Zuletzt angesehen</Text>
+              {recent.length > 5 && (
+                <TouchableOpacity onPress={() => navigation.navigate("RecentRecipes")} hitSlop={8}>
+                  <Text style={styles.recentAllLink}>Alle anzeigen</Text>
+                </TouchableOpacity>
+              )}
+            </View>
             {recent.slice(0, 5).map((recipe, i) => (
               <TouchableOpacity
                 key={`${recipe.title}-${i}`}
@@ -147,7 +154,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e6f0e8",
   },
-  recentTitle: { fontWeight: "700", fontSize: 14, marginBottom: 10, color: "#1b4332" },
+  recentTitleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
+  recentTitle: { fontWeight: "700", fontSize: 14, color: "#1b4332" },
+  recentAllLink: { fontSize: 12, fontWeight: "700", color: "#2f9e44" },
   recentRow: {
     flexDirection: "row",
     alignItems: "center",
