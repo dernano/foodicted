@@ -114,6 +114,10 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
       />
 
       <View style={styles.bottomBar}>
+        <TouchableOpacity style={styles.preferencesButton} onPress={() => navigation.navigate("Preferences")}>
+          <Ionicons name="settings-outline" size={15} color="#5c7a6a" />
+          <Text style={styles.preferencesButtonText}>Präferenzen anpassen</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.generateButton, loading && styles.generateButtonDisabled]}
           onPress={handleGenerate}
@@ -187,6 +191,15 @@ const styles = StyleSheet.create({
     borderTopColor: "#eef5ef",
     backgroundColor: "#fff",
   },
+  preferencesButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    marginBottom: 4,
+  },
+  preferencesButtonText: { color: "#5c7a6a", fontSize: 13, fontWeight: "600" },
   generateButton: {
     backgroundColor: "#2f9e44",
     borderRadius: 14,
