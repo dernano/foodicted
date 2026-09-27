@@ -6,6 +6,10 @@ import { useFavorites } from "../context/FavoritesContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
 import { DIFFICULTY_LABELS, type Nutrition, type Recipe } from "../types";
 
+function sameRecipe(a: { title: string }, b: { title: string }): boolean {
+  return a.title.trim().toLowerCase() === b.title.trim().toLowerCase();
+}
+
 type Props = RootStackScreenProps<"RecipeDetail">;
 
 function hasNutritionData(nutrition: Nutrition): boolean {
@@ -27,11 +31,12 @@ async function shareShoppingList(recipe: Recipe) {
   }
 }
 
-export default function RecipeDetailScreen({ route }: Props) {
+export default function RecipeDetailScreen({ route, navigation }: Props) {
   const { recipe } = route.params;
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const { favorites, isFavorite, toggleFavorite } = useFavorites();
   const { addRecent } = useRecentRecipes();
   const favorite = isFavorite(recipe);
+  const favoriteEntry = favorites.find((f) => sameRecipe(f, recipe));
 
   useEffect(() => {
     addRecent(recipe);
@@ -42,9 +47,19 @@ export default function RecipeDetailScreen({ route }: Props) {
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
       <View style={styles.titleRow}>
         <Text style={styles.title}>{recipe.title}</Text>
-        <TouchableOpacity onPress={() => toggleFavorite(recipe)} hitSlop={10} style={styles.favoriteButton}>
-          <Text style={styles.heart}>{favorite ? "❤️" : "🤍"}</Text>
-        </TouchableOpacity>
+        <View style={styles.titleActions}>
+          {favoriteEntry && (
+            <TouchableOpacity
+              onPress={() => navigation.navigate("EditFavoriteRecipe", { recipe: favoriteEntry })}
+              hitSlop={10}
+            >
+              <Ionicons name="create-outline" size={24} color="#2f9e44" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={() => toggleFavorite(recipe)} hitSlop={10}>
+            <Text style={styles.heart}>{favorite ? "❤️" : "🤍"}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <Text style={styles.description}>{recipe.description}</Text>
       <Text style={styles.favoriteHint}>
@@ -128,7 +143,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   title: { fontSize: 24, fontWeight: "800", color: "#1b4332", flex: 1, marginRight: 12 },
-  favoriteButton: { paddingTop: 4 },
+  titleActions: { flexDirection: "row", alignItems: "center", gap: 14, paddingTop: 4 },
   heart: { fontSize: 26 },
   description: { fontSize: 14, color: "#40616b", marginTop: 8, lineHeight: 20 },
   favoriteHint: { fontSize: 12, color: "#9db5a6", marginTop: 6, fontStyle: "italic" },

@@ -11,7 +11,7 @@ import {
 } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { Image, Text, TouchableOpacity, View } from "react-native";
-import type { FridgeItem, Recipe } from "../types";
+import type { FridgeItem, Recipe, FavoriteRecipe } from "../types";
 import HomeScreen from "../screens/HomeScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
 import CameraScreen from "../screens/CameraScreen";
@@ -20,6 +20,7 @@ import IngredientsReviewScreen from "../screens/IngredientsReviewScreen";
 import RecipesScreen from "../screens/RecipesScreen";
 import RecipeDetailScreen from "../screens/RecipeDetailScreen";
 import AddFavoriteRecipeScreen from "../screens/AddFavoriteRecipeScreen";
+import EditFavoriteRecipeScreen from "../screens/EditFavoriteRecipeScreen";
 import AccountScreen from "../screens/AccountScreen";
 import { useAuth } from "../context/AuthContext";
 
@@ -36,6 +37,7 @@ export type RootStackParamList = {
   Recipes: { recipes: Recipe[] };
   RecipeDetail: { recipe: Recipe };
   AddFavoriteRecipe: undefined;
+  EditFavoriteRecipe: { recipe: FavoriteRecipe };
   Account: undefined;
 };
 
@@ -158,6 +160,11 @@ export default function AppNavigator() {
           options={{ title: "Rezept hinzufügen" }}
         />
         <Stack.Screen name="Account" component={AccountScreen} options={{ title: "Konto & Haushalt" }} />
+        <Stack.Screen
+          name="EditFavoriteRecipe"
+          component={EditFavoriteRecipeScreen}
+          options={{ title: "Rezept bearbeiten" }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

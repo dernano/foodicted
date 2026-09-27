@@ -14,6 +14,7 @@ interface FavoritesContextValue {
   isFavorite: (recipe: Recipe) => boolean;
   toggleFavorite: (recipe: Recipe) => Promise<void>;
   removeFavorite: (id: string) => Promise<void>;
+  updateFavorite: (id: string, recipe: Recipe) => Promise<void>;
 }
 
 const FavoritesContext = createContext<FavoritesContextValue | undefined>(undefined);
@@ -65,6 +66,13 @@ function favoriteToRow(recipe: Recipe, householdId: string, userId: string | und
   return {
     household_id: householdId,
     added_by: userId ?? null,
+    ...favoriteToUpdateRow(recipe),
+  };
+}
+
+/** Editable fields only - used both for inserts (spread into favoriteToRow) and updates. */
+function favoriteToUpdateRow(recipe: Recipe) {
+  return {
     title: recipe.title,
     description: recipe.description,
     prep_time_minutes: recipe.prepTimeMinutes,
@@ -208,6 +216,31 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     [shared, household, remoteFavorites, isFavorite, localFavorites, persistLocal, session]
   );
 
+  const updateFavorite = useCallback(
+    async (id: string, recipe: Recipe) => {
+      if (shared) {
+        const { data, error } = await supabase
+          .from("favorite_recipes")
+          .update(favoriteToUpdateRow(recipe))
+          .eq("id", id)
+          .select("*")
+          .single();
+        if (error) {
+          console.warn("Failed to update shared favorite", error);
+          throw error;
+        }
+        if (data) {
+          setRemoteFavorites((prev) => prev.map((f) => (f.id === id ? rowToFavorite(data as FavoriteRow) : f)));
+        }
+        return;
+      }
+      persistLocal(
+        localFavorites.map((f) => (f.id === id ? { ...recipe, id: f.id, savedAt: f.savedAt } : f))
+      );
+    },
+    [shared, localFavorites, persistLocal]
+  );
+
   const removeFavorite = useCallback(
     async (id: string) => {
       if (shared) {
@@ -221,8 +254,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ favorites, loaded, shared, isFavorite, toggleFavorite, removeFavorite }),
-    [favorites, loaded, shared, isFavorite, toggleFavorite, removeFavorite]
+    () => ({ favorites, loaded, shared, isFavorite, toggleFavorite, removeFavorite, updateFavorite }),
+    [favorites, loaded, shared, isFavorite, toggleFavorite, removeFavorite, updateFavorite]
   );
 
   return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;
