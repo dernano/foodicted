@@ -15,6 +15,7 @@ import type { RootStackScreenProps } from "../navigation";
 import { refineRecipe } from "../api/client";
 import { useFavorites } from "../context/FavoritesContext";
 import { usePreferences } from "../context/PreferencesContext";
+import type { Recipe } from "../types";
 
 type Props = RootStackScreenProps<"AddFavoriteRecipe">;
 
@@ -39,16 +40,20 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
     setIngredientLines((prev) => prev.filter((_, i) => i !== index));
   }
 
-  async function handleSubmit() {
+  function validate(): boolean {
     if (!title.trim()) {
       Alert.alert("Titel fehlt", "Gib deinem Rezept einen Namen.");
-      return;
+      return false;
     }
     if (ingredientLines.length === 0) {
       Alert.alert("Zutaten fehlen", "Füge mindestens eine Zutat hinzu.");
-      return;
+      return false;
     }
+    return true;
+  }
 
+  async function handleSubmitWithAi() {
+    if (!validate()) return;
     setLoading(true);
     try {
       const recipe = await refineRecipe({
@@ -69,6 +74,33 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
     }
   }
 
+  function handleSaveDirectly() {
+    if (!validate()) return;
+    const notes = preparationNotes.trim();
+    const instructions = notes
+      ? notes
+          .split(/\r?\n+/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : ["Keine detaillierte Zubereitung hinterlegt."];
+
+    const recipe: Recipe = {
+      title: title.trim(),
+      description: notes || "Eigenes Rezept ohne KI-Unterstützung angelegt.",
+      prepTimeMinutes: 0,
+      cookTimeMinutes: 0,
+      servings: preferences.servings ?? 2,
+      difficulty: "medium",
+      tags: [],
+      ingredients: ingredientLines.map((line) => ({ name: line, amount: "", fromFridge: true })),
+      missingIngredients: [],
+      instructions,
+      nutrition: { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 },
+    };
+    toggleFavorite(recipe);
+    navigation.replace("RecipeDetail", { recipe });
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -77,8 +109,9 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
     >
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
         <Text style={styles.intro}>
-          Trag dein eigenes Rezept ein - Name, Zutaten und kurz wie es zubereitet wird. Die KI macht daraus ein
-          vollständiges Rezept mit Anleitung und Nährwerten und speichert es direkt in deinen Favoriten.
+          Trag dein eigenes Rezept ein - Name, Zutaten und kurz wie es zubereitet wird. Optional kannst du die KI
+          daraus ein vollständiges Rezept mit Anleitung und Nährwerten machen lassen. Gespeichert wird direkt in
+          deinen Favoriten.
         </Text>
 
         <Text style={styles.label}>Name des Rezepts</Text>
@@ -122,7 +155,7 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
 
         <TouchableOpacity
           style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
+          onPress={handleSubmitWithAi}
           disabled={loading}
         >
           {loading ? (
@@ -130,6 +163,14 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
           ) : (
             <Text style={styles.submitButtonText}>✨ Mit KI vervollständigen & speichern</Text>
           )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.plainButton, loading && styles.submitButtonDisabled]}
+          onPress={handleSaveDirectly}
+          disabled={loading}
+        >
+          <Text style={styles.plainButtonText}>Ohne KI direkt so speichern</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -198,4 +239,6 @@ const styles = StyleSheet.create({
   },
   submitButtonDisabled: { opacity: 0.7 },
   submitButtonText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  plainButton: { paddingVertical: 14, alignItems: "center", marginTop: 4 },
+  plainButtonText: { color: "#5c7a6a", fontSize: 14, fontWeight: "600" },
 });

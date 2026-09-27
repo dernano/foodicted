@@ -47,9 +47,11 @@ export default function FavoritesScreen({ navigation }: Props) {
           <Text style={styles.description}>{item.description}</Text>
 
           <View style={styles.metaRow}>
-            <Text style={styles.metaItem}>⏱ {item.prepTimeMinutes + item.cookTimeMinutes} min</Text>
+            <Text style={styles.metaItem}>
+              ⏱ {item.prepTimeMinutes + item.cookTimeMinutes ? `${item.prepTimeMinutes + item.cookTimeMinutes} min` : "-"}
+            </Text>
             <Text style={styles.metaItem}>🍽 {item.servings} Port.</Text>
-            <Text style={styles.metaItem}>🔥 {item.nutrition.calories} kcal</Text>
+            {!!item.nutrition.calories && <Text style={styles.metaItem}>🔥 {item.nutrition.calories} kcal</Text>}
           </View>
 
           <Text style={styles.ingredientsLabel}>Benötigte Zutaten:</Text>

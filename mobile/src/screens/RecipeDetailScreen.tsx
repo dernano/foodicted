@@ -3,9 +3,13 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-nati
 import type { RootStackScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
-import { DIFFICULTY_LABELS } from "../types";
+import { DIFFICULTY_LABELS, type Nutrition } from "../types";
 
 type Props = RootStackScreenProps<"RecipeDetail">;
+
+function hasNutritionData(nutrition: Nutrition): boolean {
+  return nutrition.calories > 0 || nutrition.proteinGrams > 0 || nutrition.carbsGrams > 0 || nutrition.fatGrams > 0;
+}
 
 export default function RecipeDetailScreen({ route }: Props) {
   const { recipe } = route.params;
@@ -32,21 +36,29 @@ export default function RecipeDetailScreen({ route }: Props) {
       </Text>
 
       <View style={styles.metaRow}>
-        <MetaBox label="Vorbereitung" value={`${recipe.prepTimeMinutes} min`} />
-        <MetaBox label="Kochzeit" value={`${recipe.cookTimeMinutes} min`} />
+        <MetaBox label="Vorbereitung" value={recipe.prepTimeMinutes ? `${recipe.prepTimeMinutes} min` : "-"} />
+        <MetaBox label="Kochzeit" value={recipe.cookTimeMinutes ? `${recipe.cookTimeMinutes} min` : "-"} />
         <MetaBox label="Portionen" value={String(recipe.servings)} />
         <MetaBox label="Schwierigkeit" value={DIFFICULTY_LABELS[recipe.difficulty]} />
       </View>
 
-      <View style={styles.nutritionCard}>
-        <Text style={styles.sectionTitle}>Nährwerte pro Portion</Text>
-        <View style={styles.nutritionRow}>
-          <NutritionBox label="Kalorien" value={`${recipe.nutrition.calories} kcal`} />
-          <NutritionBox label="Protein" value={`${recipe.nutrition.proteinGrams} g`} />
-          <NutritionBox label="Kohlenhydrate" value={`${recipe.nutrition.carbsGrams} g`} />
-          <NutritionBox label="Fett" value={`${recipe.nutrition.fatGrams} g`} />
+      {hasNutritionData(recipe.nutrition) ? (
+        <View style={styles.nutritionCard}>
+          <Text style={styles.sectionTitle}>Nährwerte pro Portion</Text>
+          <View style={styles.nutritionRow}>
+            <NutritionBox label="Kalorien" value={`${recipe.nutrition.calories} kcal`} />
+            <NutritionBox label="Protein" value={`${recipe.nutrition.proteinGrams} g`} />
+            <NutritionBox label="Kohlenhydrate" value={`${recipe.nutrition.carbsGrams} g`} />
+            <NutritionBox label="Fett" value={`${recipe.nutrition.fatGrams} g`} />
+          </View>
         </View>
-      </View>
+      ) : (
+        <View style={styles.nutritionCard}>
+          <Text style={styles.noNutritionText}>
+            Keine Nährwertangaben hinterlegt - dieses Rezept wurde ohne KI-Unterstützung gespeichert.
+          </Text>
+        </View>
+      )}
 
       <Text style={styles.sectionTitle}>Zutaten</Text>
       {recipe.ingredients.map((ing, i) => (
@@ -103,6 +115,7 @@ const styles = StyleSheet.create({
   metaValue: { fontSize: 15, fontWeight: "700", color: "#1b4332" },
   metaLabel: { fontSize: 11, color: "#7a8f83", marginTop: 2 },
   nutritionCard: { backgroundColor: "#f6fbf6", borderRadius: 14, padding: 16, marginTop: 24 },
+  noNutritionText: { fontSize: 13, color: "#7a8f83", fontStyle: "italic", lineHeight: 18 },
   nutritionRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
   nutritionBox: { alignItems: "center", flex: 1 },
   nutritionValue: { fontSize: 14, fontWeight: "700", color: "#1b4332" },

@@ -47,6 +47,11 @@ export default function HomeScreen({ navigation }: Props) {
         <Text style={styles.secondaryButtonText}>Zutaten manuell eingeben</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("AddFavoriteRecipe")}>
+        <Ionicons name="book-outline" size={19} color="#2f9e44" />
+        <Text style={styles.secondaryButtonText}>Eigenes Rezept hinzufügen</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.tertiaryButton} onPress={() => navigation.navigate("Preferences")}>
         <Ionicons name="settings-outline" size={15} color="#5c7a6a" />
         <Text style={styles.tertiaryButtonText}>Präferenzen anpassen</Text>
