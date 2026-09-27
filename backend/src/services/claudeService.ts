@@ -102,7 +102,8 @@ export async function generateRecipes(
       "actually cook. Prioritize recipes that use mostly what they already have - list any " +
       "additional required ingredients in missingIngredients. Respect allergies and disliked " +
       "ingredients absolutely; treat other preferences as strong guidance. Keep instructions " +
-      "clear and numbered. Give honest, reasonable nutrition estimates per serving. Respond " +
+      "clear and numbered. Give honest, reasonable nutrition estimates per serving. Assign each " +
+      "recipe the meal-type category that fits it best. Respond " +
       "entirely in German - titles, descriptions, ingredient names and amounts, tags, " +
       "missingIngredients, and every instruction step must be written in natural German.",
     messages: [
@@ -150,7 +151,8 @@ export async function refineRecipe(draft: RecipeDraft): Promise<Recipe> {
       "this into a complete, polished recipe: sensible step-by-step instructions, a " +
       "reasonable difficulty, prep/cook time estimates, and honest nutrition estimates per " +
       "serving. This is the user's own recipe, not a fridge-based suggestion, so mark every " +
-      "ingredient fromFridge: true and leave missingIngredients empty. Keep their original " +
+      "ingredient fromFridge: true and leave missingIngredients empty. Assign the meal-type " +
+      "category that fits best. Keep their original " +
       "title and intent - refine and complete it, don't reinvent it. Respond entirely in " +
       "German.",
     messages: [

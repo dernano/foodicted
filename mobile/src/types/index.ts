@@ -47,9 +47,20 @@ export interface RecipeIngredient {
   fromFridge: boolean;
 }
 
+export type RecipeCategory =
+  | "fruehstueck"
+  | "hauptgericht"
+  | "vorspeise"
+  | "beilage"
+  | "dessert"
+  | "snack"
+  | "getraenk"
+  | "sonstiges";
+
 export interface Recipe {
   title: string;
   description: string;
+  category: RecipeCategory;
   prepTimeMinutes: number;
   cookTimeMinutes: number;
   servings: number;
@@ -99,6 +110,29 @@ export const DIFFICULTY_LABELS: Record<Recipe["difficulty"], string> = {
   medium: "Mittel",
   hard: "Anspruchsvoll",
 };
+
+/** German display labels for recipe categories. */
+export const RECIPE_CATEGORY_LABELS: Record<RecipeCategory, string> = {
+  fruehstueck: "Frühstück",
+  hauptgericht: "Hauptgericht",
+  vorspeise: "Vorspeise",
+  beilage: "Beilage",
+  dessert: "Dessert",
+  snack: "Snack",
+  getraenk: "Getränk",
+  sonstiges: "Sonstiges",
+};
+
+export const RECIPE_CATEGORIES: RecipeCategory[] = [
+  "fruehstueck",
+  "hauptgericht",
+  "vorspeise",
+  "beilage",
+  "dessert",
+  "snack",
+  "getraenk",
+  "sonstiges",
+];
 
 /** Preset goals shown as quick-pick chips in the preferences screen. */
 export const GOAL_PRESETS = [

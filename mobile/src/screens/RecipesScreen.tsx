@@ -2,7 +2,7 @@ import React from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
-import type { Recipe } from "../types";
+import { RECIPE_CATEGORY_LABELS, type Recipe } from "../types";
 
 type Props = RootStackScreenProps<"Recipes">;
 
@@ -25,7 +25,10 @@ export default function RecipesScreen({ route, navigation }: Props) {
             onPress={() => navigation.navigate("RecipeDetail", { recipe: item })}
           >
             <View style={styles.cardHeader}>
-              <Text style={styles.title}>{item.title}</Text>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={styles.categoryBadge}>{RECIPE_CATEGORY_LABELS[item.category]}</Text>
+                <Text style={styles.title}>{item.title}</Text>
+              </View>
               <TouchableOpacity onPress={() => toggleFavorite(item)} hitSlop={10}>
                 <Text style={styles.heart}>{favorite ? "❤️" : "🤍"}</Text>
               </TouchableOpacity>
@@ -70,7 +73,8 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  title: { fontSize: 17, fontWeight: "800", color: "#1b4332", flex: 1, marginRight: 8 },
+  categoryBadge: { fontSize: 11, color: "#2f9e44", fontWeight: "700", marginBottom: 2, textTransform: "uppercase" },
+  title: { fontSize: 17, fontWeight: "800", color: "#1b4332" },
   heart: { fontSize: 20 },
   description: { fontSize: 13, color: "#40616b", marginTop: 6, lineHeight: 18 },
   metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 10 },

@@ -15,9 +15,18 @@ export const RecipeIngredientSchema = z.object({
     .describe("True if this ingredient was one of the items detected in the fridge photo"),
 });
 
+export const RecipeCategorySchema = z
+  .enum(["fruehstueck", "hauptgericht", "vorspeise", "beilage", "dessert", "snack", "getraenk", "sonstiges"])
+  .describe(
+    "Meal-type category this recipe belongs to, for organizing a recipe collection - " +
+      "fruehstueck (breakfast), hauptgericht (main course), vorspeise (starter), " +
+      "beilage (side dish), dessert, snack, getraenk (drink), or sonstiges (other)"
+  );
+
 export const RecipeSchema = z.object({
   title: z.string(),
   description: z.string().describe("One or two sentence appetizing summary"),
+  category: RecipeCategorySchema.default("hauptgericht"),
   prepTimeMinutes: z.number().int().nonnegative(),
   cookTimeMinutes: z.number().int().nonnegative(),
   servings: z.number().int().positive(),

@@ -5,7 +5,7 @@ import type { RootStackScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
 import { useShoppingList } from "../context/ShoppingListContext";
-import { DIFFICULTY_LABELS, type Nutrition, type Recipe } from "../types";
+import { DIFFICULTY_LABELS, RECIPE_CATEGORY_LABELS, type Nutrition, type Recipe } from "../types";
 
 function sameRecipe(a: { title: string }, b: { title: string }): boolean {
   return a.title.trim().toLowerCase() === b.title.trim().toLowerCase();
@@ -56,6 +56,7 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
+      <Text style={styles.categoryBadge}>{RECIPE_CATEGORY_LABELS[recipe.category]}</Text>
       <View style={styles.titleRow}>
         <Text style={styles.title}>{recipe.title}</Text>
         <View style={styles.titleActions}>
@@ -156,6 +157,7 @@ function NutritionBox({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  categoryBadge: { fontSize: 12, color: "#2f9e44", fontWeight: "700", textTransform: "uppercase", marginBottom: 6 },
   titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   title: { fontSize: 24, fontWeight: "800", color: "#1b4332", flex: 1, marginRight: 12 },
   titleActions: { flexDirection: "row", alignItems: "center", gap: 14, paddingTop: 4 },

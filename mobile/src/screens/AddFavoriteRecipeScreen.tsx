@@ -15,7 +15,7 @@ import type { RootStackScreenProps } from "../navigation";
 import { refineRecipe } from "../api/client";
 import { useFavorites } from "../context/FavoritesContext";
 import { usePreferences } from "../context/PreferencesContext";
-import type { Recipe } from "../types";
+import { RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS, type Recipe, type RecipeCategory } from "../types";
 
 type Props = RootStackScreenProps<"AddFavoriteRecipe">;
 
@@ -24,6 +24,7 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
   const { toggleFavorite } = useFavorites();
 
   const [title, setTitle] = useState("");
+  const [category, setCategory] = useState<RecipeCategory>("hauptgericht");
   const [ingredientLines, setIngredientLines] = useState<string[]>([]);
   const [newIngredient, setNewIngredient] = useState("");
   const [preparationNotes, setPreparationNotes] = useState("");
@@ -62,8 +63,9 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
         preparationNotes: preparationNotes.trim(),
         servings: preferences.servings,
       });
-      toggleFavorite(recipe);
-      navigation.replace("RecipeDetail", { recipe });
+      const categorized = { ...recipe, category };
+      toggleFavorite(categorized);
+      navigation.replace("RecipeDetail", { recipe: categorized });
     } catch (err) {
       Alert.alert(
         "Rezept konnte nicht erstellt werden",
@@ -87,6 +89,7 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
     const recipe: Recipe = {
       title: title.trim(),
       description: notes || "Eigenes Rezept ohne KI-Unterstützung angelegt.",
+      category,
       prepTimeMinutes: 0,
       cookTimeMinutes: 0,
       servings: preferences.servings ?? 2,
@@ -121,6 +124,21 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
           value={title}
           onChangeText={setTitle}
         />
+
+        <Text style={styles.label}>Kategorie</Text>
+        <View style={styles.chipRow}>
+          {RECIPE_CATEGORIES.map((c) => (
+            <TouchableOpacity
+              key={c}
+              style={[styles.chip, category === c && styles.chipSelected]}
+              onPress={() => setCategory(c)}
+            >
+              <Text style={[styles.chipText, category === c && styles.chipTextSelected]}>
+                {RECIPE_CATEGORY_LABELS[c]}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         <Text style={styles.label}>Zutaten</Text>
         {ingredientLines.map((line, index) => (
@@ -193,6 +211,18 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   multiline: { minHeight: 90, textAlignVertical: "top" },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 18 },
+  chip: {
+    borderWidth: 1,
+    borderColor: "#c9e6cf",
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    backgroundColor: "#fafffb",
+  },
+  chipSelected: { backgroundColor: "#2f9e44", borderColor: "#2f9e44" },
+  chipText: { color: "#1b4332", fontSize: 13, fontWeight: "600" },
+  chipTextSelected: { color: "#fff" },
   ingredientRow: {
     flexDirection: "row",
     alignItems: "center",

@@ -31,6 +31,7 @@ create table if not exists favorite_recipes (
   prep_time_minutes int not null default 0,
   cook_time_minutes int not null default 0,
   servings int not null default 2,
+  category text not null default 'sonstiges',
   difficulty text not null default 'medium',
   tags jsonb not null default '[]',
   ingredients jsonb not null default '[]',

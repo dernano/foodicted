@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
-import type { Recipe } from "../types";
+import { RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS, type Recipe } from "../types";
 
 type Props = RootStackScreenProps<"EditFavoriteRecipe">;
 
@@ -84,6 +84,7 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
 
   const [title, setTitle] = useState(recipe.title);
   const [description, setDescription] = useState(recipe.description);
+  const [category, setCategory] = useState(recipe.category);
   const [servings, setServings] = useState(recipe.servings);
   const [prepTimeMinutes, setPrepTimeMinutes] = useState(String(recipe.prepTimeMinutes || ""));
   const [cookTimeMinutes, setCookTimeMinutes] = useState(String(recipe.cookTimeMinutes || ""));
@@ -108,6 +109,7 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
       ...recipe,
       title: title.trim(),
       description: description.trim(),
+      category,
       servings: servings || 1,
       prepTimeMinutes: Number(prepTimeMinutes) || 0,
       cookTimeMinutes: Number(cookTimeMinutes) || 0,
@@ -137,6 +139,21 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
         <Text style={styles.label}>Name</Text>
         <TextInput style={styles.input} value={title} onChangeText={setTitle} />
+
+        <Text style={styles.label}>Kategorie</Text>
+        <View style={styles.chipRow}>
+          {RECIPE_CATEGORIES.map((c) => (
+            <TouchableOpacity
+              key={c}
+              style={[styles.chip, category === c && styles.chipSelected]}
+              onPress={() => setCategory(c)}
+            >
+              <Text style={[styles.chipText, category === c && styles.chipTextSelected]}>
+                {RECIPE_CATEGORY_LABELS[c]}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         <Text style={styles.label}>Beschreibung</Text>
         <TextInput

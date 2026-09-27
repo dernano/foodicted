@@ -32,6 +32,7 @@ interface FavoriteRow {
   id: string;
   title: string;
   description: string;
+  category: string;
   prep_time_minutes: number;
   cook_time_minutes: number;
   servings: number;
@@ -49,6 +50,7 @@ function rowToFavorite(row: FavoriteRow): FavoriteRecipe {
     id: row.id,
     title: row.title,
     description: row.description,
+    category: (row.category as Recipe["category"]) || "sonstiges",
     prepTimeMinutes: row.prep_time_minutes,
     cookTimeMinutes: row.cook_time_minutes,
     servings: row.servings,
@@ -75,6 +77,7 @@ function favoriteToUpdateRow(recipe: Recipe) {
   return {
     title: recipe.title,
     description: recipe.description,
+    category: recipe.category,
     prep_time_minutes: recipe.prepTimeMinutes,
     cook_time_minutes: recipe.cookTimeMinutes,
     servings: recipe.servings,

@@ -1,14 +1,24 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { MainTabsScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
-import type { FavoriteRecipe } from "../types";
+import { RECIPE_CATEGORY_LABELS, type FavoriteRecipe, type RecipeCategory } from "../types";
 
 type Props = MainTabsScreenProps<"Favoriten">;
+type CategoryFilter = RecipeCategory | "alle";
 
 export default function FavoritesScreen({ navigation }: Props) {
   const { favorites, removeFavorite, shared } = useFavorites();
+  const [filter, setFilter] = useState<CategoryFilter>("alle");
+
+  const presentCategories = useMemo(() => {
+    const set = new Set<RecipeCategory>();
+    favorites.forEach((f) => set.add(f.category));
+    return Array.from(set);
+  }, [favorites]);
+
+  const filtered = filter === "alle" ? favorites : favorites.filter((f) => f.category === filter);
 
   function confirmRemove(recipe: FavoriteRecipe) {
     Alert.alert("Rezept entfernen?", `„${recipe.title}" aus den Favoriten entfernen?`, [
@@ -21,15 +31,40 @@ export default function FavoritesScreen({ navigation }: Props) {
     <FlatList
       style={styles.container}
       contentContainerStyle={{ padding: 16, paddingBottom: 32, flexGrow: 1 }}
-      data={favorites}
+      data={filtered}
       keyExtractor={(item) => item.id}
       ListHeaderComponent={
-        shared ? (
-          <View style={styles.sharedBanner}>
-            <Ionicons name="people" size={15} color="#2f9e44" />
-            <Text style={styles.sharedBannerText}>Geteilt mit deinem Haushalt - live synchron</Text>
-          </View>
-        ) : null
+        <View>
+          {shared && (
+            <View style={styles.sharedBanner}>
+              <Ionicons name="people" size={15} color="#2f9e44" />
+              <Text style={styles.sharedBannerText}>Geteilt mit deinem Haushalt - live synchron</Text>
+            </View>
+          )}
+          {presentCategories.length > 1 && (
+            <View style={styles.filterRow}>
+              <TouchableOpacity
+                style={[styles.filterChip, filter === "alle" && styles.filterChipSelected]}
+                onPress={() => setFilter("alle")}
+              >
+                <Text style={[styles.filterChipText, filter === "alle" && styles.filterChipTextSelected]}>
+                  Alle
+                </Text>
+              </TouchableOpacity>
+              {presentCategories.map((c) => (
+                <TouchableOpacity
+                  key={c}
+                  style={[styles.filterChip, filter === c && styles.filterChipSelected]}
+                  onPress={() => setFilter(c)}
+                >
+                  <Text style={[styles.filterChipText, filter === c && styles.filterChipTextSelected]}>
+                    {RECIPE_CATEGORY_LABELS[c]}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
       }
       ListEmptyComponent={
         <View style={styles.emptyState}>
@@ -48,7 +83,10 @@ export default function FavoritesScreen({ navigation }: Props) {
           onLongPress={() => confirmRemove(item)}
         >
           <View style={styles.cardHeader}>
-            <Text style={styles.title}>{item.title}</Text>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={styles.categoryBadge}>{RECIPE_CATEGORY_LABELS[item.category]}</Text>
+              <Text style={styles.title}>{item.title}</Text>
+            </View>
             <TouchableOpacity onPress={() => confirmRemove(item)} hitSlop={10}>
               <Text style={styles.removeIcon}>🗑</Text>
             </TouchableOpacity>
@@ -90,6 +128,18 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   sharedBannerText: { fontSize: 12, color: "#1b4332", fontWeight: "600" },
+  filterRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 14 },
+  filterChip: {
+    borderWidth: 1,
+    borderColor: "#c9e6cf",
+    borderRadius: 20,
+    paddingVertical: 7,
+    paddingHorizontal: 13,
+    backgroundColor: "#fff",
+  },
+  filterChipSelected: { backgroundColor: "#2f9e44", borderColor: "#2f9e44" },
+  filterChipText: { color: "#1b4332", fontSize: 12, fontWeight: "600" },
+  filterChipTextSelected: { color: "#fff" },
   emptyState: { flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 80, paddingHorizontal: 32 },
   emptyEmoji: { fontSize: 48, marginBottom: 16 },
   emptyTitle: { fontSize: 17, fontWeight: "700", color: "#1b4332", marginBottom: 8 },
@@ -105,7 +155,8 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  title: { fontSize: 17, fontWeight: "800", color: "#1b4332", flex: 1, marginRight: 8 },
+  categoryBadge: { fontSize: 11, color: "#2f9e44", fontWeight: "700", marginBottom: 2, textTransform: "uppercase" },
+  title: { fontSize: 17, fontWeight: "800", color: "#1b4332" },
   removeIcon: { fontSize: 18 },
   description: { fontSize: 13, color: "#40616b", marginTop: 6, lineHeight: 18 },
   metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 10 },
