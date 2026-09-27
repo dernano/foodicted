@@ -9,6 +9,9 @@ const STORAGE_KEY = "foodicted.favorites";
 interface FavoritesContextValue {
   favorites: FavoriteRecipe[];
   loaded: boolean;
+  /** False while we don't yet know whether this account belongs to a household - avoids
+   * briefly showing (or writing to) the local-only favorites before the shared ones are confirmed. */
+  ready: boolean;
   /** True when favorites are synced to a shared household instead of only stored on this device. */
   shared: boolean;
   isFavorite: (recipe: Recipe) => boolean;
@@ -91,7 +94,7 @@ function favoriteToUpdateRow(recipe: Recipe) {
 }
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
-  const { household, session } = useAuth();
+  const { household, session, loading: authLoading } = useAuth();
   const [localFavorites, setLocalFavorites] = useState<FavoriteRecipe[]>([]);
   const [remoteFavorites, setRemoteFavorites] = useState<FavoriteRecipe[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -184,6 +187,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   const shared = !!household;
   const favorites = shared ? remoteFavorites : localFavorites;
+  const ready = loaded && !authLoading;
 
   const isFavorite = useCallback((recipe: Recipe) => favorites.some((f) => sameRecipe(f, recipe)), [favorites]);
 
@@ -257,8 +261,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ favorites, loaded, shared, isFavorite, toggleFavorite, removeFavorite, updateFavorite }),
-    [favorites, loaded, shared, isFavorite, toggleFavorite, removeFavorite, updateFavorite]
+    () => ({ favorites, loaded, ready, shared, isFavorite, toggleFavorite, removeFavorite, updateFavorite }),
+    [favorites, loaded, ready, shared, isFavorite, toggleFavorite, removeFavorite, updateFavorite]
   );
 
   return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;

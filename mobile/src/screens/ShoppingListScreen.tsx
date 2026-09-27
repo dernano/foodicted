@@ -1,11 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useShoppingList } from "../context/ShoppingListContext";
 import type { ShoppingListItem } from "../types";
 
 export default function ShoppingListScreen() {
-  const { items, shared, addItem, toggleChecked, removeItem, clearChecked } = useShoppingList();
+  const { items, ready, shared, addItem, toggleChecked, removeItem, clearChecked } = useShoppingList();
   const [draft, setDraft] = useState("");
 
   function handleAdd() {
@@ -19,6 +19,16 @@ export default function ShoppingListScreen() {
   const checkedItems = items.filter((i) => i.checked);
   const sorted = [...openItems, ...checkedItems];
   const hasChecked = checkedItems.length > 0;
+
+  // Wait until we know for sure whether this account belongs to a household -
+  // otherwise we'd briefly show an empty local list before the shared one loads.
+  if (!ready) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator color="#2f9e44" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -90,6 +100,7 @@ export default function ShoppingListScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
   topSection: {
     padding: 16,
     paddingBottom: 8,

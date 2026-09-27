@@ -9,6 +9,9 @@ const STORAGE_KEY = "foodicted.shoppingList";
 interface ShoppingListContextValue {
   items: ShoppingListItem[];
   loaded: boolean;
+  /** False while we don't yet know whether this account belongs to a household - avoids
+   * briefly showing (or writing to) the local-only list before the shared one is confirmed. */
+  ready: boolean;
   shared: boolean;
   addItem: (text: string, source?: string) => Promise<void>;
   addItems: (texts: string[], source?: string) => Promise<void>;
@@ -42,7 +45,7 @@ function rowToItem(row: ShoppingRow): ShoppingListItem {
 }
 
 export function ShoppingListProvider({ children }: { children: React.ReactNode }) {
-  const { household, session } = useAuth();
+  const { household, session, loading: authLoading } = useAuth();
   const [localItems, setLocalItems] = useState<ShoppingListItem[]>([]);
   const [remoteItems, setRemoteItems] = useState<ShoppingListItem[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -138,6 +141,7 @@ export function ShoppingListProvider({ children }: { children: React.ReactNode }
 
   const shared = !!household;
   const items = shared ? remoteItems : localItems;
+  const ready = loaded && !authLoading;
 
   const addItems = useCallback(
     async (texts: string[], source?: string) => {
@@ -218,8 +222,8 @@ export function ShoppingListProvider({ children }: { children: React.ReactNode }
   }, [shared, remoteItems, localItems, persistLocal]);
 
   const value = useMemo(
-    () => ({ items, loaded, shared, addItem, addItems, toggleChecked, removeItem, clearChecked }),
-    [items, loaded, shared, addItem, addItems, toggleChecked, removeItem, clearChecked]
+    () => ({ items, loaded, ready, shared, addItem, addItems, toggleChecked, removeItem, clearChecked }),
+    [items, loaded, ready, shared, addItem, addItems, toggleChecked, removeItem, clearChecked]
   );
 
   return <ShoppingListContext.Provider value={value}>{children}</ShoppingListContext.Provider>;

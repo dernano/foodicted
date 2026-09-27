@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { MainTabsScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
 import { RECIPE_CATEGORY_LABELS, type FavoriteRecipe, type RecipeCategory } from "../types";
@@ -9,7 +9,7 @@ type Props = MainTabsScreenProps<"Favoriten">;
 type CategoryFilter = RecipeCategory | "alle";
 
 export default function FavoritesScreen({ navigation }: Props) {
-  const { favorites, removeFavorite, shared } = useFavorites();
+  const { favorites, removeFavorite, ready, shared } = useFavorites();
   const [filter, setFilter] = useState<CategoryFilter>("alle");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
 
@@ -38,6 +38,16 @@ export default function FavoritesScreen({ navigation }: Props) {
       { text: "Abbrechen", style: "cancel" },
       { text: "Entfernen", style: "destructive", onPress: () => removeFavorite(recipe.id) },
     ]);
+  }
+
+  // Wait until we know for sure whether this account belongs to a household -
+  // otherwise we'd briefly show an empty local list before the shared one loads.
+  if (!ready) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator color="#2f9e44" />
+      </View>
+    );
   }
 
   return (
@@ -156,6 +166,7 @@ export default function FavoritesScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
   sharedBanner: {
     flexDirection: "row",
     alignItems: "center",
