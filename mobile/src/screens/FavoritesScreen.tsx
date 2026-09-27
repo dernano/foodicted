@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { MainTabsScreenProps } from "../navigation";
@@ -7,7 +8,7 @@ import type { FavoriteRecipe } from "../types";
 type Props = MainTabsScreenProps<"Favoriten">;
 
 export default function FavoritesScreen({ navigation }: Props) {
-  const { favorites, removeFavorite } = useFavorites();
+  const { favorites, removeFavorite, shared } = useFavorites();
 
   function confirmRemove(recipe: FavoriteRecipe) {
     Alert.alert("Rezept entfernen?", `„${recipe.title}" aus den Favoriten entfernen?`, [
@@ -22,6 +23,14 @@ export default function FavoritesScreen({ navigation }: Props) {
       contentContainerStyle={{ padding: 16, paddingBottom: 32, flexGrow: 1 }}
       data={favorites}
       keyExtractor={(item) => item.id}
+      ListHeaderComponent={
+        shared ? (
+          <View style={styles.sharedBanner}>
+            <Ionicons name="people" size={15} color="#2f9e44" />
+            <Text style={styles.sharedBannerText}>Geteilt mit deinem Haushalt - live synchron</Text>
+          </View>
+        ) : null
+      }
       ListEmptyComponent={
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>💚</Text>
@@ -70,6 +79,17 @@ export default function FavoritesScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  sharedBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#eaf7ec",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 14,
+  },
+  sharedBannerText: { fontSize: 12, color: "#1b4332", fontWeight: "600" },
   emptyState: { flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 80, paddingHorizontal: 32 },
   emptyEmoji: { fontSize: 48, marginBottom: 16 },
   emptyTitle: { fontSize: 17, fontWeight: "700", color: "#1b4332", marginBottom: 8 },

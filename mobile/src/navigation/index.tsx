@@ -4,7 +4,11 @@ import {
   type NativeStackNavigationProp,
   type NativeStackScreenProps,
 } from "@react-navigation/native-stack";
-import { createBottomTabNavigator, type BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import {
+  createBottomTabNavigator,
+  type BottomTabNavigationProp,
+  type BottomTabScreenProps,
+} from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import type { FridgeItem, Recipe } from "../types";
@@ -16,6 +20,8 @@ import IngredientsReviewScreen from "../screens/IngredientsReviewScreen";
 import RecipesScreen from "../screens/RecipesScreen";
 import RecipeDetailScreen from "../screens/RecipeDetailScreen";
 import AddFavoriteRecipeScreen from "../screens/AddFavoriteRecipeScreen";
+import AccountScreen from "../screens/AccountScreen";
+import { useAuth } from "../context/AuthContext";
 
 export type MainTabsParamList = {
   Start: undefined;
@@ -30,6 +36,7 @@ export type RootStackParamList = {
   Recipes: { recipes: Recipe[] };
   RecipeDetail: { recipe: Recipe };
   AddFavoriteRecipe: undefined;
+  Account: undefined;
 };
 
 export type MainTabsScreenProps<T extends keyof MainTabsParamList> = CompositeScreenProps<
@@ -58,6 +65,20 @@ function HeaderLogo({ title }: { title: string }) {
   );
 }
 
+function AccountHeaderButton({ navigation }: { navigation: BottomTabNavigationProp<MainTabsParamList, "Start"> }) {
+  const { session, household } = useAuth();
+  const iconName = household ? "people" : session ? "person" : "person-outline";
+  return (
+    <TouchableOpacity
+      onPress={() => navigation.getParent<NativeStackNavigationProp<RootStackParamList>>()?.navigate("Account")}
+      hitSlop={12}
+      style={{ marginRight: 16 }}
+    >
+      <Ionicons name={iconName} size={24} color="#fff" />
+    </TouchableOpacity>
+  );
+}
+
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -74,13 +95,14 @@ function MainTabs() {
       <Tab.Screen
         name="Start"
         component={HomeScreen}
-        options={{
+        options={({ navigation }) => ({
           headerTitle: () => <HeaderLogo title="Foodicted" />,
           tabBarLabel: "Start",
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? "home" : "home-outline"} size={size} color={color} />
           ),
-        }}
+          headerRight: () => <AccountHeaderButton navigation={navigation} />,
+        })}
       />
       <Tab.Screen
         name="Favoriten"
@@ -135,6 +157,7 @@ export default function AppNavigator() {
           component={AddFavoriteRecipeScreen}
           options={{ title: "Rezept hinzufügen" }}
         />
+        <Stack.Screen name="Account" component={AccountScreen} options={{ title: "Konto & Haushalt" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

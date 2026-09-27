@@ -1,5 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "./AuthContext";
 import type { FavoriteRecipe, Recipe } from "../types";
 
 const STORAGE_KEY = "foodicted.favorites";
@@ -7,9 +9,11 @@ const STORAGE_KEY = "foodicted.favorites";
 interface FavoritesContextValue {
   favorites: FavoriteRecipe[];
   loaded: boolean;
+  /** True when favorites are synced to a shared household instead of only stored on this device. */
+  shared: boolean;
   isFavorite: (recipe: Recipe) => boolean;
-  toggleFavorite: (recipe: Recipe) => void;
-  removeFavorite: (id: string) => void;
+  toggleFavorite: (recipe: Recipe) => Promise<void>;
+  removeFavorite: (id: string) => Promise<void>;
 }
 
 const FavoritesContext = createContext<FavoritesContextValue | undefined>(undefined);
@@ -18,59 +22,207 @@ function makeId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-/** Two recipes are considered "the same" for favoriting purposes if their title matches. */
 function sameRecipe(a: { title: string }, b: { title: string }): boolean {
   return a.title.trim().toLowerCase() === b.title.trim().toLowerCase();
 }
 
-export function FavoritesProvider({ children }: { children: React.ReactNode }) {
-  const [favorites, setFavorites] = useState<FavoriteRecipe[]>([]);
-  const [loaded, setLoaded] = useState(false);
+/** Shape of a row in the Supabase `favorite_recipes` table. */
+interface FavoriteRow {
+  id: string;
+  title: string;
+  description: string;
+  prep_time_minutes: number;
+  cook_time_minutes: number;
+  servings: number;
+  difficulty: string;
+  tags: string[];
+  ingredients: { name: string; amount: string; fromFridge: boolean }[];
+  missing_ingredients: string[];
+  instructions: string[];
+  nutrition: { calories: number; proteinGrams: number; carbsGrams: number; fatGrams: number };
+  created_at: string;
+}
 
+function rowToFavorite(row: FavoriteRow): FavoriteRecipe {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    prepTimeMinutes: row.prep_time_minutes,
+    cookTimeMinutes: row.cook_time_minutes,
+    servings: row.servings,
+    difficulty: (row.difficulty as Recipe["difficulty"]) || "medium",
+    tags: row.tags ?? [],
+    ingredients: row.ingredients ?? [],
+    missingIngredients: row.missing_ingredients ?? [],
+    instructions: row.instructions ?? [],
+    nutrition: row.nutrition ?? { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 },
+    savedAt: new Date(row.created_at).getTime(),
+  };
+}
+
+function favoriteToRow(recipe: Recipe, householdId: string, userId: string | undefined) {
+  return {
+    household_id: householdId,
+    added_by: userId ?? null,
+    title: recipe.title,
+    description: recipe.description,
+    prep_time_minutes: recipe.prepTimeMinutes,
+    cook_time_minutes: recipe.cookTimeMinutes,
+    servings: recipe.servings,
+    difficulty: recipe.difficulty,
+    tags: recipe.tags,
+    ingredients: recipe.ingredients,
+    missing_ingredients: recipe.missingIngredients,
+    instructions: recipe.instructions,
+    nutrition: recipe.nutrition,
+  };
+}
+
+export function FavoritesProvider({ children }: { children: React.ReactNode }) {
+  const { household, session } = useAuth();
+  const [localFavorites, setLocalFavorites] = useState<FavoriteRecipe[]>([]);
+  const [remoteFavorites, setRemoteFavorites] = useState<FavoriteRecipe[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const migratedHouseholds = useRef<Set<string>>(new Set());
+  const localFavoritesRef = useRef<FavoriteRecipe[]>([]);
+  localFavoritesRef.current = localFavorites;
+
+  // Local favorites always load first - they're the guest-mode source of
+  // truth, and the seed for a one-time migration into a household.
   useEffect(() => {
     (async () => {
       try {
         const raw = await AsyncStorage.getItem(STORAGE_KEY);
-        if (raw) setFavorites(JSON.parse(raw));
+        if (raw) setLocalFavorites(JSON.parse(raw));
       } catch (err) {
-        console.warn("Failed to load favorites", err);
+        console.warn("Failed to load local favorites", err);
       } finally {
         setLoaded(true);
       }
     })();
   }, []);
 
-  const persist = useCallback((next: FavoriteRecipe[]) => {
-    setFavorites(next);
+  const persistLocal = useCallback((next: FavoriteRecipe[]) => {
+    setLocalFavorites(next);
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch((err) =>
-      console.warn("Failed to persist favorites", err)
+      console.warn("Failed to persist local favorites", err)
     );
   }, []);
+
+  // Once a household is available: load its shared favorites, migrate any
+  // local-only ones into it the first time, and keep listening for live
+  // changes from other household members.
+  useEffect(() => {
+    if (!household) {
+      setRemoteFavorites([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadAndMigrate() {
+      const { data, error } = await supabase
+        .from("favorite_recipes")
+        .select("*")
+        .eq("household_id", household!.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.warn("Failed to load household favorites", error);
+        return;
+      }
+      if (cancelled) return;
+      const rows = (data ?? []) as FavoriteRow[];
+      setRemoteFavorites(rows.map(rowToFavorite));
+
+      if (!migratedHouseholds.current.has(household!.id) && localFavoritesRef.current.length) {
+        migratedHouseholds.current.add(household!.id);
+        const existingTitles = new Set(rows.map((r) => r.title.trim().toLowerCase()));
+        const toUpload = localFavoritesRef.current.filter((f) => !existingTitles.has(f.title.trim().toLowerCase()));
+        if (toUpload.length) {
+          const inserted = await supabase
+            .from("favorite_recipes")
+            .insert(toUpload.map((f) => favoriteToRow(f, household!.id, session?.user.id)))
+            .select("*");
+          if (!inserted.error && inserted.data && !cancelled) {
+            const migratedRows = inserted.data as FavoriteRow[];
+            setRemoteFavorites((prev) => [...migratedRows.map(rowToFavorite), ...prev]);
+          }
+        }
+      }
+    }
+
+    loadAndMigrate();
+
+    const channel = supabase
+      .channel(`favorites-${household.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "favorite_recipes", filter: `household_id=eq.${household.id}` },
+        () => loadAndMigrate()
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [household?.id, session?.user.id]);
+
+  const shared = !!household;
+  const favorites = shared ? remoteFavorites : localFavorites;
 
   const isFavorite = useCallback((recipe: Recipe) => favorites.some((f) => sameRecipe(f, recipe)), [favorites]);
 
   const toggleFavorite = useCallback(
-    (recipe: Recipe) => {
+    async (recipe: Recipe) => {
+      if (shared && household) {
+        const existing = remoteFavorites.find((f) => sameRecipe(f, recipe));
+        if (existing) {
+          await supabase.from("favorite_recipes").delete().eq("id", existing.id);
+          setRemoteFavorites((prev) => prev.filter((f) => f.id !== existing.id));
+        } else {
+          const { data, error } = await supabase
+            .from("favorite_recipes")
+            .insert(favoriteToRow(recipe, household.id, session?.user.id))
+            .select("*")
+            .single();
+          if (!error && data) {
+            setRemoteFavorites((prev) => [rowToFavorite(data as FavoriteRow), ...prev]);
+          } else if (error) {
+            console.warn("Failed to save shared favorite", error);
+          }
+        }
+        return;
+      }
+
       if (isFavorite(recipe)) {
-        persist(favorites.filter((f) => !sameRecipe(f, recipe)));
+        persistLocal(localFavorites.filter((f) => !sameRecipe(f, recipe)));
       } else {
         const favorite: FavoriteRecipe = { ...recipe, id: makeId(), savedAt: Date.now() };
-        persist([favorite, ...favorites]);
+        persistLocal([favorite, ...localFavorites]);
       }
     },
-    [favorites, isFavorite, persist]
+    [shared, household, remoteFavorites, isFavorite, localFavorites, persistLocal, session]
   );
 
   const removeFavorite = useCallback(
-    (id: string) => {
-      persist(favorites.filter((f) => f.id !== id));
+    async (id: string) => {
+      if (shared) {
+        await supabase.from("favorite_recipes").delete().eq("id", id);
+        setRemoteFavorites((prev) => prev.filter((f) => f.id !== id));
+        return;
+      }
+      persistLocal(localFavorites.filter((f) => f.id !== id));
     },
-    [favorites, persist]
+    [shared, localFavorites, persistLocal]
   );
 
   const value = useMemo(
-    () => ({ favorites, loaded, isFavorite, toggleFavorite, removeFavorite }),
-    [favorites, loaded, isFavorite, toggleFavorite, removeFavorite]
+    () => ({ favorites, loaded, shared, isFavorite, toggleFavorite, removeFavorite }),
+    [favorites, loaded, shared, isFavorite, toggleFavorite, removeFavorite]
   );
 
   return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;
