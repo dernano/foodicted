@@ -1,14 +1,30 @@
+import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
-import { DIFFICULTY_LABELS, type Nutrition } from "../types";
+import { DIFFICULTY_LABELS, type Nutrition, type Recipe } from "../types";
 
 type Props = RootStackScreenProps<"RecipeDetail">;
 
 function hasNutritionData(nutrition: Nutrition): boolean {
   return nutrition.calories > 0 || nutrition.proteinGrams > 0 || nutrition.carbsGrams > 0 || nutrition.fatGrams > 0;
+}
+
+function buildShoppingListText(recipe: Recipe): string {
+  const items = recipe.missingIngredients.length
+    ? recipe.missingIngredients
+    : recipe.ingredients.map((ing) => `${ing.amount} ${ing.name}`.trim());
+  return `Einkaufsliste für "${recipe.title}":\n\n${items.map((item) => `- ${item}`).join("\n")}`;
+}
+
+async function shareShoppingList(recipe: Recipe) {
+  try {
+    await Share.share({ message: buildShoppingListText(recipe) });
+  } catch {
+    // User cancelled the share sheet - nothing to do.
+  }
 }
 
 export default function RecipeDetailScreen({ route }: Props) {
@@ -60,7 +76,13 @@ export default function RecipeDetailScreen({ route }: Props) {
         </View>
       )}
 
-      <Text style={styles.sectionTitle}>Zutaten</Text>
+      <View style={styles.sectionHeaderRow}>
+        <Text style={styles.sectionTitle}>Zutaten</Text>
+        <TouchableOpacity style={styles.shareListButton} onPress={() => shareShoppingList(recipe)}>
+          <Ionicons name="share-outline" size={15} color="#2f9e44" />
+          <Text style={styles.shareListButtonText}>Einkaufsliste teilen</Text>
+        </TouchableOpacity>
+      </View>
       {recipe.ingredients.map((ing, i) => (
         <View key={i} style={styles.ingredientRow}>
           <Text style={styles.ingredientBullet}>{ing.fromFridge ? "✅" : "🛒"}</Text>
@@ -121,6 +143,9 @@ const styles = StyleSheet.create({
   nutritionValue: { fontSize: 14, fontWeight: "700", color: "#1b4332" },
   nutritionLabel: { fontSize: 11, color: "#7a8f83", marginTop: 2 },
   sectionTitle: { fontSize: 16, fontWeight: "700", color: "#1b4332", marginTop: 28, marginBottom: 12 },
+  sectionHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  shareListButton: { flexDirection: "row", alignItems: "center", gap: 5 },
+  shareListButtonText: { color: "#2f9e44", fontSize: 12, fontWeight: "700" },
   ingredientRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 8, gap: 8 },
   ingredientBullet: { fontSize: 14 },
   ingredientText: { fontSize: 14, color: "#1b4332", flex: 1 },
