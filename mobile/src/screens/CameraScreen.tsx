@@ -2,9 +2,10 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useRef, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackParamList } from "../navigation";
 import { analyzeFridgePhoto } from "../api/client";
+import LoadingLogo from "../components/LoadingLogo";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Camera">;
 
@@ -55,7 +56,7 @@ export default function CameraScreen({ navigation }: Props) {
   if (analyzing) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2f9e44" />
+        <LoadingLogo size={110} />
         <Text style={styles.loadingText}>Analysiere deinen Vorrat …</Text>
       </View>
     );
