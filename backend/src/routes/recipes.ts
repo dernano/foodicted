@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { FridgeItemSchema } from "../schemas/fridgeItems.js";
 import { generateRecipes, refineRecipe } from "../services/claudeService.js";
+import { notifyUsage } from "../services/notifyService.js";
 
 export const recipesRouter = Router();
 
@@ -38,6 +39,7 @@ recipesRouter.post("/generate", async (req, res, next) => {
     }
     const { items, preferences } = parsed.data;
     const result = await generateRecipes(items, preferences);
+    notifyUsage("Rezepte generiert");
     res.json(result);
   } catch (err) {
     next(err);
@@ -64,6 +66,7 @@ recipesRouter.post("/refine", async (req, res, next) => {
       return;
     }
     const recipe = await refineRecipe(parsed.data);
+    notifyUsage("Eigenes Rezept vervollständigt");
     res.json({ recipe });
   } catch (err) {
     next(err);

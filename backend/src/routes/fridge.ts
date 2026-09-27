@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { imageUpload } from "../middleware/upload.js";
 import { analyzeFridgeImage, type ImageMediaType } from "../services/claudeService.js";
+import { notifyUsage } from "../services/notifyService.js";
 
 export const fridgeRouter = Router();
 
@@ -41,6 +42,7 @@ fridgeRouter.post("/analyze", imageUpload.single("image"), async (req, res, next
     }
 
     const analysis = await analyzeFridgeImage(imageBase64, mediaType);
+    notifyUsage("Foto gescannt");
     res.json(analysis);
   } catch (err) {
     next(err);

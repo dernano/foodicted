@@ -12,6 +12,9 @@ export const config = {
   port: Number(process.env.PORT ?? 4000),
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
   corsOrigin: process.env.CORS_ORIGIN ?? "*",
+  notifyEmailTo: process.env.NOTIFY_EMAIL_TO ?? "",
+  notifyEmailUser: process.env.NOTIFY_EMAIL_USER ?? "",
+  notifyEmailAppPassword: process.env.NOTIFY_EMAIL_APP_PASSWORD ?? "",
 };
 
 export function assertAnthropicConfigured(): void {
