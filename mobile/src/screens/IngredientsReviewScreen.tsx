@@ -1,18 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import type { RootStackParamList } from "../navigation";
 import { CATEGORY_LABELS, type FridgeItem } from "../types";
 import { generateRecipes } from "../api/client";
@@ -72,23 +61,39 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
-      {!!notes && <Text style={styles.notes}>{notes}</Text>}
+    <View style={styles.container}>
+      {/* Add-row pinned to the top, below the header - the keyboard can never
+          cover it here, unlike a bottom-pinned input on this screen. */}
+      <View style={styles.topSection}>
+        {!!notes && <Text style={styles.notes}>{notes}</Text>}
 
-      <TouchableOpacity style={styles.addPhotoButton} onPress={() => navigation.navigate("Camera")}>
-        <Ionicons name="camera-outline" size={17} color="#2f9e44" />
-        <Text style={styles.addPhotoButtonText}>Weiteres Foto scannen (z. B. zweites Fach, Vorratsschrank)</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.addPhotoButton} onPress={() => navigation.navigate("Camera")}>
+          <Ionicons name="camera-outline" size={17} color="#2f9e44" />
+          <Text style={styles.addPhotoButtonText}>Weiteres Foto scannen (z. B. zweites Fach, Vorratsschrank)</Text>
+        </TouchableOpacity>
+
+        <View style={styles.addRow}>
+          <TextInput
+            style={styles.addInput}
+            placeholder="Zutat manuell hinzufügen"
+            value={newItemName}
+            onChangeText={setNewItemName}
+            onSubmitEditing={addItem}
+            returnKeyType="done"
+          />
+          <TouchableOpacity style={styles.addButton} onPress={addItem}>
+            <Text style={styles.addButtonText}>+</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
       <FlatList
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: 16, flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
         data={items}
         keyExtractor={(_, i) => String(i)}
-        contentContainerStyle={{ paddingBottom: 16 }}
-        ListEmptyComponent={<Text style={styles.empty}>Keine Zutaten erkannt - füge unten welche hinzu.</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>Keine Zutaten erkannt - füge oben welche hinzu.</Text>}
         renderItem={({ item, index }) => {
           const metaParts = [
             item.category !== "other" ? CATEGORY_LABELS[item.category] : null,
@@ -108,36 +113,32 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
         }}
       />
 
-      <View style={styles.addRow}>
-        <TextInput
-          style={styles.addInput}
-          placeholder="Zutat manuell hinzufügen"
-          value={newItemName}
-          onChangeText={setNewItemName}
-          onSubmitEditing={addItem}
-        />
-        <TouchableOpacity style={styles.addButton} onPress={addItem}>
-          <Text style={styles.addButtonText}>+</Text>
+      <View style={styles.bottomBar}>
+        <TouchableOpacity
+          style={[styles.generateButton, loading && styles.generateButtonDisabled]}
+          onPress={handleGenerate}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.generateButtonText}>🍳 Rezepte vorschlagen</Text>
+          )}
         </TouchableOpacity>
       </View>
-
-      <TouchableOpacity
-        style={[styles.generateButton, loading && styles.generateButtonDisabled]}
-        onPress={handleGenerate}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.generateButtonText}>🍳 Rezepte vorschlagen</Text>
-        )}
-      </TouchableOpacity>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 16 },
+  container: { flex: 1, backgroundColor: "#fff" },
+  topSection: {
+    padding: 16,
+    paddingBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eef5ef",
+    backgroundColor: "#fff",
+  },
   notes: { fontSize: 13, color: "#966b1f", backgroundColor: "#fff7e0", padding: 10, borderRadius: 8, marginBottom: 12 },
   addPhotoButton: {
     flexDirection: "row",
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
   itemMeta: { fontSize: 12, color: "#7a8f83", marginTop: 2, textTransform: "capitalize" },
   removeButton: { padding: 6 },
   removeButtonText: { color: "#c92a2a", fontSize: 16, fontWeight: "700" },
-  addRow: { flexDirection: "row", gap: 8, marginTop: 8, marginBottom: 16 },
+  addRow: { flexDirection: "row", gap: 8, marginBottom: 14 },
   addInput: {
     flex: 1,
     borderWidth: 1,
@@ -180,6 +181,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   addButtonText: { color: "#fff", fontSize: 22, fontWeight: "700", lineHeight: 24 },
+  bottomBar: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#eef5ef",
+    backgroundColor: "#fff",
+  },
   generateButton: {
     backgroundColor: "#2f9e44",
     borderRadius: 14,
