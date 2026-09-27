@@ -22,11 +22,13 @@ import RecipeDetailScreen from "../screens/RecipeDetailScreen";
 import AddFavoriteRecipeScreen from "../screens/AddFavoriteRecipeScreen";
 import EditFavoriteRecipeScreen from "../screens/EditFavoriteRecipeScreen";
 import AccountScreen from "../screens/AccountScreen";
+import ShoppingListScreen from "../screens/ShoppingListScreen";
 import { useAuth } from "../context/AuthContext";
 
 export type MainTabsParamList = {
   Start: undefined;
   Favoriten: undefined;
+  Einkaufsliste: undefined;
 };
 
 export type RootStackParamList = {
@@ -127,6 +129,17 @@ function MainTabs() {
             </TouchableOpacity>
           ),
         })}
+      />
+      <Tab.Screen
+        name="Einkaufsliste"
+        component={ShoppingListScreen}
+        options={{
+          title: "Einkaufsliste",
+          tabBarLabel: "Liste",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "cart" : "cart-outline"} size={size} color={color} />
+          ),
+        }}
       />
     </Tab.Navigator>
   );

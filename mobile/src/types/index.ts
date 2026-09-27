@@ -71,6 +71,14 @@ export interface FavoriteRecipe extends Recipe {
   savedAt: number;
 }
 
+/** A single entry on the shopping list. */
+export interface ShoppingListItem {
+  id: string;
+  text: string;
+  checked: boolean;
+  addedAt: number;
+}
+
 /** German display labels for food categories. */
 export const CATEGORY_LABELS: Record<FoodCategory, string> = {
   vegetable: "Gemüse",

@@ -40,6 +40,15 @@ create table if not exists favorite_recipes (
   created_at timestamptz not null default now()
 );
 
+create table if not exists shopping_list_items (
+  id uuid primary key default gen_random_uuid(),
+  household_id uuid not null references households(id) on delete cascade,
+  added_by uuid references auth.users(id) on delete set null,
+  text text not null,
+  checked boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
 -- ---------------------------------------------------------------------
 -- Row Level Security
 -- ---------------------------------------------------------------------
@@ -47,6 +56,7 @@ create table if not exists favorite_recipes (
 alter table households enable row level security;
 alter table household_members enable row level security;
 alter table favorite_recipes enable row level security;
+alter table shopping_list_items enable row level security;
 
 -- Bypasses RLS internally (security definer) to answer "is the current
 -- user a member of this household" without recursive policy issues.
@@ -75,6 +85,15 @@ create policy "insert household favorites" on favorite_recipes
 create policy "update household favorites" on favorite_recipes
   for update using (is_household_member(household_id)) with check (is_household_member(household_id));
 create policy "delete household favorites" on favorite_recipes
+  for delete using (is_household_member(household_id));
+
+create policy "select household shopping list" on shopping_list_items
+  for select using (is_household_member(household_id));
+create policy "insert household shopping list" on shopping_list_items
+  for insert with check (is_household_member(household_id));
+create policy "update household shopping list" on shopping_list_items
+  for update using (is_household_member(household_id)) with check (is_household_member(household_id));
+create policy "delete household shopping list" on shopping_list_items
   for delete using (is_household_member(household_id));
 
 -- No direct insert/update/delete policies on households / household_members -
@@ -153,3 +172,4 @@ $$;
 -- ---------------------------------------------------------------------
 
 alter publication supabase_realtime add table favorite_recipes;
+alter publication supabase_realtime add table shopping_list_items;

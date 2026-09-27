@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect } from "react";
-import { ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
+import { useShoppingList } from "../context/ShoppingListContext";
 import { DIFFICULTY_LABELS, type Nutrition, type Recipe } from "../types";
 
 function sameRecipe(a: { title: string }, b: { title: string }): boolean {
@@ -16,10 +17,14 @@ function hasNutritionData(nutrition: Nutrition): boolean {
   return nutrition.calories > 0 || nutrition.proteinGrams > 0 || nutrition.carbsGrams > 0 || nutrition.fatGrams > 0;
 }
 
-function buildShoppingListText(recipe: Recipe): string {
-  const items = recipe.missingIngredients.length
+function shoppingItemsFor(recipe: Recipe): string[] {
+  return recipe.missingIngredients.length
     ? recipe.missingIngredients
     : recipe.ingredients.map((ing) => `${ing.amount} ${ing.name}`.trim());
+}
+
+function buildShoppingListText(recipe: Recipe): string {
+  const items = shoppingItemsFor(recipe);
   return `Einkaufsliste für "${recipe.title}":\n\n${items.map((item) => `- ${item}`).join("\n")}`;
 }
 
@@ -35,8 +40,14 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
   const { recipe } = route.params;
   const { favorites, isFavorite, toggleFavorite } = useFavorites();
   const { addRecent } = useRecentRecipes();
+  const { addItems } = useShoppingList();
   const favorite = isFavorite(recipe);
   const favoriteEntry = favorites.find((f) => sameRecipe(f, recipe));
+
+  function addToShoppingList() {
+    addItems(shoppingItemsFor(recipe));
+    Alert.alert("Hinzugefügt", "Die Zutaten wurden zu deiner Einkaufsliste hinzugefügt.");
+  }
 
   useEffect(() => {
     addRecent(recipe);
@@ -91,11 +102,15 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
         </View>
       )}
 
-      <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionTitle}>Zutaten</Text>
+      <Text style={styles.sectionTitle}>Zutaten</Text>
+      <View style={styles.shoppingActionsRow}>
+        <TouchableOpacity style={styles.shareListButton} onPress={addToShoppingList}>
+          <Ionicons name="cart-outline" size={15} color="#2f9e44" />
+          <Text style={styles.shareListButtonText}>Zur Einkaufsliste</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.shareListButton} onPress={() => shareShoppingList(recipe)}>
           <Ionicons name="share-outline" size={15} color="#2f9e44" />
-          <Text style={styles.shareListButtonText}>Einkaufsliste teilen</Text>
+          <Text style={styles.shareListButtonText}>Teilen</Text>
         </TouchableOpacity>
       </View>
       {recipe.ingredients.map((ing, i) => (
@@ -158,7 +173,7 @@ const styles = StyleSheet.create({
   nutritionValue: { fontSize: 14, fontWeight: "700", color: "#1b4332" },
   nutritionLabel: { fontSize: 11, color: "#7a8f83", marginTop: 2 },
   sectionTitle: { fontSize: 16, fontWeight: "700", color: "#1b4332", marginTop: 28, marginBottom: 12 },
-  sectionHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  shoppingActionsRow: { flexDirection: "row", gap: 18, marginBottom: 4 },
   shareListButton: { flexDirection: "row", alignItems: "center", gap: 5 },
   shareListButtonText: { color: "#2f9e44", fontSize: 12, fontWeight: "700" },
   ingredientRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 8, gap: 8 },
