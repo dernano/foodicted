@@ -11,6 +11,7 @@ import {
 } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { Image, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { FridgeItem, Recipe, FavoriteRecipe } from "../types";
 import HomeScreen from "../screens/HomeScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
@@ -89,6 +90,9 @@ function AccountHeaderButton({ navigation }: { navigation: BottomTabNavigationPr
 }
 
 function MainTabs() {
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, 8);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -97,7 +101,13 @@ function MainTabs() {
         headerShadowVisible: false,
         tabBarActiveTintColor: ACCENT_COLOR,
         tabBarInactiveTintColor: "#9db5a6",
-        tabBarStyle: { backgroundColor: "#fff", borderTopColor: "#eef5ef", height: 62, paddingBottom: 8, paddingTop: 6 },
+        tabBarStyle: {
+          backgroundColor: "#fff",
+          borderTopColor: "#eef5ef",
+          height: 54 + bottomInset,
+          paddingBottom: bottomInset,
+          paddingTop: 6,
+        },
         tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
         tabBarHideOnKeyboard: true,
       }}
