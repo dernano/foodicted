@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
+import TagEditor from "../components/TagEditor";
 import { useFavorites } from "../context/FavoritesContext";
 import { RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS, type Recipe } from "../types";
 
@@ -85,6 +86,7 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
   const [title, setTitle] = useState(recipe.title);
   const [description, setDescription] = useState(recipe.description);
   const [category, setCategory] = useState(recipe.category);
+  const [tags, setTags] = useState<string[]>(recipe.tags);
   const [servings, setServings] = useState(recipe.servings);
   const [prepTimeMinutes, setPrepTimeMinutes] = useState(String(recipe.prepTimeMinutes || ""));
   const [cookTimeMinutes, setCookTimeMinutes] = useState(String(recipe.cookTimeMinutes || ""));
@@ -110,6 +112,7 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
       title: title.trim(),
       description: description.trim(),
       category,
+      tags,
       servings: servings || 1,
       prepTimeMinutes: Number(prepTimeMinutes) || 0,
       cookTimeMinutes: Number(cookTimeMinutes) || 0,
@@ -154,6 +157,9 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
             </TouchableOpacity>
           ))}
         </View>
+
+        <Text style={styles.label}>Tags</Text>
+        <TagEditor tags={tags} onChange={setTags} />
 
         <Text style={styles.label}>Beschreibung</Text>
         <TextInput

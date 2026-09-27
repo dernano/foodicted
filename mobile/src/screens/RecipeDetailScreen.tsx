@@ -74,6 +74,15 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
         </View>
       </View>
       <Text style={styles.description}>{recipe.description}</Text>
+      {!!recipe.tags.length && (
+        <View style={styles.tagRow}>
+          {recipe.tags.map((tag) => (
+            <View key={tag} style={styles.tagPill}>
+              <Text style={styles.tagPillText}>#{tag}</Text>
+            </View>
+          ))}
+        </View>
+      )}
       <Text style={styles.favoriteHint}>
         {favorite ? "In deinen Lieblingsrezepten gespeichert" : "Tippe auf das Herz, um es zu speichern"}
       </Text>
@@ -163,6 +172,9 @@ const styles = StyleSheet.create({
   titleActions: { flexDirection: "row", alignItems: "center", gap: 14, paddingTop: 4 },
   heart: { fontSize: 26 },
   description: { fontSize: 14, color: "#40616b", marginTop: 8, lineHeight: 20 },
+  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 10 },
+  tagPill: { backgroundColor: "#d8f0dc", borderRadius: 12, paddingVertical: 4, paddingHorizontal: 10 },
+  tagPillText: { fontSize: 11, color: "#1b4332", fontWeight: "600" },
   favoriteHint: { fontSize: 12, color: "#9db5a6", marginTop: 6, fontStyle: "italic" },
   metaRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 20 },
   metaBox: { alignItems: "center", flex: 1 },

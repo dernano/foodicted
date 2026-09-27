@@ -11,6 +11,7 @@ type CategoryFilter = RecipeCategory | "alle";
 export default function FavoritesScreen({ navigation }: Props) {
   const { favorites, removeFavorite, shared } = useFavorites();
   const [filter, setFilter] = useState<CategoryFilter>("alle");
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
 
   const presentCategories = useMemo(() => {
     const set = new Set<RecipeCategory>();
@@ -18,7 +19,19 @@ export default function FavoritesScreen({ navigation }: Props) {
     return Array.from(set);
   }, [favorites]);
 
-  const filtered = filter === "alle" ? favorites : favorites.filter((f) => f.category === filter);
+  const presentTags = useMemo(() => {
+    const set = new Set<string>();
+    favorites.forEach((f) => f.tags.forEach((t) => set.add(t)));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [favorites]);
+
+  function toggleTagFilter(tag: string) {
+    setTagFilter((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+  }
+
+  const filtered = favorites
+    .filter((f) => filter === "alle" || f.category === filter)
+    .filter((f) => tagFilter.length === 0 || f.tags.some((t) => tagFilter.includes(t)));
 
   function confirmRemove(recipe: FavoriteRecipe) {
     Alert.alert("Rezept entfernen?", `„${recipe.title}" aus den Favoriten entfernen?`, [
@@ -59,6 +72,23 @@ export default function FavoritesScreen({ navigation }: Props) {
                 >
                   <Text style={[styles.filterChipText, filter === c && styles.filterChipTextSelected]}>
                     {RECIPE_CATEGORY_LABELS[c]}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          {presentTags.length > 0 && (
+            <View style={styles.filterRow}>
+              {presentTags.map((tag) => (
+                <TouchableOpacity
+                  key={tag}
+                  style={[styles.tagFilterChip, tagFilter.includes(tag) && styles.tagFilterChipSelected]}
+                  onPress={() => toggleTagFilter(tag)}
+                >
+                  <Text
+                    style={[styles.tagFilterChipText, tagFilter.includes(tag) && styles.tagFilterChipTextSelected]}
+                  >
+                    #{tag}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -109,6 +139,15 @@ export default function FavoritesScreen({ navigation }: Props) {
           {!!item.missingIngredients.length && (
             <Text style={styles.shopping}>🛒 Einzukaufen: {item.missingIngredients.join(", ")}</Text>
           )}
+          {!!item.tags.length && (
+            <View style={styles.tagRow}>
+              {item.tags.map((tag) => (
+                <View key={tag} style={styles.tagPill}>
+                  <Text style={styles.tagPillText}>#{tag}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </TouchableOpacity>
       )}
     />
@@ -140,6 +179,17 @@ const styles = StyleSheet.create({
   filterChipSelected: { backgroundColor: "#2f9e44", borderColor: "#2f9e44" },
   filterChipText: { color: "#1b4332", fontSize: 12, fontWeight: "600" },
   filterChipTextSelected: { color: "#fff" },
+  tagFilterChip: {
+    borderWidth: 1,
+    borderColor: "#d8e6da",
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: "#fafffb",
+  },
+  tagFilterChipSelected: { backgroundColor: "#1b4332", borderColor: "#1b4332" },
+  tagFilterChipText: { color: "#5c7a6a", fontSize: 11, fontWeight: "600" },
+  tagFilterChipTextSelected: { color: "#fff" },
   emptyState: { flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 80, paddingHorizontal: 32 },
   emptyEmoji: { fontSize: 48, marginBottom: 16 },
   emptyTitle: { fontSize: 17, fontWeight: "700", color: "#1b4332", marginBottom: 8 },
@@ -164,4 +214,7 @@ const styles = StyleSheet.create({
   ingredientsLabel: { fontSize: 12, fontWeight: "700", color: "#1b4332", marginTop: 12 },
   ingredientsText: { fontSize: 12, color: "#40616b", marginTop: 4, lineHeight: 17 },
   shopping: { fontSize: 12, color: "#966b1f", marginTop: 8 },
+  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 10 },
+  tagPill: { backgroundColor: "#d8f0dc", borderRadius: 12, paddingVertical: 4, paddingHorizontal: 10 },
+  tagPillText: { fontSize: 11, color: "#1b4332", fontWeight: "600" },
 });

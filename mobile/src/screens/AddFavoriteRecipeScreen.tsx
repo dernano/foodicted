@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
 import { refineRecipe } from "../api/client";
+import TagEditor from "../components/TagEditor";
 import { useFavorites } from "../context/FavoritesContext";
 import { usePreferences } from "../context/PreferencesContext";
 import { RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS, type Recipe, type RecipeCategory } from "../types";
@@ -25,6 +26,7 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<RecipeCategory>("hauptgericht");
+  const [tags, setTags] = useState<string[]>([]);
   const [ingredientLines, setIngredientLines] = useState<string[]>([]);
   const [newIngredient, setNewIngredient] = useState("");
   const [preparationNotes, setPreparationNotes] = useState("");
@@ -63,7 +65,14 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
         preparationNotes: preparationNotes.trim(),
         servings: preferences.servings,
       });
-      const categorized = { ...recipe, category };
+      const mergedTags = Array.from(
+        new Set(
+          [...recipe.tags, ...tags]
+            .map((t) => t.trim())
+            .filter(Boolean)
+        )
+      );
+      const categorized = { ...recipe, category, tags: mergedTags };
       toggleFavorite(categorized);
       navigation.replace("RecipeDetail", { recipe: categorized });
     } catch (err) {
@@ -94,7 +103,7 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
       cookTimeMinutes: 0,
       servings: preferences.servings ?? 2,
       difficulty: "medium",
-      tags: [],
+      tags,
       ingredients: ingredientLines.map((line) => ({ name: line, amount: "", fromFridge: true })),
       missingIngredients: [],
       instructions,
@@ -140,7 +149,10 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
           ))}
         </View>
 
-        <Text style={styles.label}>Zutaten</Text>
+        <Text style={styles.label}>Tags (optional)</Text>
+        <TagEditor tags={tags} onChange={setTags} />
+
+        <Text style={[styles.label, { marginTop: 18 }]}>Zutaten</Text>
         {ingredientLines.map((line, index) => (
           <View key={index} style={styles.ingredientRow}>
             <Text style={styles.ingredientText}>{line}</Text>
