@@ -51,8 +51,8 @@
     ],
     "extra": {
       "apiBaseUrl": "https://foodicted-vh9o.onrender.com",
-      "supabaseUrl": "https://DEIN-PROJEKT.supabase.co",
-      "supabaseAnonKey": "DEIN-SUPABASE-ANON-KEY",
+      "supabaseUrl": "https://zcklrssornugfrnuztei.supabase.co",
+      "supabaseAnonKey": "sb_publishable_2dMVP1fy4uQNseartd-nOA_hn1aS_jR",
       "eas": {
         "projectId": "3f4bcee0-2545-4975-bfef-d07d7d46e453"
       }
