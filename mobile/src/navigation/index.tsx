@@ -26,6 +26,7 @@ import AccountScreen from "../screens/AccountScreen";
 import ShoppingListScreen from "../screens/ShoppingListScreen";
 import RecentRecipesScreen from "../screens/RecentRecipesScreen";
 import IngredientMatchScreen from "../screens/IngredientMatchScreen";
+import AboutScreen from "../screens/AboutScreen";
 import OnboardingScreen, { ONBOARDING_SEEN_KEY } from "../screens/OnboardingScreen";
 import { useAuth } from "../context/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -51,6 +52,7 @@ export type RootStackParamList = {
   Account: undefined;
   RecentRecipes: undefined;
   IngredientMatch: { recipe: Recipe; detectedItems: FridgeItem[] };
+  About: undefined;
 };
 
 export type MainTabsScreenProps<T extends keyof MainTabsParamList> = CompositeScreenProps<
@@ -221,6 +223,7 @@ export default function AppNavigator() {
         />
         <Stack.Screen name="RecentRecipes" component={RecentRecipesScreen} options={{ title: "Verlauf" }} />
         <Stack.Screen name="IngredientMatch" component={IngredientMatchScreen} options={{ title: "Zutaten-Check" }} />
+        <Stack.Screen name="About" component={AboutScreen} options={{ title: "Über Foodicted" }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

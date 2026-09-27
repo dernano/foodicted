@@ -3,38 +3,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
+import { APP_FEATURES } from "../constants/features";
 
 export const ONBOARDING_SEEN_KEY = "foodicted.onboardingSeen";
 
 type Props = RootStackScreenProps<"Onboarding">;
-
-const FEATURES: { icon: keyof typeof Ionicons.glyphMap; title: string; text: string }[] = [
-  {
-    icon: "camera",
-    title: "Vorrat scannen",
-    text: "Foto von Kühlschrank, Vorratskammer oder Schrank - die KI erkennt automatisch, welche Lebensmittel du zuhause hast.",
-  },
-  {
-    icon: "restaurant",
-    title: "Passende Rezepte",
-    text: "Vorschläge abgestimmt auf deine Präferenzen - Ziele, Diät, Allergien, Lieblingsküchen.",
-  },
-  {
-    icon: "heart",
-    title: "Lieblingsrezepte speichern",
-    text: "Rezepte merken, oder eigene hinzufügen und optional von der KI vervollständigen lassen.",
-  },
-  {
-    icon: "cart",
-    title: "Einkaufsliste",
-    text: "Fehlende Zutaten direkt auf die Einkaufsliste - live geteilt mit deinem Haushalt.",
-  },
-  {
-    icon: "people",
-    title: "Gemeinsam als Haushalt",
-    text: "Mit Google anmelden und per Einladungscode Rezepte & Liste mit der Familie teilen.",
-  },
-];
 
 export default function OnboardingScreen({ navigation }: Props) {
   async function handleContinue() {
@@ -53,7 +26,7 @@ export default function OnboardingScreen({ navigation }: Props) {
         <Text style={styles.title}>Willkommen bei Foodicted!</Text>
         <Text style={styles.subtitle}>Das kann die App für dich:</Text>
 
-        {FEATURES.map((f) => (
+        {APP_FEATURES.map((f) => (
           <View key={f.title} style={styles.featureRow}>
             <View style={styles.iconCircle}>
               <Ionicons name={f.icon} size={20} color="#2f9e44" />

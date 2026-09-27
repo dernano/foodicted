@@ -97,6 +97,10 @@ export default function HomeScreen({ navigation }: Props) {
           ))}
         </View>
 
+        <TouchableOpacity style={styles.aboutLink} onPress={() => navigation.navigate("About")}>
+          <Ionicons name="information-circle-outline" size={14} color="#9db5a6" />
+          <Text style={styles.aboutLinkText}>Über Foodicted</Text>
+        </TouchableOpacity>
         <Text style={styles.copyright}>© {new Date().getFullYear()} Mario Stöffler</Text>
       </ScrollView>
       <VersionBadge />
@@ -181,5 +185,7 @@ const styles = StyleSheet.create({
   },
   summaryTitle: { fontWeight: "700", fontSize: 15, marginBottom: 8, color: "#1b4332" },
   summaryLine: { fontSize: 14, color: "#40616b", marginBottom: 4 },
-  copyright: { fontSize: 13, color: "#7a8f83", marginTop: 20, marginBottom: 4, fontWeight: "600" },
+  aboutLink: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 22 },
+  aboutLinkText: { fontSize: 12, color: "#9db5a6", fontWeight: "600" },
+  copyright: { fontSize: 13, color: "#7a8f83", marginTop: 6, marginBottom: 4, fontWeight: "600" },
 });
