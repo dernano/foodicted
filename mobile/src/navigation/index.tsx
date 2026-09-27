@@ -23,7 +23,11 @@ import AddFavoriteRecipeScreen from "../screens/AddFavoriteRecipeScreen";
 import EditFavoriteRecipeScreen from "../screens/EditFavoriteRecipeScreen";
 import AccountScreen from "../screens/AccountScreen";
 import ShoppingListScreen from "../screens/ShoppingListScreen";
+import OnboardingScreen, { ONBOARDING_SEEN_KEY } from "../screens/OnboardingScreen";
 import { useAuth } from "../context/AuthContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
+import { ActivityIndicator } from "react-native";
 
 export type MainTabsParamList = {
   Start: undefined;
@@ -32,6 +36,7 @@ export type MainTabsParamList = {
 };
 
 export type RootStackParamList = {
+  Onboarding: undefined;
   MainTabs: NavigatorScreenParams<MainTabsParamList>;
   Camera: undefined;
   Preferences: undefined;
@@ -147,10 +152,26 @@ function MainTabs() {
 }
 
 export default function AppNavigator() {
+  const [initialRoute, setInitialRoute] = useState<"Onboarding" | "MainTabs" | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem(ONBOARDING_SEEN_KEY)
+      .then((value) => setInitialRoute(value ? "MainTabs" : "Onboarding"))
+      .catch(() => setInitialRoute("MainTabs"));
+  }, []);
+
+  if (!initialRoute) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#f6fbf6" }}>
+        <ActivityIndicator color="#2f9e44" />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="MainTabs"
+        initialRouteName={initialRoute}
         screenOptions={{
           headerStyle: { backgroundColor: THEME_COLOR },
           headerTintColor: "#fff",
@@ -158,6 +179,7 @@ export default function AppNavigator() {
           headerShadowVisible: false,
         }}
       >
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
         <Stack.Screen name="Camera" component={CameraScreen} options={{ title: "Kühlschrank scannen" }} />
         <Stack.Screen name="Preferences" component={PreferencesScreen} options={{ title: "Präferenzen" }} />
