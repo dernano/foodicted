@@ -1,0 +1,38 @@
+name: EAS Update
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: "Update-Nachricht"
+        required: true
+        default: "Manuelles Update"
+      branch:
+        description: "EAS Update Branch"
+        required: true
+        default: "preview"
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Publish EAS Update
+        run: eas update --branch "${{ github.event.inputs.branch }}" --message "${{ github.event.inputs.message }}" --non-interactive
