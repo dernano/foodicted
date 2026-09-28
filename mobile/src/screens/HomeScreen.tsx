@@ -30,12 +30,17 @@ export default function HomeScreen({ navigation }: Props) {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
-          <Image source={require("../../assets/logo-full.png")} style={styles.logo} resizeMode="contain" />
-          <Text style={styles.slogan}>Erst scannen, dann schlemmen.</Text>
-        </View>
-        {/* Note: the logo artwork itself is dark-green-on-transparent, so the
-            hero stays on a light surface - a dark-green hero would swallow it. */}
+        {/* Fixed aspect ratio (matches the source image) so the layout never
+            shifts once it loads - logo, wordmark and slogan are baked into
+            the image itself, so no text/logo is rendered on top of it. */}
+        <Image
+          source={require("../../assets/images/foodicted-hero.jpg")}
+          style={styles.hero}
+          resizeMode="cover"
+          accessible
+          accessibilityRole="image"
+          accessibilityLabel="Foodicted – Erst scannen, dann schlemmen."
+        />
 
         <TouchableOpacity
           style={styles.primaryButton}
@@ -135,15 +140,11 @@ const styles = StyleSheet.create({
   container: { flexGrow: 1, alignItems: "center", padding: spacing.xxl, paddingBottom: spacing.xxl, backgroundColor: colors.bg },
   hero: {
     width: "100%",
-    backgroundColor: colors.bgAlt,
+    aspectRatio: 1672 / 941,
     borderRadius: radius.hero,
-    alignItems: "center",
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
+    backgroundColor: colors.bgAlt,
     marginBottom: spacing.lg,
   },
-  logo: { width: 150, height: 114 },
-  slogan: { ...t.bodyStrong, color: colors.primary, textAlign: "center", marginTop: 2 },
   primaryButton: {
     flexDirection: "row",
     alignItems: "center",
