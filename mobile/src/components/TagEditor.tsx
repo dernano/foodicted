@@ -1,5 +1,7 @@
+import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { colors, radius, spacing } from "../constants/theme";
 
 /** Free-text tag chips with add/remove - used on the add/edit recipe screens. */
 export default function TagEditor({
@@ -33,8 +35,9 @@ export default function TagEditor({
       {!!tags.length && (
         <View style={styles.tagWrap}>
           {tags.map((tag) => (
-            <TouchableOpacity key={tag} style={styles.tagChip} onPress={() => remove(tag)}>
-              <Text style={styles.tagChipText}>{tag} ✕</Text>
+            <TouchableOpacity key={tag} style={styles.tagChip} onPress={() => remove(tag)} activeOpacity={0.7}>
+              <Text style={styles.tagChipText}>{tag}</Text>
+              <Ionicons name="close" size={12} color={colors.textPrimary} />
             </TouchableOpacity>
           ))}
         </View>
@@ -43,12 +46,13 @@ export default function TagEditor({
         <TextInput
           style={styles.addInput}
           placeholder={placeholder}
+          placeholderTextColor={colors.textMuted}
           value={draft}
           onChangeText={setDraft}
           onSubmitEditing={add}
         />
-        <TouchableOpacity style={styles.addButton} onPress={add}>
-          <Text style={styles.addButtonText}>+</Text>
+        <TouchableOpacity style={styles.addButton} onPress={add} activeOpacity={0.8}>
+          <Ionicons name="add" size={22} color={colors.textOnDark} />
         </TouchableOpacity>
       </View>
     </View>
@@ -56,32 +60,35 @@ export default function TagEditor({
 }
 
 const styles = StyleSheet.create({
-  tagWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
+  tagWrap: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginBottom: spacing.md },
   tagChip: {
-    backgroundColor: "#eaf7ec",
-    borderRadius: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: colors.bgAlt,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm - 1,
+    paddingHorizontal: spacing.md,
   },
-  tagChipText: { color: "#1b4332", fontSize: 12, fontWeight: "600" },
-  addRow: { flexDirection: "row", gap: 8 },
+  tagChipText: { color: colors.textPrimary, fontSize: 12, fontWeight: "600" },
+  addRow: { flexDirection: "row", gap: spacing.sm },
   addInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#d8e6da",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderColor: colors.border,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.md,
     fontSize: 14,
-    backgroundColor: "#fafffb",
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
   },
   addButton: {
     width: 44,
     height: 44,
-    borderRadius: 10,
-    backgroundColor: "#2f9e44",
+    borderRadius: radius.control,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  addButtonText: { color: "#fff", fontSize: 22, fontWeight: "700", lineHeight: 24 },
 });

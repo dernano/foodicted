@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -17,6 +18,7 @@ import TagEditor from "../components/TagEditor";
 import { useFavorites } from "../context/FavoritesContext";
 import { usePreferences } from "../context/PreferencesContext";
 import { RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS, type Recipe, type RecipeCategory } from "../types";
+import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 type Props = RootStackScreenProps<"AddFavoriteRecipe">;
 
@@ -157,7 +159,7 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
           <View key={index} style={styles.ingredientRow}>
             <Text style={styles.ingredientText}>{line}</Text>
             <TouchableOpacity onPress={() => removeIngredient(index)} hitSlop={10}>
-              <Text style={styles.removeIcon}>✕</Text>
+              <Ionicons name="close" size={16} color={colors.danger} />
             </TouchableOpacity>
           </View>
         ))}
@@ -165,12 +167,13 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
           <TextInput
             style={styles.addInput}
             placeholder="z. B. 500g Kartoffeln"
+            placeholderTextColor={colors.textMuted}
             value={newIngredient}
             onChangeText={setNewIngredient}
             onSubmitEditing={addIngredient}
           />
-          <TouchableOpacity style={styles.addButton} onPress={addIngredient}>
-            <Text style={styles.addButtonText}>+</Text>
+          <TouchableOpacity style={styles.addButton} onPress={addIngredient} activeOpacity={0.8}>
+            <Ionicons name="add" size={24} color={colors.textOnDark} />
           </TouchableOpacity>
         </View>
 
@@ -187,11 +190,15 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
           style={[styles.submitButton, loading && styles.submitButtonDisabled]}
           onPress={handleSubmitWithAi}
           disabled={loading}
+          activeOpacity={0.85}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.textOnDark} />
           ) : (
-            <Text style={styles.submitButtonText}>✨ Mit KI vervollständigen & speichern</Text>
+            <>
+              <Ionicons name="sparkles" size={16} color={colors.textOnDark} />
+              <Text style={styles.submitButtonText}>Mit KI vervollständigen & speichern</Text>
+            </>
           )}
         </TouchableOpacity>
 
@@ -208,79 +215,75 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  intro: { fontSize: 13, color: "#5c7a6a", lineHeight: 19, marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: "700", color: "#1b4332", marginBottom: 8, marginTop: 4 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  intro: { fontSize: 13, color: colors.textSecondary, lineHeight: 19, marginBottom: spacing.xl },
+  label: { ...t.bodyStrong, fontSize: 14, color: colors.textPrimary, marginBottom: spacing.sm, marginTop: spacing.xs },
   input: {
     borderWidth: 1,
-    borderColor: "#d8e6da",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderColor: colors.border,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.md,
     fontSize: 14,
-    color: "#1b4332",
-    backgroundColor: "#fafffb",
-    marginBottom: 18,
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
+    marginBottom: spacing.xl,
   },
   multiline: { minHeight: 90, textAlignVertical: "top" },
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 18 },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginBottom: spacing.xl },
   chip: {
-    borderWidth: 1,
-    borderColor: "#c9e6cf",
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    backgroundColor: "#fafffb",
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md + 2,
+    backgroundColor: colors.chipInactiveBg,
   },
-  chipSelected: { backgroundColor: "#2f9e44", borderColor: "#2f9e44" },
-  chipText: { color: "#1b4332", fontSize: 13, fontWeight: "600" },
-  chipTextSelected: { color: "#fff" },
+  chipSelected: { backgroundColor: colors.primary },
+  chipText: { color: colors.chipInactiveText, fontSize: 13, fontWeight: "600" },
+  chipTextSelected: { color: colors.textOnDark },
   ingredientRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#f6fbf6",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    marginBottom: 8,
+    backgroundColor: colors.surface,
+    borderRadius: radius.control,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md + 2,
+    marginBottom: spacing.sm,
   },
-  ingredientText: { fontSize: 14, color: "#1b4332", flex: 1 },
-  removeIcon: { color: "#c92a2a", fontSize: 15, fontWeight: "700", marginLeft: 8 },
-  addRow: { flexDirection: "row", gap: 8, marginBottom: 18 },
+  ingredientText: { fontSize: 14, color: colors.textPrimary, flex: 1 },
+  addRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.xl },
   addInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#d8e6da",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderColor: colors.border,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.md,
     fontSize: 14,
-    backgroundColor: "#fafffb",
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
   },
   addButton: {
     width: 44,
     height: 44,
-    borderRadius: 10,
-    backgroundColor: "#2f9e44",
+    borderRadius: radius.control,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  addButtonText: { color: "#fff", fontSize: 22, fontWeight: "700", lineHeight: 24 },
   submitButton: {
-    backgroundColor: "#2f9e44",
-    borderRadius: 14,
-    paddingVertical: 16,
+    flexDirection: "row",
+    gap: spacing.sm,
+    backgroundColor: colors.primary,
+    borderRadius: radius.button,
+    paddingVertical: spacing.lg,
     alignItems: "center",
-    marginTop: 12,
-    shadowColor: "#2f9e44",
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    justifyContent: "center",
+    marginTop: spacing.md,
+    ...shadow.button,
   },
   submitButtonDisabled: { opacity: 0.7 },
-  submitButtonText: { color: "#fff", fontSize: 15, fontWeight: "700" },
-  plainButton: { paddingVertical: 14, alignItems: "center", marginTop: 4 },
-  plainButtonText: { color: "#5c7a6a", fontSize: 14, fontWeight: "600" },
+  submitButtonText: { color: colors.textOnDark, fontSize: 15, fontWeight: "700" },
+  plainButton: { paddingVertical: spacing.md + 2, alignItems: "center", marginTop: spacing.xs },
+  plainButtonText: { color: colors.textSecondary, fontSize: 14, fontWeight: "600" },
 });

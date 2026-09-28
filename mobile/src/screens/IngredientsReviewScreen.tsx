@@ -10,6 +10,7 @@ import { useFavorites } from "../context/FavoritesContext";
 import { usePantry } from "../context/PantryContext";
 import { matchRatio } from "../utils/ingredientMatch";
 import { mergeFridgeItems } from "../utils/fridgeItems";
+import { colors, radius, spacing } from "../constants/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "IngredientsReview">;
 
@@ -118,12 +119,12 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
 
         <View style={styles.topButtonsRow}>
           <TouchableOpacity style={styles.addPhotoButton} onPress={() => navigation.navigate("Camera")}>
-            <Ionicons name="camera-outline" size={17} color="#2f9e44" />
+            <Ionicons name="camera-outline" size={17} color={colors.primary} />
             <Text style={styles.addPhotoButtonText}>Weiteres Foto scannen</Text>
           </TouchableOpacity>
           {!!items.length && (
             <TouchableOpacity style={styles.clearAllButton} onPress={clearAll}>
-              <Ionicons name="trash-outline" size={14} color="#c92a2a" />
+              <Ionicons name="trash-outline" size={14} color={colors.danger} />
               <Text style={styles.clearAllButtonText}>Alle entfernen</Text>
             </TouchableOpacity>
           )}
@@ -133,13 +134,14 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
           <TextInput
             style={styles.addInput}
             placeholder="Zutat manuell hinzufügen"
+            placeholderTextColor={colors.textMuted}
             value={newItemName}
             onChangeText={setNewItemName}
             onSubmitEditing={addItem}
             returnKeyType="done"
           />
-          <TouchableOpacity style={styles.addButton} onPress={addItem}>
-            <Text style={styles.addButtonText}>+</Text>
+          <TouchableOpacity style={styles.addButton} onPress={addItem} activeOpacity={0.8}>
+            <Ionicons name="add" size={24} color={colors.textOnDark} />
           </TouchableOpacity>
         </View>
       </View>
@@ -154,7 +156,10 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
         ListFooterComponent={
           !!matchedFavorites.length ? (
             <View style={styles.matchSection}>
-              <Text style={styles.matchTitle}>💚 Das kannst du bereits kochen</Text>
+              <View style={styles.matchTitleRow}>
+                <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                <Text style={styles.matchTitle}>Das kannst du bereits kochen</Text>
+              </View>
               {matchedFavorites.map(({ favorite, score }) => (
                 <TouchableOpacity
                   key={favorite.id}
@@ -167,7 +172,7 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
                       {score >= 0.999 ? "Alle Zutaten vorhanden" : `${Math.round(score * 100)}% der Zutaten vorhanden`}
                     </Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={16} color="#c3d6c8" />
+                  <Ionicons name="chevron-forward" size={16} color={colors.border} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -185,7 +190,7 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
                 {!!metaParts.length && <Text style={styles.itemMeta}>{metaParts.join(" · ")}</Text>}
               </View>
               <TouchableOpacity onPress={() => removeItem(index)} style={styles.removeButton}>
-                <Text style={styles.removeButtonText}>✕</Text>
+                <Ionicons name="close" size={18} color={colors.danger} />
               </TouchableOpacity>
             </View>
           );
@@ -194,18 +199,22 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
 
       <View style={styles.bottomBar}>
         <TouchableOpacity style={styles.preferencesButton} onPress={() => navigation.navigate("Preferences")}>
-          <Ionicons name="settings-outline" size={15} color="#5c7a6a" />
+          <Ionicons name="options-outline" size={15} color={colors.textSecondary} />
           <Text style={styles.preferencesButtonText}>Präferenzen anpassen</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.generateButton, loading && styles.generateButtonDisabled]}
           onPress={handleGenerate}
           disabled={loading}
+          activeOpacity={0.85}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.textOnDark} />
           ) : (
-            <Text style={styles.generateButtonText}>🍳 Rezepte vorschlagen</Text>
+            <>
+              <Ionicons name="sparkles" size={17} color={colors.textOnDark} />
+              <Text style={styles.generateButtonText}>Rezepte vorschlagen</Text>
+            </>
           )}
         </TouchableOpacity>
       </View>
@@ -214,97 +223,95 @@ export default function IngredientsReviewScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: colors.bg },
   topSection: {
-    padding: 16,
-    paddingBottom: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eef5ef",
-    backgroundColor: "#fff",
+    padding: spacing.lg,
+    paddingBottom: spacing.xs,
+    backgroundColor: colors.bg,
   },
-  notes: { fontSize: 13, color: "#966b1f", backgroundColor: "#fff7e0", padding: 10, borderRadius: 8, marginBottom: 12 },
+  notes: { fontSize: 13, color: colors.noticeText, backgroundColor: colors.noticeBg, padding: spacing.md, borderRadius: radius.control, marginBottom: spacing.md },
   topButtonsRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 14,
+    marginBottom: spacing.md + 2,
   },
-  addPhotoButton: { flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 },
-  addPhotoButtonText: { color: "#2f9e44", fontSize: 13, fontWeight: "700", flexShrink: 1 },
-  clearAllButton: { flexDirection: "row", alignItems: "center", gap: 4, paddingLeft: 10 },
-  clearAllButtonText: { color: "#c92a2a", fontSize: 12, fontWeight: "700" },
-  empty: { textAlign: "center", color: "#7a8f83", marginTop: 32 },
+  addPhotoButton: { flexDirection: "row", alignItems: "center", gap: spacing.sm, flexShrink: 1 },
+  addPhotoButtonText: { color: colors.primary, fontSize: 13, fontWeight: "700", flexShrink: 1 },
+  clearAllButton: { flexDirection: "row", alignItems: "center", gap: 4, paddingLeft: spacing.md },
+  clearAllButtonText: { color: colors.danger, fontSize: 12, fontWeight: "700" },
+  empty: { textAlign: "center", color: colors.textMuted, marginTop: 32 },
   itemRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    backgroundColor: "#f6fbf6",
-    borderRadius: 10,
-    marginBottom: 8,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md + 2,
+    backgroundColor: colors.surface,
+    borderRadius: radius.control,
+    marginBottom: spacing.sm,
   },
-  itemName: { fontSize: 15, fontWeight: "600", color: "#1b4332" },
-  itemMeta: { fontSize: 12, color: "#7a8f83", marginTop: 2, textTransform: "capitalize" },
+  itemName: { fontSize: 15, fontWeight: "600", color: colors.textPrimary },
+  itemMeta: { fontSize: 12, color: colors.textMuted, marginTop: 2, textTransform: "capitalize" },
   removeButton: { padding: 6 },
-  removeButtonText: { color: "#c92a2a", fontSize: 16, fontWeight: "700" },
   matchSection: {
-    marginTop: 8,
-    backgroundColor: "#f6fbf6",
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#e6f0e8",
+    marginTop: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
+    padding: spacing.md + 2,
   },
-  matchTitle: { fontSize: 13, fontWeight: "700", color: "#1b4332", marginBottom: 8 },
+  matchTitleRow: { flexDirection: "row", alignItems: "center", gap: spacing.xs, marginBottom: spacing.sm },
+  matchTitle: { fontSize: 13, fontWeight: "700", color: colors.textPrimary },
   matchRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 9,
     borderTopWidth: 1,
-    borderTopColor: "#e6f0e8",
+    borderTopColor: colors.border,
   },
-  matchRowTitle: { fontSize: 14, fontWeight: "700", color: "#1b4332" },
-  matchRowMeta: { fontSize: 11, color: "#7a8f83", marginTop: 2 },
-  addRow: { flexDirection: "row", gap: 8, marginBottom: 14 },
+  matchRowTitle: { fontSize: 14, fontWeight: "700", color: colors.textPrimary },
+  matchRowMeta: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  addRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md + 2 },
   addInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#d8e6da",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderColor: colors.border,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.md,
     fontSize: 14,
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
   },
   addButton: {
     width: 44,
     height: 44,
-    borderRadius: 10,
-    backgroundColor: "#2f9e44",
+    borderRadius: radius.control,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  addButtonText: { color: "#fff", fontSize: 22, fontWeight: "700", lineHeight: 24 },
   bottomBar: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#eef5ef",
-    backgroundColor: "#fff",
+    padding: spacing.lg,
+    backgroundColor: colors.bg,
   },
   preferencesButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    paddingVertical: 10,
-    marginBottom: 4,
+    paddingVertical: spacing.sm + 2,
+    marginBottom: spacing.xs,
   },
-  preferencesButtonText: { color: "#5c7a6a", fontSize: 13, fontWeight: "600" },
+  preferencesButtonText: { color: colors.textSecondary, fontSize: 13, fontWeight: "600" },
   generateButton: {
-    backgroundColor: "#2f9e44",
-    borderRadius: 14,
-    paddingVertical: 16,
+    flexDirection: "row",
+    backgroundColor: colors.primary,
+    borderRadius: radius.button,
+    paddingVertical: spacing.lg,
     alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
   },
   generateButtonDisabled: { opacity: 0.7 },
-  generateButtonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  generateButtonText: { color: colors.textOnDark, fontSize: 16, fontWeight: "700" },
 });

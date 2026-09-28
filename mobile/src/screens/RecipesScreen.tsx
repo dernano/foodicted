@@ -5,6 +5,7 @@ import type { RootStackScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
 import { useShoppingList } from "../context/ShoppingListContext";
 import { RECIPE_CATEGORY_LABELS, type Recipe } from "../types";
+import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 type Props = RootStackScreenProps<"Recipes">;
 
@@ -44,7 +45,7 @@ export default function RecipesScreen({ route, navigation }: Props) {
   return (
     <SectionList
       style={styles.container}
-      contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+      contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }}
       sections={sections}
       stickySectionHeadersEnabled={false}
       keyExtractor={(item, i) => `${item.title}-${i}`}
@@ -66,24 +67,28 @@ export default function RecipesScreen({ route, navigation }: Props) {
           <TouchableOpacity
             style={[styles.card, extra && styles.cardExtra]}
             onPress={() => navigation.navigate("RecipeDetail", { recipe: item })}
+            activeOpacity={0.85}
           >
             <View style={styles.cardHeader}>
-              <View style={{ flex: 1, marginRight: 8 }}>
+              <View style={styles.categoryIcon}>
+                <Ionicons name="restaurant" size={16} color={extra ? colors.attention : colors.primary} />
+              </View>
+              <View style={{ flex: 1, marginRight: spacing.sm }}>
                 <Text style={[styles.categoryBadge, extra && styles.categoryBadgeExtra]}>
                   {RECIPE_CATEGORY_LABELS[item.category]}
                 </Text>
                 <Text style={styles.title}>{item.title}</Text>
               </View>
               <TouchableOpacity onPress={() => toggleFavorite(item)} hitSlop={10}>
-                <Text style={styles.heart}>{favorite ? "❤️" : "🤍"}</Text>
+                <Ionicons name={favorite ? "heart" : "heart-outline"} size={22} color={favorite ? colors.danger : colors.textMuted} />
               </TouchableOpacity>
             </View>
             <Text style={styles.description}>{item.description}</Text>
             <View style={styles.metaRow}>
-              <Text style={styles.metaItem}>⏱ {item.prepTimeMinutes + item.cookTimeMinutes} min</Text>
-              <Text style={styles.metaItem}>🍽 {item.servings} Port.</Text>
-              <Text style={styles.metaItem}>🔥 {item.nutrition.calories} kcal</Text>
-              <Text style={styles.metaItem}>💪 {item.nutrition.proteinGrams}g Protein</Text>
+              <MetaItem icon="time-outline" value={`${item.prepTimeMinutes + item.cookTimeMinutes} min`} />
+              <MetaItem icon="restaurant-outline" value={`${item.servings} Port.`} />
+              <MetaItem icon="flame-outline" value={`${item.nutrition.calories} kcal`} />
+              <MetaItem icon="barbell-outline" value={`${item.nutrition.proteinGrams}g Protein`} />
             </View>
             {!!item.tags.length && (
               <View style={styles.tagRow}>
@@ -96,13 +101,14 @@ export default function RecipesScreen({ route, navigation }: Props) {
             )}
             {extra && !!item.missingIngredients.length && (
               <View style={styles.missingBox}>
-                <Text style={styles.missing}>🛒 Zusätzlich benötigt: {item.missingIngredients.join(", ")}</Text>
+                <Text style={styles.missing}>Zusätzlich benötigt: {item.missingIngredients.join(", ")}</Text>
                 <TouchableOpacity
                   style={styles.missingButton}
                   onPress={() => addMissingToShoppingList(item)}
                   hitSlop={8}
+                  activeOpacity={0.8}
                 >
-                  <Ionicons name="cart-outline" size={14} color="#fff" />
+                  <Ionicons name="cart-outline" size={14} color={colors.textOnDark} />
                   <Text style={styles.missingButtonText}>Zur Einkaufsliste</Text>
                 </TouchableOpacity>
               </View>
@@ -114,57 +120,73 @@ export default function RecipesScreen({ route, navigation }: Props) {
   );
 }
 
+function MetaItem({ icon, value }: { icon: keyof typeof Ionicons.glyphMap; value: string }) {
+  return (
+    <View style={styles.metaItem}>
+      <Ionicons name={icon} size={13} color={colors.textSecondary} />
+      <Text style={styles.metaItemText}>{value}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  empty: { textAlign: "center", color: "#7a8f83", marginTop: 32 },
-  sectionHeader: { marginTop: 4, marginBottom: 12 },
-  sectionHeaderExtra: { marginTop: 20 },
-  sectionTitle: { fontSize: 15, fontWeight: "800", color: "#1b4332" },
-  sectionTitleExtra: { color: "#c2670c" },
-  sectionSubtitle: { fontSize: 12, color: "#7a8f83", marginTop: 3, lineHeight: 17 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  empty: { textAlign: "center", color: colors.textMuted, marginTop: 32 },
+  sectionHeader: { marginTop: spacing.xs, marginBottom: spacing.md },
+  sectionHeaderExtra: { marginTop: spacing.xl },
+  sectionTitle: { ...t.section, fontSize: 15, color: colors.textPrimary },
+  sectionTitleExtra: { color: colors.attention },
+  sectionSubtitle: { fontSize: 12, color: colors.textMuted, marginTop: 3, lineHeight: 17 },
   card: {
-    backgroundColor: "#f6fbf6",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
+    padding: spacing.lg,
+    marginBottom: spacing.md + 2,
+    ...shadow.soft,
   },
   cardExtra: {
-    backgroundColor: "#fff8ee",
+    backgroundColor: colors.attentionBg,
     borderWidth: 1,
-    borderColor: "#f6d9a8",
+    borderColor: colors.attentionBorder,
+    shadowOpacity: 0,
+    elevation: 0,
   },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  categoryBadge: { fontSize: 11, color: "#2f9e44", fontWeight: "700", marginBottom: 2, textTransform: "uppercase" },
-  categoryBadgeExtra: { color: "#c2670c" },
-  title: { fontSize: 17, fontWeight: "800", color: "#1b4332" },
-  heart: { fontSize: 20 },
-  description: { fontSize: 13, color: "#40616b", marginTop: 6, lineHeight: 18 },
-  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 10 },
-  metaItem: { fontSize: 12, color: "#40616b" },
-  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 10 },
-  tag: { backgroundColor: "#d8f0dc", borderRadius: 12, paddingVertical: 4, paddingHorizontal: 10 },
-  tagText: { fontSize: 11, color: "#1b4332", fontWeight: "600" },
+  cardHeader: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md },
+  categoryIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.control,
+    backgroundColor: colors.bgAlt,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  categoryBadge: { fontSize: 11, color: colors.primary, fontWeight: "700", marginBottom: 2, textTransform: "uppercase" },
+  categoryBadgeExtra: { color: colors.attention },
+  title: { fontSize: 16, fontWeight: "800", color: colors.textPrimary },
+  description: { fontSize: 13, color: colors.textSecondary, marginTop: spacing.sm, lineHeight: 18 },
+  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md, marginTop: spacing.md },
+  metaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  metaItemText: { fontSize: 12, color: colors.textSecondary },
+  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs, marginTop: spacing.md },
+  tag: { backgroundColor: colors.bgAlt, borderRadius: radius.pill, paddingVertical: 4, paddingHorizontal: spacing.sm },
+  tagText: { fontSize: 11, color: colors.textPrimary, fontWeight: "600" },
   missingBox: {
-    marginTop: 12,
-    paddingTop: 12,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: "#f6d9a8",
+    borderTopColor: colors.attentionBorder,
   },
-  missing: { fontSize: 12, color: "#966b1f", lineHeight: 17 },
+  missing: { fontSize: 12, color: colors.noticeText, lineHeight: 17 },
   missingButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     alignSelf: "flex-start",
-    backgroundColor: "#e0951a",
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginTop: 10,
+    backgroundColor: colors.attention,
+    borderRadius: radius.control,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.md,
   },
-  missingButtonText: { color: "#fff", fontSize: 12, fontWeight: "700" },
+  missingButtonText: { color: colors.textOnDark, fontSize: 12, fontWeight: "700" },
 });

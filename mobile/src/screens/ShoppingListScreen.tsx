@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useShoppingList } from "../context/ShoppingListContext";
 import type { ShoppingListItem } from "../types";
+import { colors, radius, spacing, type as t } from "../constants/theme";
 
 export default function ShoppingListScreen() {
   const { items, ready, shared, addItem, toggleChecked, removeItem, clearChecked } = useShoppingList();
@@ -25,7 +26,7 @@ export default function ShoppingListScreen() {
   if (!ready) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator color="#2f9e44" />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -37,7 +38,7 @@ export default function ShoppingListScreen() {
       <View style={styles.topSection}>
         {shared && (
           <View style={styles.sharedBanner}>
-            <Ionicons name="people" size={15} color="#2f9e44" />
+            <Ionicons name="people" size={15} color={colors.primary} />
             <Text style={styles.sharedBannerText}>Geteilt mit deinem Haushalt - live synchron</Text>
           </View>
         )}
@@ -45,18 +46,19 @@ export default function ShoppingListScreen() {
           <TextInput
             style={styles.addInput}
             placeholder="Artikel hinzufügen"
+            placeholderTextColor={colors.textMuted}
             value={draft}
             onChangeText={setDraft}
             onSubmitEditing={handleAdd}
             returnKeyType="done"
           />
-          <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
-            <Text style={styles.addButtonText}>+</Text>
+          <TouchableOpacity style={styles.addButton} onPress={handleAdd} activeOpacity={0.8}>
+            <Ionicons name="add" size={24} color={colors.textOnDark} />
           </TouchableOpacity>
         </View>
         {hasChecked && (
           <TouchableOpacity style={styles.clearButton} onPress={() => clearChecked()}>
-            <Ionicons name="trash-outline" size={14} color="#966b1f" />
+            <Ionicons name="trash-outline" size={14} color={colors.noticeText} />
             <Text style={styles.clearButtonText}>Erledigte löschen ({checkedItems.length})</Text>
           </TouchableOpacity>
         )}
@@ -64,13 +66,15 @@ export default function ShoppingListScreen() {
 
       <FlatList
         style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 16, paddingTop: 4, paddingBottom: 24, flexGrow: 1 }}
+        contentContainerStyle={{ padding: spacing.lg, paddingTop: spacing.xs, paddingBottom: spacing.xxl, flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
         data={sorted}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🛒</Text>
+            <View style={styles.emptyIconCircle}>
+              <Ionicons name="cart-outline" size={28} color={colors.primary} />
+            </View>
             <Text style={styles.emptyTitle}>Einkaufsliste ist leer</Text>
             <Text style={styles.emptyText}>
               Füge oben Artikel hinzu, oder tippe bei einem Rezept auf „Zur Einkaufsliste".
@@ -78,18 +82,18 @@ export default function ShoppingListScreen() {
           </View>
         }
         renderItem={({ item }: { item: ShoppingListItem }) => (
-          <TouchableOpacity style={styles.row} onPress={() => toggleChecked(item.id)}>
+          <TouchableOpacity style={styles.row} onPress={() => toggleChecked(item.id)} activeOpacity={0.7}>
             <Ionicons
               name={item.checked ? "checkbox" : "square-outline"}
               size={22}
-              color={item.checked ? "#2f9e44" : "#c3d6c8"}
+              color={item.checked ? colors.primary : colors.border}
             />
             <View style={{ flex: 1 }}>
               <Text style={[styles.rowText, item.checked && styles.rowTextChecked]}>{item.text}</Text>
               {!!item.source && <Text style={styles.rowSource}>aus: {item.source}</Text>}
             </View>
             <TouchableOpacity onPress={() => removeItem(item.id)} hitSlop={10}>
-              <Ionicons name="close" size={18} color="#c92a2a" />
+              <Ionicons name="close" size={18} color={colors.danger} />
             </TouchableOpacity>
           </TouchableOpacity>
         )}
@@ -99,68 +103,75 @@ export default function ShoppingListScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: colors.bg },
+  loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg },
   topSection: {
-    padding: 16,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eef5ef",
-    backgroundColor: "#fff",
+    padding: spacing.lg,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.bg,
   },
   sharedBanner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    backgroundColor: "#eaf7ec",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    marginBottom: 12,
+    gap: spacing.sm,
+    backgroundColor: colors.bgAlt,
+    borderRadius: radius.control,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md + 2,
+    marginBottom: spacing.md,
   },
-  sharedBannerText: { fontSize: 12, color: "#1b4332", fontWeight: "600" },
+  sharedBannerText: { fontSize: 12, color: colors.textPrimary, fontWeight: "600" },
   clearButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     alignSelf: "flex-start",
-    marginTop: 10,
+    marginTop: spacing.md,
   },
-  clearButtonText: { fontSize: 12, color: "#966b1f", fontWeight: "600" },
+  clearButtonText: { fontSize: 12, color: colors.noticeText, fontWeight: "600" },
   emptyState: { alignItems: "center", justifyContent: "center", paddingTop: 48, paddingHorizontal: 32 },
-  emptyEmoji: { fontSize: 44, marginBottom: 14 },
-  emptyTitle: { fontSize: 16, fontWeight: "700", color: "#1b4332", marginBottom: 6 },
-  emptyText: { fontSize: 13, color: "#7a8f83", textAlign: "center", lineHeight: 19 },
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.bgAlt,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.lg,
+  },
+  emptyTitle: { ...t.section, color: colors.textPrimary, marginBottom: spacing.sm },
+  emptyText: { fontSize: 13, color: colors.textMuted, textAlign: "center", lineHeight: 19 },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    backgroundColor: "#f6fbf6",
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    marginBottom: 8,
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.control,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md + 2,
+    marginBottom: spacing.sm,
   },
-  rowText: { fontSize: 15, color: "#1b4332", fontWeight: "600" },
-  rowTextChecked: { color: "#9db5a6", textDecorationLine: "line-through" },
-  rowSource: { fontSize: 11, color: "#7a8f83", marginTop: 2, fontStyle: "italic" },
-  addRow: { flexDirection: "row", gap: 8 },
+  rowText: { fontSize: 15, color: colors.textPrimary, fontWeight: "600" },
+  rowTextChecked: { color: colors.textMuted, textDecorationLine: "line-through" },
+  rowSource: { fontSize: 11, color: colors.textMuted, marginTop: 2, fontStyle: "italic" },
+  addRow: { flexDirection: "row", gap: spacing.sm },
   addInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#d8e6da",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderColor: colors.border,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.md,
     fontSize: 14,
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
   },
   addButton: {
     width: 44,
     height: 44,
-    borderRadius: 10,
-    backgroundColor: "#2f9e44",
+    borderRadius: radius.control,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  addButtonText: { color: "#fff", fontSize: 22, fontWeight: "700", lineHeight: 24 },
 });

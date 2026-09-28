@@ -16,6 +16,7 @@ import type { RootStackScreenProps } from "../navigation";
 import TagEditor from "../components/TagEditor";
 import { useFavorites } from "../context/FavoritesContext";
 import { RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS, type Recipe } from "../types";
+import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 type Props = RootStackScreenProps<"EditFavoriteRecipe">;
 
@@ -59,7 +60,7 @@ function EditableList({
         <View key={i} style={styles.lineRow}>
           <TextInput style={styles.lineInput} value={line} onChangeText={(v) => updateLine(i, v)} multiline />
           <TouchableOpacity onPress={() => removeLine(i)} hitSlop={10} style={styles.removeLineButton}>
-            <Ionicons name="close-circle" size={20} color="#c92a2a" />
+            <Ionicons name="close-circle" size={20} color={colors.danger} />
           </TouchableOpacity>
         </View>
       ))}
@@ -67,12 +68,13 @@ function EditableList({
         <TextInput
           style={styles.addLineInput}
           placeholder={placeholder}
+          placeholderTextColor={colors.textMuted}
           value={draft}
           onChangeText={setDraft}
           onSubmitEditing={addLine}
         />
-        <TouchableOpacity style={styles.addLineButton} onPress={addLine}>
-          <Text style={styles.addLineButtonText}>+</Text>
+        <TouchableOpacity style={styles.addLineButton} onPress={addLine} activeOpacity={0.8}>
+          <Ionicons name="add" size={22} color={colors.textOnDark} />
         </TouchableOpacity>
       </View>
     </View>
@@ -220,8 +222,13 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
         <Text style={styles.label}>Zubereitung</Text>
         <EditableList lines={instructionLines} onChange={setInstructionLines} placeholder="Neuen Schritt hinzufügen" />
 
-        <TouchableOpacity style={[styles.saveButton, saving && styles.saveButtonDisabled]} onPress={handleSave} disabled={saving}>
-          {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Änderungen speichern</Text>}
+        <TouchableOpacity
+          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+          onPress={handleSave}
+          disabled={saving}
+          activeOpacity={0.85}
+        >
+          {saving ? <ActivityIndicator color={colors.textOnDark} /> : <Text style={styles.saveButtonText}>Änderungen speichern</Text>}
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -229,87 +236,82 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  label: { fontSize: 14, fontWeight: "700", color: "#1b4332", marginBottom: 8, marginTop: 18 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  label: { ...t.bodyStrong, fontSize: 14, color: colors.textPrimary, marginBottom: spacing.sm, marginTop: spacing.xl },
   input: {
     borderWidth: 1,
-    borderColor: "#d8e6da",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderColor: colors.border,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.md,
     fontSize: 14,
-    color: "#1b4332",
-    backgroundColor: "#fafffb",
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
   },
   multiline: { minHeight: 70, textAlignVertical: "top" },
-  stepperRow: { flexDirection: "row", alignItems: "center", gap: 20 },
+  stepperRow: { flexDirection: "row", alignItems: "center", gap: spacing.xl },
   stepperButton: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "#2f9e44",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  stepperButtonText: { color: "#fff", fontSize: 20, fontWeight: "700", lineHeight: 22 },
-  stepperValue: { fontSize: 17, fontWeight: "700", color: "#1b4332", minWidth: 24, textAlign: "center" },
-  timeRow: { flexDirection: "row", gap: 12 },
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  stepperButtonText: { color: colors.textOnDark, fontSize: 20, fontWeight: "700", lineHeight: 22 },
+  stepperValue: { fontSize: 17, fontWeight: "700", color: colors.textPrimary, minWidth: 24, textAlign: "center" },
+  timeRow: { flexDirection: "row", gap: spacing.md },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   chip: {
-    borderWidth: 1,
-    borderColor: "#c9e6cf",
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    backgroundColor: "#fafffb",
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md + 2,
+    backgroundColor: colors.chipInactiveBg,
   },
-  chipSelected: { backgroundColor: "#2f9e44", borderColor: "#2f9e44" },
-  chipText: { color: "#1b4332", fontSize: 13, fontWeight: "600" },
-  chipTextSelected: { color: "#fff" },
-  lineRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  chipSelected: { backgroundColor: colors.primary },
+  chipText: { color: colors.chipInactiveText, fontSize: 13, fontWeight: "600" },
+  chipTextSelected: { color: colors.textOnDark },
+  lineRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.sm },
   lineInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#d8e6da",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderColor: colors.border,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
     fontSize: 14,
-    backgroundColor: "#f6fbf6",
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
   },
   removeLineButton: { padding: 2 },
-  addLineRow: { flexDirection: "row", gap: 8, marginTop: 2 },
+  addLineRow: { flexDirection: "row", gap: spacing.sm, marginTop: 2 },
   addLineInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#d8e6da",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderColor: colors.border,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.md,
     fontSize: 14,
-    backgroundColor: "#fafffb",
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
   },
   addLineButton: {
     width: 40,
     height: 40,
-    borderRadius: 10,
-    backgroundColor: "#2f9e44",
+    borderRadius: radius.control,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  addLineButtonText: { color: "#fff", fontSize: 20, fontWeight: "700", lineHeight: 22 },
   saveButton: {
-    backgroundColor: "#2f9e44",
-    borderRadius: 14,
-    paddingVertical: 16,
+    backgroundColor: colors.primary,
+    borderRadius: radius.button,
+    paddingVertical: spacing.lg,
     alignItems: "center",
-    marginTop: 28,
-    shadowColor: "#2f9e44",
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    marginTop: spacing.xxl + 4,
+    ...shadow.button,
   },
   saveButtonDisabled: { opacity: 0.7 },
-  saveButtonText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  saveButtonText: { color: colors.textOnDark, fontSize: 15, fontWeight: "700" },
 });

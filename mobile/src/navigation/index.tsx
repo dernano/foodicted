@@ -32,6 +32,7 @@ import { useAuth } from "../context/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import { ActivityIndicator } from "react-native";
+import { colors, spacing } from "../constants/theme";
 
 export type MainTabsParamList = {
   Start: undefined;
@@ -65,33 +66,65 @@ export type RootStackScreenProps<T extends keyof RootStackParamList> = NativeSta
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabsParamList>();
 
-const THEME_COLOR = "#1b4332";
-const ACCENT_COLOR = "#2f9e44";
+const THEME_COLOR = colors.brandDark;
+const ACCENT_COLOR = colors.primary;
 
+/** Consistent icon + title on every tab's header, so the brand mark is always
+ * visible and the header doesn't visually jump between tabs (same layout,
+ * only the title text differs). */
 function HeaderLogo({ title }: { title: string }) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+    <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
       <Image
         source={require("../../assets/icon-mark.png")}
         style={{ width: 26, height: 26 }}
         resizeMode="contain"
       />
-      <Text style={{ color: "#fff", fontSize: 18, fontWeight: "800" }}>{title}</Text>
+      <Text style={{ color: colors.textOnDark, fontSize: 18, fontWeight: "800" }}>{title}</Text>
     </View>
   );
 }
 
-function AccountHeaderButton({ navigation }: { navigation: BottomTabNavigationProp<MainTabsParamList, "Start"> }) {
+function AccountHeaderButton({
+  navigation,
+}: {
+  navigation: BottomTabNavigationProp<MainTabsParamList, keyof MainTabsParamList>;
+}) {
   const { session, household } = useAuth();
   const iconName = household ? "people" : session ? "person" : "person-outline";
   return (
     <TouchableOpacity
       onPress={() => navigation.getParent<NativeStackNavigationProp<RootStackParamList>>()?.navigate("Account")}
       hitSlop={12}
-      style={{ marginRight: 16 }}
     >
-      <Ionicons name={iconName} size={24} color="#fff" />
+      <Ionicons name={iconName} size={24} color={colors.textOnDark} />
     </TouchableOpacity>
+  );
+}
+
+/** Account access is available on every tab (not just Start), and Favoriten's
+ * "add recipe" action sits alongside it instead of replacing it. */
+function TabHeaderRight({
+  navigation,
+  showAdd,
+}: {
+  navigation: BottomTabNavigationProp<MainTabsParamList, keyof MainTabsParamList>;
+  showAdd?: boolean;
+}) {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.lg, marginRight: spacing.lg }}>
+      {showAdd && (
+        <TouchableOpacity
+          onPress={() =>
+            navigation.getParent<NativeStackNavigationProp<RootStackParamList>>()?.navigate("AddFavoriteRecipe")
+          }
+          hitSlop={12}
+        >
+          <Ionicons name="add-circle-outline" size={26} color={colors.textOnDark} />
+        </TouchableOpacity>
+      )}
+      <AccountHeaderButton navigation={navigation} />
+    </View>
   );
 }
 
@@ -103,16 +136,21 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: THEME_COLOR },
-        headerTintColor: "#fff",
+        headerTintColor: colors.textOnDark,
         headerShadowVisible: false,
         tabBarActiveTintColor: ACCENT_COLOR,
-        tabBarInactiveTintColor: "#9db5a6",
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
-          backgroundColor: "#fff",
-          borderTopColor: "#eef5ef",
-          height: 54 + bottomInset,
+          backgroundColor: colors.surface,
+          borderTopWidth: 0,
+          height: 56 + bottomInset,
           paddingBottom: bottomInset,
-          paddingTop: 6,
+          paddingTop: spacing.sm,
+          shadowColor: colors.brandDark,
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: -2 },
+          elevation: 8,
         },
         tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
         tabBarHideOnKeyboard: true,
@@ -127,41 +165,32 @@ function MainTabs() {
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? "home" : "home-outline"} size={size} color={color} />
           ),
-          headerRight: () => <AccountHeaderButton navigation={navigation} />,
+          headerRight: () => <TabHeaderRight navigation={navigation} />,
         })}
       />
       <Tab.Screen
         name="Favoriten"
         component={FavoritesScreen}
         options={({ navigation }) => ({
-          title: "Lieblingsrezepte",
+          headerTitle: () => <HeaderLogo title="Lieblingsrezepte" />,
           tabBarLabel: "Favoriten",
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? "heart" : "heart-outline"} size={size} color={color} />
           ),
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() =>
-                navigation.getParent<NativeStackNavigationProp<RootStackParamList>>()?.navigate("AddFavoriteRecipe")
-              }
-              hitSlop={12}
-              style={{ marginRight: 16 }}
-            >
-              <Ionicons name="add-circle-outline" size={26} color="#fff" />
-            </TouchableOpacity>
-          ),
+          headerRight: () => <TabHeaderRight navigation={navigation} showAdd />,
         })}
       />
       <Tab.Screen
         name="Einkaufsliste"
         component={ShoppingListScreen}
-        options={{
-          title: "Einkaufsliste",
+        options={({ navigation }) => ({
+          headerTitle: () => <HeaderLogo title="Einkaufsliste" />,
           tabBarLabel: "Liste",
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? "cart" : "cart-outline"} size={size} color={color} />
           ),
-        }}
+          headerRight: () => <TabHeaderRight navigation={navigation} />,
+        })}
       />
     </Tab.Navigator>
   );
@@ -178,8 +207,8 @@ export default function AppNavigator() {
 
   if (!initialRoute) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#f6fbf6" }}>
-        <ActivityIndicator color="#2f9e44" />
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -190,7 +219,7 @@ export default function AppNavigator() {
         initialRouteName={initialRoute}
         screenOptions={{
           headerStyle: { backgroundColor: THEME_COLOR },
-          headerTintColor: "#fff",
+          headerTintColor: colors.textOnDark,
           headerTitleStyle: { fontWeight: "700" },
           headerShadowVisible: false,
         }}
@@ -209,7 +238,9 @@ export default function AppNavigator() {
           options={{ title: "Zutaten" }}
         />
         <Stack.Screen name="Recipes" component={RecipesScreen} options={{ title: "Rezeptvorschläge" }} />
-        <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} options={{ title: "Rezept" }} />
+        {/* No title text here - the recipe's own large title lives in the
+            screen's hero card, which visually continues this dark header. */}
+        <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} options={{ title: "" }} />
         <Stack.Screen
           name="AddFavoriteRecipe"
           component={AddFavoriteRecipeScreen}

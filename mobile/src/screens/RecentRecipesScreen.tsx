@@ -1,9 +1,11 @@
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
 import { RECIPE_CATEGORY_LABELS, type Recipe } from "../types";
+import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 type Props = RootStackScreenProps<"RecentRecipes">;
 
@@ -14,12 +16,14 @@ export default function RecentRecipesScreen({ navigation }: Props) {
   return (
     <FlatList
       style={styles.container}
-      contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+      contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }}
       data={recent}
       keyExtractor={(item, i) => `${item.title}-${i}`}
       ListEmptyComponent={
         <View style={styles.emptyState}>
-          <Text style={styles.emptyEmoji}>🕘</Text>
+          <View style={styles.emptyIconCircle}>
+            <Ionicons name="time-outline" size={28} color={colors.primary} />
+          </View>
           <Text style={styles.emptyTitle}>Noch keine Rezepte angesehen</Text>
           <Text style={styles.emptyText}>Rezepte, die du dir ansiehst, landen hier - die letzten 20.</Text>
         </View>
@@ -30,23 +34,35 @@ export default function RecentRecipesScreen({ navigation }: Props) {
           <TouchableOpacity
             style={styles.card}
             onPress={() => navigation.navigate("RecipeDetail", { recipe: item })}
+            activeOpacity={0.85}
           >
             <View style={styles.cardHeader}>
-              <View style={{ flex: 1, marginRight: 8 }}>
+              <View style={{ flex: 1, marginRight: spacing.sm }}>
                 <Text style={styles.categoryBadge}>{RECIPE_CATEGORY_LABELS[item.category]}</Text>
                 <Text style={styles.title}>{item.title}</Text>
               </View>
               <TouchableOpacity onPress={() => toggleFavorite(item)} hitSlop={10}>
-                <Text style={styles.heart}>{favorite ? "❤️" : "🤍"}</Text>
+                <Ionicons name={favorite ? "heart" : "heart-outline"} size={20} color={favorite ? colors.danger : colors.textMuted} />
               </TouchableOpacity>
             </View>
             <Text style={styles.description} numberOfLines={2}>
               {item.description}
             </Text>
             <View style={styles.metaRow}>
-              <Text style={styles.metaItem}>⏱ {item.prepTimeMinutes + item.cookTimeMinutes} min</Text>
-              <Text style={styles.metaItem}>🍽 {item.servings} Port.</Text>
-              {!!item.nutrition.calories && <Text style={styles.metaItem}>🔥 {item.nutrition.calories} kcal</Text>}
+              <View style={styles.metaItem}>
+                <Ionicons name="time-outline" size={13} color={colors.textSecondary} />
+                <Text style={styles.metaItemText}>{item.prepTimeMinutes + item.cookTimeMinutes} min</Text>
+              </View>
+              <View style={styles.metaItem}>
+                <Ionicons name="restaurant-outline" size={13} color={colors.textSecondary} />
+                <Text style={styles.metaItemText}>{item.servings} Port.</Text>
+              </View>
+              {!!item.nutrition.calories && (
+                <View style={styles.metaItem}>
+                  <Ionicons name="flame-outline" size={13} color={colors.textSecondary} />
+                  <Text style={styles.metaItemText}>{item.nutrition.calories} kcal</Text>
+                </View>
+              )}
             </View>
           </TouchableOpacity>
         );
@@ -56,26 +72,31 @@ export default function RecentRecipesScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: colors.bg },
   emptyState: { alignItems: "center", justifyContent: "center", paddingTop: 80, paddingHorizontal: 32 },
-  emptyEmoji: { fontSize: 44, marginBottom: 14 },
-  emptyTitle: { fontSize: 16, fontWeight: "700", color: "#1b4332", marginBottom: 6 },
-  emptyText: { fontSize: 13, color: "#7a8f83", textAlign: "center", lineHeight: 19 },
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.bgAlt,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.lg,
+  },
+  emptyTitle: { ...t.section, color: colors.textPrimary, marginBottom: spacing.sm },
+  emptyText: { fontSize: 13, color: colors.textMuted, textAlign: "center", lineHeight: 19 },
   card: {
-    backgroundColor: "#f6fbf6",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
+    padding: spacing.lg,
+    marginBottom: spacing.md + 2,
+    ...shadow.soft,
   },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  categoryBadge: { fontSize: 11, color: "#2f9e44", fontWeight: "700", marginBottom: 2, textTransform: "uppercase" },
-  title: { fontSize: 17, fontWeight: "800", color: "#1b4332" },
-  heart: { fontSize: 20 },
-  description: { fontSize: 13, color: "#40616b", marginTop: 6, lineHeight: 18 },
-  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 10 },
-  metaItem: { fontSize: 12, color: "#40616b" },
+  categoryBadge: { fontSize: 11, color: colors.primary, fontWeight: "700", marginBottom: 2, textTransform: "uppercase" },
+  title: { fontSize: 16, fontWeight: "800", color: colors.textPrimary },
+  description: { fontSize: 13, color: colors.textSecondary, marginTop: spacing.sm, lineHeight: 18 },
+  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md, marginTop: spacing.md },
+  metaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  metaItemText: { fontSize: 12, color: colors.textSecondary },
 });

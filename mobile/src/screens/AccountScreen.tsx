@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 export default function AccountScreen() {
   const { configured, loading, session, household, signInWithGoogle, signOut, createHousehold, joinHousehold } =
@@ -23,7 +24,7 @@ export default function AccountScreen() {
   if (!configured) {
     return (
       <View style={styles.center}>
-        <Ionicons name="construct-outline" size={40} color="#c3d6c8" />
+        <Ionicons name="construct-outline" size={40} color={colors.border} />
         <Text style={styles.notConfiguredText}>
           Konto-Funktion ist noch nicht eingerichtet. Sobald Supabase konfiguriert ist, kannst du dich hier mit
           Google anmelden und einen gemeinsamen Haushalt einrichten.
@@ -35,7 +36,7 @@ export default function AccountScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#2f9e44" />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -43,7 +44,7 @@ export default function AccountScreen() {
   if (!session) {
     return (
       <View style={styles.center}>
-        <Ionicons name="people-circle-outline" size={56} color="#2f9e44" />
+        <Ionicons name="people-circle-outline" size={56} color={colors.primary} />
         <Text style={styles.title}>Gemeinsam als Haushalt</Text>
         <Text style={styles.text}>
           Melde dich an, um Lieblingsrezepte mit deinem Haushalt zu teilen - jeder sieht dieselbe Liste, live
@@ -55,10 +56,10 @@ export default function AccountScreen() {
           disabled={busy}
         >
           {busy ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.textOnDark} />
           ) : (
             <>
-              <Ionicons name="logo-google" size={18} color="#fff" />
+              <Ionicons name="logo-google" size={18} color={colors.textOnDark} />
               <Text style={styles.primaryButtonText}>Mit Google anmelden</Text>
             </>
           )}
@@ -76,7 +77,7 @@ export default function AccountScreen() {
         </Text>
 
         <TouchableOpacity style={styles.primaryButton} onPress={() => handle(() => createHousehold())} disabled={busy}>
-          {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Neuen Haushalt erstellen</Text>}
+          {busy ? <ActivityIndicator color={colors.textOnDark} /> : <Text style={styles.primaryButtonText}>Neuen Haushalt erstellen</Text>}
         </TouchableOpacity>
 
         <Text style={styles.orText}>oder</Text>
@@ -105,7 +106,7 @@ export default function AccountScreen() {
 
   return (
     <View style={styles.container}>
-      <Ionicons name="home-outline" size={40} color="#2f9e44" />
+      <Ionicons name="home-outline" size={40} color={colors.primary} />
       <Text style={styles.title}>{household.name || "Dein Haushalt"}</Text>
       <Text style={styles.text}>
         Angemeldet als {session.user.email}. Lieblingsrezepte werden jetzt mit deinem Haushalt geteilt.
@@ -122,7 +123,7 @@ export default function AccountScreen() {
             })
           }
         >
-          <Ionicons name="share-outline" size={16} color="#2f9e44" />
+          <Ionicons name="share-outline" size={16} color={colors.primary} />
           <Text style={styles.shareButtonText}>Code teilen</Text>
         </TouchableOpacity>
       </View>
@@ -135,60 +136,61 @@ export default function AccountScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f6fbf6", padding: 24, alignItems: "center", paddingTop: 48 },
-  center: { flex: 1, backgroundColor: "#f6fbf6", padding: 32, alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 20, fontWeight: "800", color: "#1b4332", marginTop: 14, marginBottom: 8, textAlign: "center" },
-  text: { fontSize: 14, color: "#5c7a6a", textAlign: "center", lineHeight: 20, marginBottom: 24 },
-  notConfiguredText: { fontSize: 14, color: "#7a8f83", textAlign: "center", lineHeight: 20, marginTop: 14 },
+  container: { flex: 1, backgroundColor: colors.bg, padding: spacing.xxl, alignItems: "center", paddingTop: 48 },
+  center: { flex: 1, backgroundColor: colors.bg, padding: spacing.xxxl, alignItems: "center", justifyContent: "center" },
+  title: { ...t.title, fontSize: 20, color: colors.textPrimary, marginTop: spacing.md + 2, marginBottom: spacing.sm, textAlign: "center" },
+  text: { fontSize: 14, color: colors.textSecondary, textAlign: "center", lineHeight: 20, marginBottom: spacing.xxl },
+  notConfiguredText: { fontSize: 14, color: colors.textMuted, textAlign: "center", lineHeight: 20, marginTop: spacing.md + 2 },
   primaryButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
-    backgroundColor: "#2f9e44",
+    gap: spacing.sm + 2,
+    backgroundColor: colors.primary,
     paddingVertical: 15,
-    paddingHorizontal: 28,
-    borderRadius: 14,
+    paddingHorizontal: spacing.xxl,
+    borderRadius: radius.button,
     width: "100%",
+    ...shadow.button,
   },
-  primaryButtonText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  primaryButtonText: { color: colors.textOnDark, fontSize: 15, fontWeight: "700" },
   secondaryButton: {
     borderWidth: 1.5,
-    borderColor: "#2f9e44",
-    paddingVertical: 13,
-    borderRadius: 14,
+    borderColor: colors.primary,
+    paddingVertical: spacing.md + 1,
+    borderRadius: radius.button,
     width: "100%",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: colors.surface,
   },
-  secondaryButtonText: { color: "#2f9e44", fontSize: 15, fontWeight: "700" },
-  orText: { color: "#9db5a6", fontSize: 13, marginVertical: 14 },
+  secondaryButtonText: { color: colors.primary, fontSize: 15, fontWeight: "700" },
+  orText: { color: colors.textMuted, fontSize: 13, marginVertical: spacing.md + 2 },
   input: {
     width: "100%",
     borderWidth: 1,
-    borderColor: "#d8e6da",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderColor: colors.border,
+    borderRadius: radius.control,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.md + 2,
     fontSize: 15,
-    backgroundColor: "#fff",
-    marginBottom: 12,
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
+    marginBottom: spacing.md,
     textAlign: "center",
     letterSpacing: 2,
   },
-  plainButton: { marginTop: 24, paddingVertical: 10 },
-  plainButtonText: { color: "#c92a2a", fontSize: 14, fontWeight: "600" },
+  plainButton: { marginTop: spacing.xxl, paddingVertical: spacing.sm + 2 },
+  plainButtonText: { color: colors.danger, fontSize: 14, fontWeight: "600" },
   codeCard: {
     width: "100%",
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    padding: 20,
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
+    padding: spacing.xl,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#e6f0e8",
+    ...shadow.soft,
   },
-  codeLabel: { fontSize: 12, color: "#7a8f83", marginBottom: 6 },
-  codeValue: { fontSize: 28, fontWeight: "800", color: "#1b4332", letterSpacing: 4, marginBottom: 14 },
+  codeLabel: { fontSize: 12, color: colors.textMuted, marginBottom: spacing.xs + 2 },
+  codeValue: { fontSize: 28, fontWeight: "800", color: colors.textPrimary, letterSpacing: 4, marginBottom: spacing.md + 2 },
   shareButton: { flexDirection: "row", alignItems: "center", gap: 6 },
-  shareButtonText: { color: "#2f9e44", fontSize: 13, fontWeight: "700" },
+  shareButtonText: { color: colors.primary, fontSize: 13, fontWeight: "700" },
 });

@@ -9,6 +9,7 @@ import { analyzeFridgePhoto } from "../api/client";
 import LoadingLogo from "../components/LoadingLogo";
 import { usePantry } from "../context/PantryContext";
 import { mergeFridgeItems } from "../utils/fridgeItems";
+import { colors, radius, spacing } from "../constants/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Camera">;
 
@@ -97,8 +98,11 @@ export default function CameraScreen({ navigation, route }: Props) {
   if (!permission.granted) {
     return (
       <View style={styles.center}>
+        <View style={styles.permissionIconCircle}>
+          <Ionicons name="camera-outline" size={28} color={colors.primary} />
+        </View>
         <Text style={styles.permissionText}>Foodicted braucht Zugriff auf deine Kamera.</Text>
-        <TouchableOpacity style={styles.primaryButton} onPress={requestPermission}>
+        <TouchableOpacity style={styles.primaryButton} onPress={requestPermission} activeOpacity={0.85}>
           <Text style={styles.primaryButtonText}>Zugriff erlauben</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.secondaryButton} onPress={pickFromGallery}>
@@ -123,7 +127,7 @@ export default function CameraScreen({ navigation, route }: Props) {
       <View style={styles.topBar}>
         {!matchRecipe && pantryLoaded && pantry.items.length ? (
           <TouchableOpacity style={styles.topBarPill} onPress={openPantry}>
-            <Ionicons name="time-outline" size={15} color="#fff" />
+            <Ionicons name="time-outline" size={15} color={colors.textOnDark} />
             <Text style={styles.topBarPillText}>Mein Vorrat · {formatRelativeTime(pantry.updatedAt)}</Text>
           </TouchableOpacity>
         ) : (
@@ -134,15 +138,16 @@ export default function CameraScreen({ navigation, route }: Props) {
           onPress={() => setTorchOn((v) => !v)}
           hitSlop={8}
         >
-          <Ionicons name={torchOn ? "flash" : "flash-off"} size={20} color={torchOn ? "#1b4332" : "#fff"} />
+          <Ionicons name={torchOn ? "flash" : "flash-off"} size={20} color={torchOn ? colors.textPrimary : colors.textOnDark} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.controls}>
-        <TouchableOpacity style={styles.galleryButton} onPress={pickFromGallery}>
+        <TouchableOpacity style={styles.galleryButton} onPress={pickFromGallery} activeOpacity={0.7}>
+          <Ionicons name="images-outline" size={20} color={colors.textOnDark} />
           <Text style={styles.galleryButtonText}>Galerie</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.shutterButton} onPress={takePhoto}>
+        <TouchableOpacity style={styles.shutterButton} onPress={takePhoto} activeOpacity={0.85}>
           <View style={styles.shutterInner} />
         </TouchableOpacity>
         <View style={styles.galleryButton} />
@@ -156,9 +161,9 @@ const styles = StyleSheet.create({
   camera: { flex: 1 },
   topBar: {
     position: "absolute",
-    top: 16,
-    left: 16,
-    right: 16,
+    top: spacing.lg,
+    left: spacing.lg,
+    right: spacing.lg,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -168,22 +173,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     backgroundColor: "rgba(0,0,0,0.55)",
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md + 2,
   },
-  topBarPillText: { color: "#fff", fontSize: 12, fontWeight: "700" },
+  topBarPillText: { color: colors.textOnDark, fontSize: 12, fontWeight: "700" },
   matchBanner: {
     position: "absolute",
     top: 64,
-    left: 16,
-    right: 16,
+    left: spacing.lg,
+    right: spacing.lg,
     backgroundColor: "rgba(0,0,0,0.55)",
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    borderRadius: radius.control,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md + 2,
   },
-  matchBannerText: { color: "#fff", fontSize: 13, fontWeight: "600", lineHeight: 18 },
+  matchBannerText: { color: colors.textOnDark, fontSize: 13, fontWeight: "600", lineHeight: 18 },
   torchButton: {
     width: 40,
     height: 40,
@@ -192,13 +197,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  torchButtonActive: { backgroundColor: "#fff" },
+  torchButtonActive: { backgroundColor: colors.textOnDark },
   controls: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingVertical: 28,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.xxl + 4,
     backgroundColor: "#000",
   },
   shutterButton: {
@@ -206,18 +211,27 @@ const styles = StyleSheet.create({
     height: 76,
     borderRadius: 38,
     borderWidth: 4,
-    borderColor: "#fff",
+    borderColor: colors.textOnDark,
     alignItems: "center",
     justifyContent: "center",
   },
-  shutterInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: "#fff" },
-  galleryButton: { width: 70, alignItems: "center" },
-  galleryButtonText: { color: "#fff", fontSize: 14 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, backgroundColor: "#f6fbf6" },
-  loadingText: { marginTop: 16, fontSize: 15, color: "#40616b" },
-  permissionText: { fontSize: 16, textAlign: "center", marginBottom: 20, color: "#1b4332" },
-  primaryButton: { backgroundColor: "#2f9e44", paddingVertical: 14, paddingHorizontal: 28, borderRadius: 12, marginBottom: 12 },
-  primaryButtonText: { color: "#fff", fontWeight: "700", fontSize: 15 },
-  secondaryButton: { paddingVertical: 10 },
-  secondaryButtonText: { color: "#2f9e44", fontSize: 14 },
+  shutterInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: colors.textOnDark },
+  galleryButton: { width: 70, alignItems: "center", gap: 4 },
+  galleryButtonText: { color: colors.textOnDark, fontSize: 12, fontWeight: "600" },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing.xxl, backgroundColor: colors.bg },
+  permissionIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.bgAlt,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.lg,
+  },
+  loadingText: { marginTop: spacing.lg, fontSize: 15, color: colors.textSecondary },
+  permissionText: { fontSize: 16, textAlign: "center", marginBottom: spacing.xl, color: colors.textPrimary },
+  primaryButton: { backgroundColor: colors.primary, paddingVertical: spacing.md + 2, paddingHorizontal: spacing.xxl, borderRadius: radius.button, marginBottom: spacing.md },
+  primaryButtonText: { color: colors.textOnDark, fontWeight: "700", fontSize: 15 },
+  secondaryButton: { paddingVertical: spacing.sm + 2 },
+  secondaryButtonText: { color: colors.primary, fontSize: 14 },
 });

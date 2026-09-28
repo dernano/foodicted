@@ -4,6 +4,7 @@ import React from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
 import { APP_FEATURES } from "../constants/features";
+import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 export const ONBOARDING_SEEN_KEY = "foodicted.onboardingSeen";
 
@@ -29,7 +30,7 @@ export default function OnboardingScreen({ navigation }: Props) {
         {APP_FEATURES.map((f) => (
           <View key={f.title} style={styles.featureRow}>
             <View style={styles.iconCircle}>
-              <Ionicons name={f.icon} size={20} color="#2f9e44" />
+              <Ionicons name={f.icon} size={20} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.featureTitle}>{f.title}</Text>
@@ -49,39 +50,35 @@ export default function OnboardingScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f6fbf6" },
-  scrollContent: { padding: 24, paddingBottom: 8, alignItems: "center" },
-  logo: { width: 170, height: 130, marginTop: 20, marginBottom: 8 },
-  title: { fontSize: 22, fontWeight: "800", color: "#1b4332", textAlign: "center", marginBottom: 4 },
-  subtitle: { fontSize: 14, color: "#5c7a6a", marginBottom: 24 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  scrollContent: { padding: spacing.xxl, paddingBottom: spacing.sm, alignItems: "center" },
+  logo: { width: 170, height: 130, marginTop: spacing.xl, marginBottom: spacing.sm },
+  title: { ...t.title, fontSize: 22, color: colors.textPrimary, textAlign: "center", marginBottom: spacing.xs },
+  subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.xxl },
   featureRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 14,
+    gap: spacing.md + 2,
     width: "100%",
-    marginBottom: 20,
+    marginBottom: spacing.xl,
   },
   iconCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#eaf7ec",
+    backgroundColor: colors.bgAlt,
     alignItems: "center",
     justifyContent: "center",
   },
-  featureTitle: { fontSize: 15, fontWeight: "700", color: "#1b4332", marginBottom: 2 },
-  featureText: { fontSize: 13, color: "#5c7a6a", lineHeight: 18 },
-  footer: { padding: 20, backgroundColor: "#f6fbf6" },
+  featureTitle: { fontSize: 15, fontWeight: "700", color: colors.textPrimary, marginBottom: 2 },
+  featureText: { fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
+  footer: { padding: spacing.xl, backgroundColor: colors.bg },
   button: {
-    backgroundColor: "#2f9e44",
-    borderRadius: 14,
-    paddingVertical: 16,
+    backgroundColor: colors.primary,
+    borderRadius: radius.button,
+    paddingVertical: spacing.lg,
     alignItems: "center",
-    shadowColor: "#2f9e44",
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    ...shadow.button,
   },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  buttonText: { color: colors.textOnDark, fontSize: 16, fontWeight: "700" },
 });

@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity,
 import type { MainTabsScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
 import { RECIPE_CATEGORY_LABELS, type FavoriteRecipe, type RecipeCategory } from "../types";
+import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 type Props = MainTabsScreenProps<"Favoriten">;
 type CategoryFilter = RecipeCategory | "alle";
@@ -45,7 +46,7 @@ export default function FavoritesScreen({ navigation }: Props) {
   if (!ready) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator color="#2f9e44" />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -53,14 +54,14 @@ export default function FavoritesScreen({ navigation }: Props) {
   return (
     <FlatList
       style={styles.container}
-      contentContainerStyle={{ padding: 16, paddingBottom: 32, flexGrow: 1 }}
+      contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl, flexGrow: 1 }}
       data={filtered}
       keyExtractor={(item) => item.id}
       ListHeaderComponent={
         <View>
           {shared && (
             <View style={styles.sharedBanner}>
-              <Ionicons name="people" size={15} color="#2f9e44" />
+              <Ionicons name="people" size={15} color={colors.primary} />
               <Text style={styles.sharedBannerText}>Geteilt mit deinem Haushalt - live synchron</Text>
             </View>
           )}
@@ -108,7 +109,9 @@ export default function FavoritesScreen({ navigation }: Props) {
       }
       ListEmptyComponent={
         <View style={styles.emptyState}>
-          <Text style={styles.emptyEmoji}>💚</Text>
+          <View style={styles.emptyIconCircle}>
+            <Ionicons name="heart" size={28} color={colors.primary} />
+          </View>
           <Text style={styles.emptyTitle}>Noch keine Lieblingsrezepte</Text>
           <Text style={styles.emptyText}>
             Tippe bei einem Rezeptvorschlag auf das Herz-Symbol, um es hier zu speichern - inklusive aller
@@ -121,33 +124,45 @@ export default function FavoritesScreen({ navigation }: Props) {
           style={styles.card}
           onPress={() => navigation.navigate("RecipeDetail", { recipe: item })}
           onLongPress={() => confirmRemove(item)}
+          activeOpacity={0.85}
         >
           <View style={styles.cardHeader}>
-            <View style={{ flex: 1, marginRight: 8 }}>
+            <View style={{ flex: 1, marginRight: spacing.sm }}>
               <Text style={styles.categoryBadge}>{RECIPE_CATEGORY_LABELS[item.category]}</Text>
               <Text style={styles.title}>{item.title}</Text>
             </View>
             <TouchableOpacity onPress={() => confirmRemove(item)} hitSlop={10}>
-              <Text style={styles.removeIcon}>🗑</Text>
+              <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
           <Text style={styles.description}>{item.description}</Text>
 
           <View style={styles.metaRow}>
-            <Text style={styles.metaItem}>
-              ⏱ {item.prepTimeMinutes + item.cookTimeMinutes ? `${item.prepTimeMinutes + item.cookTimeMinutes} min` : "-"}
-            </Text>
-            <Text style={styles.metaItem}>🍽 {item.servings} Port.</Text>
-            {!!item.nutrition.calories && <Text style={styles.metaItem}>🔥 {item.nutrition.calories} kcal</Text>}
+            <View style={styles.metaItem}>
+              <Ionicons name="time-outline" size={13} color={colors.textSecondary} />
+              <Text style={styles.metaItemText}>
+                {item.prepTimeMinutes + item.cookTimeMinutes ? `${item.prepTimeMinutes + item.cookTimeMinutes} min` : "-"}
+              </Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Ionicons name="restaurant-outline" size={13} color={colors.textSecondary} />
+              <Text style={styles.metaItemText}>{item.servings} Port.</Text>
+            </View>
+            {!!item.nutrition.calories && (
+              <View style={styles.metaItem}>
+                <Ionicons name="flame-outline" size={13} color={colors.textSecondary} />
+                <Text style={styles.metaItemText}>{item.nutrition.calories} kcal</Text>
+              </View>
+            )}
           </View>
 
-          <Text style={styles.ingredientsLabel}>Benötigte Zutaten:</Text>
+          <Text style={styles.ingredientsLabel}>Benötigte Zutaten</Text>
           <Text style={styles.ingredientsText} numberOfLines={3}>
             {item.ingredients.map((ing) => `${ing.amount} ${ing.name}`).join(" · ")}
           </Text>
 
           {!!item.missingIngredients.length && (
-            <Text style={styles.shopping}>🛒 Einzukaufen: {item.missingIngredients.join(", ")}</Text>
+            <Text style={styles.shopping}>Einzukaufen: {item.missingIngredients.join(", ")}</Text>
           )}
           {!!item.tags.length && (
             <View style={styles.tagRow}>
@@ -165,67 +180,68 @@ export default function FavoritesScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: colors.bg },
+  loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg },
   sharedBanner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    backgroundColor: "#eaf7ec",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    marginBottom: 14,
+    gap: spacing.sm,
+    backgroundColor: colors.bgAlt,
+    borderRadius: radius.control,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md + 2,
+    marginBottom: spacing.md + 2,
   },
-  sharedBannerText: { fontSize: 12, color: "#1b4332", fontWeight: "600" },
-  filterRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 14 },
+  sharedBannerText: { fontSize: 12, color: colors.textPrimary, fontWeight: "600" },
+  filterRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginBottom: spacing.md + 2 },
   filterChip: {
-    borderWidth: 1,
-    borderColor: "#c9e6cf",
-    borderRadius: 20,
+    borderRadius: radius.pill,
     paddingVertical: 7,
-    paddingHorizontal: 13,
-    backgroundColor: "#fff",
+    paddingHorizontal: spacing.md + 1,
+    backgroundColor: colors.chipInactiveBg,
   },
-  filterChipSelected: { backgroundColor: "#2f9e44", borderColor: "#2f9e44" },
-  filterChipText: { color: "#1b4332", fontSize: 12, fontWeight: "600" },
-  filterChipTextSelected: { color: "#fff" },
+  filterChipSelected: { backgroundColor: colors.primary },
+  filterChipText: { color: colors.chipInactiveText, fontSize: 12, fontWeight: "600" },
+  filterChipTextSelected: { color: colors.textOnDark },
   tagFilterChip: {
-    borderWidth: 1,
-    borderColor: "#d8e6da",
-    borderRadius: 20,
+    borderRadius: radius.pill,
     paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: "#fafffb",
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.chipInactiveBg,
   },
-  tagFilterChipSelected: { backgroundColor: "#1b4332", borderColor: "#1b4332" },
-  tagFilterChipText: { color: "#5c7a6a", fontSize: 11, fontWeight: "600" },
-  tagFilterChipTextSelected: { color: "#fff" },
+  tagFilterChipSelected: { backgroundColor: colors.brandDark },
+  tagFilterChipText: { color: colors.chipInactiveText, fontSize: 11, fontWeight: "600" },
+  tagFilterChipTextSelected: { color: colors.textOnDark },
   emptyState: { flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 80, paddingHorizontal: 32 },
-  emptyEmoji: { fontSize: 48, marginBottom: 16 },
-  emptyTitle: { fontSize: 17, fontWeight: "700", color: "#1b4332", marginBottom: 8 },
-  emptyText: { fontSize: 14, color: "#7a8f83", textAlign: "center", lineHeight: 20 },
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.bgAlt,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.lg,
+  },
+  emptyTitle: { ...t.section, color: colors.textPrimary, marginBottom: spacing.sm },
+  emptyText: { fontSize: 14, color: colors.textMuted, textAlign: "center", lineHeight: 20 },
   card: {
-    backgroundColor: "#f6fbf6",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
+    padding: spacing.lg,
+    marginBottom: spacing.md + 2,
+    ...shadow.soft,
   },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  categoryBadge: { fontSize: 11, color: "#2f9e44", fontWeight: "700", marginBottom: 2, textTransform: "uppercase" },
-  title: { fontSize: 17, fontWeight: "800", color: "#1b4332" },
-  removeIcon: { fontSize: 18 },
-  description: { fontSize: 13, color: "#40616b", marginTop: 6, lineHeight: 18 },
-  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 10 },
-  metaItem: { fontSize: 12, color: "#40616b" },
-  ingredientsLabel: { fontSize: 12, fontWeight: "700", color: "#1b4332", marginTop: 12 },
-  ingredientsText: { fontSize: 12, color: "#40616b", marginTop: 4, lineHeight: 17 },
-  shopping: { fontSize: 12, color: "#966b1f", marginTop: 8 },
-  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 10 },
-  tagPill: { backgroundColor: "#d8f0dc", borderRadius: 12, paddingVertical: 4, paddingHorizontal: 10 },
-  tagPillText: { fontSize: 11, color: "#1b4332", fontWeight: "600" },
+  categoryBadge: { fontSize: 11, color: colors.primary, fontWeight: "700", marginBottom: 2, textTransform: "uppercase" },
+  title: { fontSize: 16, fontWeight: "800", color: colors.textPrimary },
+  description: { fontSize: 13, color: colors.textSecondary, marginTop: spacing.sm, lineHeight: 18 },
+  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md, marginTop: spacing.md },
+  metaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  metaItemText: { fontSize: 12, color: colors.textSecondary },
+  ingredientsLabel: { fontSize: 12, fontWeight: "700", color: colors.textPrimary, marginTop: spacing.md },
+  ingredientsText: { fontSize: 12, color: colors.textSecondary, marginTop: spacing.xs, lineHeight: 17 },
+  shopping: { fontSize: 12, color: colors.noticeText, marginTop: spacing.sm },
+  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs, marginTop: spacing.md },
+  tagPill: { backgroundColor: colors.bgAlt, borderRadius: radius.pill, paddingVertical: 4, paddingHorizontal: spacing.sm },
+  tagPillText: { fontSize: 11, color: colors.textPrimary, fontWeight: "600" },
 });
