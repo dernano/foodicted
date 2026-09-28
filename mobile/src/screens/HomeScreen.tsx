@@ -8,15 +8,23 @@ import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 type Props = MainTabsScreenProps<"Start">;
 
-/** Sampled from the hero photo's own background so the Home canvas reads as
- * one continuous surface instead of a visible image rectangle. Scoped to
- * this screen only - other screens keep the shared `colors.bg` token. */
-const HERO_BG = "#f3f1e6";
+/** Sampled from the calm lower area of the hero photo so the Home canvas
+ * reads as one continuous surface instead of a visible image rectangle.
+ * Scoped to this screen only - other screens keep the shared `colors.bg`. */
+const HERO_BG = "#f2efe5";
 
-/** height / width of the source asset (1672x941) - used to compute an exact
- * pixel height below, since `aspectRatio` alone is unreliable on Image and
- * was rendering it at its raw asset pixel size instead of scaling to fit. */
-const HERO_ASPECT = 941 / 1672;
+/** height / width of the source asset (941x1672) - a tall background plate
+ * with food concentrated near the top, deliberately larger than any hero
+ * crop. We scale it to the full device width and let it overflow downward,
+ * clipped by the (shorter) hero window - see heroWrap/HomeScreen below. */
+const HERO_SOURCE_ASPECT = 1672 / 941;
+
+/** Responsive hero height: ~30% of the window, clamped so it stays sensible
+ * on very small or very large screens instead of one fixed pixel value. */
+function useHeroHeight(): number {
+  const { height } = useWindowDimensions();
+  return Math.min(Math.max(height * 0.3, 220), 340);
+}
 
 function preferenceLines(preferences: ReturnType<typeof usePreferences>["preferences"]): string[] {
   const lines: string[] = [];
@@ -37,23 +45,32 @@ export default function HomeScreen({ navigation }: Props) {
   const { preferences } = usePreferences();
   const { recent } = useRecentRecipes();
   const { width: windowWidth } = useWindowDimensions();
-  const heroWidth = windowWidth - spacing.xxl * 2;
-  const heroHeight = heroWidth * HERO_ASPECT;
+  const heroHeight = useHeroHeight();
+  const heroImageHeight = windowWidth * HERO_SOURCE_ASPECT;
 
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* "contain" (not "cover") so nothing of the baked-in logo/wordmark/
-            slogan is ever cropped - the matching background color makes the
-            image read as part of the page instead of a separate rectangle. */}
-        <Image
-          source={require("../../assets/images/foodicted-hero.jpg")}
-          style={[styles.hero, { width: heroWidth, height: heroHeight }]}
-          resizeMode="contain"
-          accessible
-          accessibilityRole="image"
-          accessibilityLabel="Foodicted – Erst scannen, dann schlemmen."
-        />
+        {/* Full-bleed: an explicit windowWidth size, centered by the padded
+            parent, overflows past its padding to reach both screen edges. */}
+        <View style={[styles.heroWrap, { width: windowWidth, height: heroHeight }]}>
+          {/* Scaled to the full device width and top-anchored (default flow
+              position) - the source is much taller than the hero window, so
+              the calm middle/bottom gets clipped instead of the food-forward
+              top. Decorative only; the real, accessible copy is native text. */}
+          <Image
+            source={require("../../assets/images/foodicted-hero-bg.jpg")}
+            style={{ width: windowWidth, height: heroImageHeight }}
+            resizeMode="cover"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          />
+          <View style={styles.heroTextBlock}>
+            <Image source={require("../../assets/icon-mark.png")} style={styles.heroBrandIcon} resizeMode="contain" />
+            <Text style={styles.heroHeadline}>Was können wir heute kochen?</Text>
+            <Text style={styles.heroSlogan}>Erst scannen, dann schlemmen.</Text>
+          </View>
+        </View>
 
         <TouchableOpacity
           style={styles.primaryButton}
@@ -150,11 +167,29 @@ export default function HomeScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: HERO_BG },
-  container: { flexGrow: 1, alignItems: "center", padding: spacing.xxl, paddingBottom: spacing.xxl, backgroundColor: HERO_BG },
-  hero: {
+  container: {
+    flexGrow: 1,
+    alignItems: "center",
+    paddingHorizontal: spacing.xxl,
+    paddingBottom: spacing.xxl,
+    backgroundColor: HERO_BG,
+  },
+  heroWrap: {
+    overflow: "hidden",
     backgroundColor: HERO_BG,
     marginBottom: spacing.sm,
   },
+  heroTextBlock: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: spacing.xxl,
+    paddingBottom: spacing.lg,
+  },
+  heroBrandIcon: { width: 32, height: 32, marginBottom: spacing.xs },
+  heroHeadline: { ...t.title, fontSize: 22, lineHeight: 27, color: colors.textPrimary, marginBottom: 4 },
+  heroSlogan: { ...t.bodyStrong, color: colors.primary },
   primaryButton: {
     flexDirection: "row",
     alignItems: "center",
