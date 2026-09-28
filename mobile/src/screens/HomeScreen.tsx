@@ -19,11 +19,16 @@ const HERO_BG = "#f2efe5";
  * clipped by the (shorter) hero window - see heroWrap/HomeScreen below. */
 const HERO_SOURCE_ASPECT = 1672 / 941;
 
-/** Responsive hero height: ~30% of the window, clamped so it stays sensible
+/** rgb() of HERO_BG, used to fade the photo into the canvas without any
+ * gradient library (a stack of increasingly-opaque bands, pure Views). */
+const HERO_BG_RGB = "242,239,229";
+const HERO_FADE_STEPS = [0.05, 0.14, 0.26, 0.42, 0.6, 0.78, 0.92, 1];
+
+/** Responsive hero height: ~26% of the window, clamped so it stays sensible
  * on very small or very large screens instead of one fixed pixel value. */
 function useHeroHeight(): number {
   const { height } = useWindowDimensions();
-  return Math.min(Math.max(height * 0.3, 220), 340);
+  return Math.min(Math.max(height * 0.26, 196), 298);
 }
 
 function preferenceLines(preferences: ReturnType<typeof usePreferences>["preferences"]): string[] {
@@ -47,6 +52,9 @@ export default function HomeScreen({ navigation }: Props) {
   const { width: windowWidth } = useWindowDimensions();
   const heroHeight = useHeroHeight();
   const heroImageHeight = windowWidth * HERO_SOURCE_ASPECT;
+  const heroFadeHeight = heroHeight * 0.64;
+  const contentWidth = windowWidth - spacing.xxl * 2;
+  const heroLogoSize = Math.min(Math.max(contentWidth * 0.17, 56), 80);
 
   return (
     <View style={styles.screen}>
@@ -65,8 +73,21 @@ export default function HomeScreen({ navigation }: Props) {
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           />
+          {/* Soft fade into the canvas color - a stack of increasingly-opaque
+              bands instead of a gradient library (would need a native rebuild). */}
+          <View style={[styles.heroFade, { height: heroFadeHeight }]} pointerEvents="none">
+            {HERO_FADE_STEPS.map((alpha, i) => (
+              <View key={i} style={{ flex: 1, backgroundColor: `rgba(${HERO_BG_RGB},${alpha})` }} />
+            ))}
+          </View>
+          {/* Left-aligned, deliberately narrower than the hero so the headline
+              wraps onto two lines well clear of the food on the right. */}
           <View style={styles.heroTextBlock}>
-            <Image source={require("../../assets/icon-mark.png")} style={styles.heroBrandIcon} resizeMode="contain" />
+            <Image
+              source={require("../../assets/icon-mark.png")}
+              style={[styles.heroBrandLogo, { width: heroLogoSize, height: heroLogoSize }]}
+              resizeMode="contain"
+            />
             <Text style={styles.heroHeadline}>Was können wir heute kochen?</Text>
             <Text style={styles.heroSlogan}>Erst scannen, dann schlemmen.</Text>
           </View>
@@ -177,17 +198,18 @@ const styles = StyleSheet.create({
   heroWrap: {
     overflow: "hidden",
     backgroundColor: HERO_BG,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
+  heroFade: { position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "column" },
   heroTextBlock: {
     position: "absolute",
     left: 0,
-    right: 0,
     bottom: 0,
-    paddingHorizontal: spacing.xxl,
-    paddingBottom: spacing.lg,
+    width: "64%",
+    paddingLeft: spacing.xxl,
+    paddingBottom: spacing.md,
   },
-  heroBrandIcon: { width: 32, height: 32, marginBottom: spacing.xs },
+  heroBrandLogo: { marginBottom: spacing.sm },
   heroHeadline: { ...t.title, fontSize: 22, lineHeight: 27, color: colors.textPrimary, marginBottom: 4 },
   heroSlogan: { ...t.bodyStrong, color: colors.primary },
   primaryButton: {
