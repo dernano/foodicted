@@ -47,12 +47,6 @@
         {
           "photosPermission": "Foodicted braucht Zugriff auf deine Fotos, um ein Foto deines Vorrats auszuwählen."
         }
-      ],
-      [
-        "expo-notifications",
-        {
-          "color": "#2f9e44"
-        }
       ]
     ],
     "extra": {

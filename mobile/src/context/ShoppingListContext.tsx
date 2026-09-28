@@ -2,7 +2,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./AuthContext";
-import { notifyHouseholdMembers } from "../utils/pushNotifications";
 import type { ShoppingListItem } from "../types";
 
 const STORAGE_KEY = "foodicted.shoppingList";
@@ -163,8 +162,6 @@ export function ShoppingListProvider({ children }: { children: React.ReactNode }
           .select("*");
         if (!error && data) {
           setRemoteItems((prev) => [...prev, ...(data as ShoppingRow[]).map(rowToItem)]);
-          const body = clean.length === 1 ? `„${clean[0]}" wurde hinzugefügt` : `${clean.length} Artikel wurden hinzugefügt`;
-          notifyHouseholdMembers(household.id, "🛒 Einkaufsliste", body);
         } else if (error) {
           console.warn("Failed to add shared shopping list items", error);
         }
@@ -203,29 +200,26 @@ export function ShoppingListProvider({ children }: { children: React.ReactNode }
 
   const removeItem = useCallback(
     async (id: string) => {
-      if (shared && household) {
-        const current = remoteItems.find((i) => i.id === id);
+      if (shared) {
         await supabase.from("shopping_list_items").delete().eq("id", id);
         setRemoteItems((prev) => prev.filter((i) => i.id !== id));
-        if (current) notifyHouseholdMembers(household.id, "🛒 Einkaufsliste", `„${current.text}" wurde entfernt`);
         return;
       }
       persistLocal(localItems.filter((i) => i.id !== id));
     },
-    [shared, household, remoteItems, localItems, persistLocal]
+    [shared, localItems, persistLocal]
   );
 
   const clearChecked = useCallback(async () => {
-    if (shared && household) {
+    if (shared) {
       const ids = remoteItems.filter((i) => i.checked).map((i) => i.id);
       if (!ids.length) return;
       await supabase.from("shopping_list_items").delete().in("id", ids);
       setRemoteItems((prev) => prev.filter((i) => !i.checked));
-      notifyHouseholdMembers(household.id, "🛒 Einkaufsliste", `${ids.length} erledigte Artikel wurden entfernt`);
       return;
     }
     persistLocal(localItems.filter((i) => !i.checked));
-  }, [shared, household, remoteItems, localItems, persistLocal]);
+  }, [shared, remoteItems, localItems, persistLocal]);
 
   const value = useMemo(
     () => ({ items, loaded, ready, shared, addItem, addItems, toggleChecked, removeItem, clearChecked }),

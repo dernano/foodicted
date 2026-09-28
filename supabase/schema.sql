@@ -55,14 +55,6 @@ create table if not exists shopping_list_items (
   created_at timestamptz not null default now()
 );
 
--- One row per device registered for push notifications.
-create table if not exists push_tokens (
-  user_id uuid not null references auth.users(id) on delete cascade,
-  token text not null,
-  updated_at timestamptz not null default now(),
-  primary key (user_id, token)
-);
-
 -- ---------------------------------------------------------------------
 -- Row Level Security
 -- ---------------------------------------------------------------------
@@ -71,7 +63,6 @@ alter table households enable row level security;
 alter table household_members enable row level security;
 alter table favorite_recipes enable row level security;
 alter table shopping_list_items enable row level security;
-alter table push_tokens enable row level security;
 
 -- Bypasses RLS internally (security definer) to answer "is the current
 -- user a member of this household" without recursive policy issues.
@@ -110,15 +101,6 @@ create policy "update household shopping list" on shopping_list_items
   for update using (is_household_member(household_id)) with check (is_household_member(household_id));
 create policy "delete household shopping list" on shopping_list_items
   for delete using (is_household_member(household_id));
-
-create policy "select own push tokens" on push_tokens
-  for select using (user_id = auth.uid());
-create policy "insert own push tokens" on push_tokens
-  for insert with check (user_id = auth.uid());
-create policy "update own push tokens" on push_tokens
-  for update using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy "delete own push tokens" on push_tokens
-  for delete using (user_id = auth.uid());
 
 -- No direct insert/update/delete policies on households / household_members -
 -- all writes go through the security-definer functions below, which run
@@ -189,23 +171,6 @@ begin
 
   return query select hh.id, hh.name;
 end;
-$$;
-
--- Returns the push tokens of every OTHER member of a household the caller
--- belongs to - lets the app notify household members about shopping list
--- changes without ever exposing anyone's token via a direct select().
-create or replace function household_push_tokens(hh_id uuid)
-returns table (token text)
-language sql
-security definer
-stable
-as $$
-  select pt.token
-  from push_tokens pt
-  join household_members hm on hm.user_id = pt.user_id
-  where hm.household_id = hh_id
-    and is_household_member(hh_id)
-    and pt.user_id <> auth.uid();
 $$;
 
 -- ---------------------------------------------------------------------
