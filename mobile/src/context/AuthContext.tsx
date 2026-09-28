@@ -3,6 +3,7 @@ import * as WebBrowser from "expo-web-browser";
 import type { Session } from "@supabase/supabase-js";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
+import { registerForPushNotifications } from "../utils/pushNotifications";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -62,14 +63,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      if (data.session) fetchHousehold(data.session.user.id);
+      if (data.session) {
+        fetchHousehold(data.session.user.id);
+        registerForPushNotifications(data.session.user.id);
+      }
       setLoading(false);
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
-      if (nextSession) fetchHousehold(nextSession.user.id);
-      else setHousehold(null);
+      if (nextSession) {
+        fetchHousehold(nextSession.user.id);
+        registerForPushNotifications(nextSession.user.id);
+      } else {
+        setHousehold(null);
+      }
     });
 
     return () => sub.subscription.unsubscribe();
