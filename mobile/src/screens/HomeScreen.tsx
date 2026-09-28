@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import type { MainTabsScreenProps } from "../navigation";
 import { usePreferences } from "../context/PreferencesContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
@@ -12,6 +12,11 @@ type Props = MainTabsScreenProps<"Start">;
  * one continuous surface instead of a visible image rectangle. Scoped to
  * this screen only - other screens keep the shared `colors.bg` token. */
 const HERO_BG = "#f3f1e6";
+
+/** height / width of the source asset (1672x941) - used to compute an exact
+ * pixel height below, since `aspectRatio` alone is unreliable on Image and
+ * was rendering it at its raw asset pixel size instead of scaling to fit. */
+const HERO_ASPECT = 941 / 1672;
 
 function preferenceLines(preferences: ReturnType<typeof usePreferences>["preferences"]): string[] {
   const lines: string[] = [];
@@ -31,6 +36,9 @@ function preferenceLines(preferences: ReturnType<typeof usePreferences>["prefere
 export default function HomeScreen({ navigation }: Props) {
   const { preferences } = usePreferences();
   const { recent } = useRecentRecipes();
+  const { width: windowWidth } = useWindowDimensions();
+  const heroWidth = windowWidth - spacing.xxl * 2;
+  const heroHeight = heroWidth * HERO_ASPECT;
 
   return (
     <View style={styles.screen}>
@@ -40,7 +48,7 @@ export default function HomeScreen({ navigation }: Props) {
             image read as part of the page instead of a separate rectangle. */}
         <Image
           source={require("../../assets/images/foodicted-hero.jpg")}
-          style={styles.hero}
+          style={[styles.hero, { width: heroWidth, height: heroHeight }]}
           resizeMode="contain"
           accessible
           accessibilityRole="image"
@@ -144,8 +152,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: HERO_BG },
   container: { flexGrow: 1, alignItems: "center", padding: spacing.xxl, paddingBottom: spacing.xxl, backgroundColor: HERO_BG },
   hero: {
-    width: "100%",
-    aspectRatio: 1672 / 941,
     backgroundColor: HERO_BG,
     marginBottom: spacing.sm,
   },
