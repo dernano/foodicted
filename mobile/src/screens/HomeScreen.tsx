@@ -8,6 +8,11 @@ import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 type Props = MainTabsScreenProps<"Start">;
 
+/** Sampled from the hero photo's own background so the Home canvas reads as
+ * one continuous surface instead of a visible image rectangle. Scoped to
+ * this screen only - other screens keep the shared `colors.bg` token. */
+const HERO_BG = "#f3f1e6";
+
 function preferenceLines(preferences: ReturnType<typeof usePreferences>["preferences"]): string[] {
   const lines: string[] = [];
   lines.push(`Ziel: ${preferences.goal || "-"}`);
@@ -30,13 +35,13 @@ export default function HomeScreen({ navigation }: Props) {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Fixed aspect ratio (matches the source image) so the layout never
-            shifts once it loads - logo, wordmark and slogan are baked into
-            the image itself, so no text/logo is rendered on top of it. */}
+        {/* "contain" (not "cover") so nothing of the baked-in logo/wordmark/
+            slogan is ever cropped - the matching background color makes the
+            image read as part of the page instead of a separate rectangle. */}
         <Image
           source={require("../../assets/images/foodicted-hero.jpg")}
           style={styles.hero}
-          resizeMode="cover"
+          resizeMode="contain"
           accessible
           accessibilityRole="image"
           accessibilityLabel="Foodicted – Erst scannen, dann schlemmen."
@@ -136,14 +141,13 @@ export default function HomeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  container: { flexGrow: 1, alignItems: "center", padding: spacing.xxl, paddingBottom: spacing.xxl, backgroundColor: colors.bg },
+  screen: { flex: 1, backgroundColor: HERO_BG },
+  container: { flexGrow: 1, alignItems: "center", padding: spacing.xxl, paddingBottom: spacing.xxl, backgroundColor: HERO_BG },
   hero: {
     width: "100%",
     aspectRatio: 1672 / 941,
-    borderRadius: radius.hero,
-    backgroundColor: colors.bgAlt,
-    marginBottom: spacing.lg,
+    backgroundColor: HERO_BG,
+    marginBottom: spacing.sm,
   },
   primaryButton: {
     flexDirection: "row",
