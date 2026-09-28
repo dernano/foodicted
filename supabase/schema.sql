@@ -192,6 +192,12 @@ on conflict (id) do nothing;
 
 -- Objects are stored as "<household_id>/<recipe_id>-<timestamp>.jpg" - the
 -- first path segment is used to check household membership for writes.
+-- (A select policy is required too, not just insert/update/delete - upload
+-- with upsert:true does an internal existence check that needs read access.)
+create policy "household members can view recipe images" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'recipe-images' and is_household_member((storage.foldername(name))[1]::uuid));
+
 create policy "household members can upload recipe images" on storage.objects
   for insert to authenticated
   with check (bucket_id = 'recipe-images' and is_household_member((storage.foldername(name))[1]::uuid));
