@@ -37,9 +37,9 @@ export default function ShoppingListScreen() {
           cover it here, unlike a bottom-pinned input inside a tab screen. */}
       <View style={styles.topSection}>
         {shared && (
-          <View style={styles.sharedBanner}>
-            <Ionicons name="people" size={15} color={colors.primary} />
-            <Text style={styles.sharedBannerText}>Geteilt mit deinem Haushalt - live synchron</Text>
+          <View style={styles.sharedPill}>
+            <Ionicons name="checkmark-circle" size={13} color={colors.primary} />
+            <Text style={styles.sharedPillText}>Haushalt · live synchron</Text>
           </View>
         )}
         <View style={styles.addRow}>
@@ -110,17 +110,18 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     backgroundColor: colors.bg,
   },
-  sharedBanner: {
+  sharedPill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.sm,
+    alignSelf: "flex-start",
+    gap: 5,
     backgroundColor: colors.bgAlt,
-    borderRadius: radius.control,
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.md + 2,
+    borderRadius: radius.pill,
+    paddingVertical: 5,
+    paddingHorizontal: spacing.md,
     marginBottom: spacing.md,
   },
-  sharedBannerText: { fontSize: 12, color: colors.textPrimary, fontWeight: "600" },
+  sharedPillText: { fontSize: 11, color: colors.textSecondary, fontWeight: "700" },
   clearButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -154,21 +155,21 @@ const styles = StyleSheet.create({
   rowText: { fontSize: 15, color: colors.textPrimary, fontWeight: "600" },
   rowTextChecked: { color: colors.textMuted, textDecorationLine: "line-through" },
   rowSource: { fontSize: 11, color: colors.textMuted, marginTop: 2, fontStyle: "italic" },
-  addRow: { flexDirection: "row", gap: spacing.sm },
+  addRow: { flexDirection: "row", gap: spacing.xs, alignItems: "stretch" },
   addInput: {
     flex: 1,
+    height: 48,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.control,
     paddingHorizontal: spacing.md + 2,
-    paddingVertical: spacing.md,
     fontSize: 14,
     color: colors.textPrimary,
     backgroundColor: colors.surface,
   },
   addButton: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: radius.control,
     backgroundColor: colors.primary,
     alignItems: "center",

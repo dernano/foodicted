@@ -1,13 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import Constants from "expo-constants";
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { APP_FEATURES } from "../constants/features";
+import VersionBadge from "../components/VersionBadge";
 import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 export default function AboutScreen() {
-  const version = Constants.expoConfig?.version ?? "?";
-
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.xxl, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
@@ -37,7 +35,7 @@ export default function AboutScreen() {
         </Text>
       </View>
 
-      <Text style={styles.version}>Version {version}</Text>
+      <VersionBadge />
       <Text style={styles.copyright}>© {new Date().getFullYear()} Mario Stöffler</Text>
     </ScrollView>
   );
@@ -71,6 +69,5 @@ const styles = StyleSheet.create({
   },
   devTitle: { fontSize: 15, fontWeight: "700", color: colors.textPrimary, marginTop: spacing.sm, marginBottom: spacing.xs + 2 },
   devText: { fontSize: 13, color: colors.textSecondary, textAlign: "center", lineHeight: 18 },
-  version: { fontSize: 12, color: colors.textMuted, textAlign: "center", marginTop: spacing.xs },
-  copyright: { fontSize: 12, color: colors.textMuted, textAlign: "center", marginTop: spacing.xs },
+  copyright: { fontSize: 12, color: colors.textMuted, textAlign: "center", marginTop: spacing.sm },
 });

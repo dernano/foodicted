@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { MainTabsScreenProps } from "../navigation";
-import VersionBadge from "../components/VersionBadge";
 import { usePreferences } from "../context/PreferencesContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
 import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
@@ -34,10 +33,6 @@ export default function HomeScreen({ navigation }: Props) {
         <View style={styles.hero}>
           <Image source={require("../../assets/logo-full.png")} style={styles.logo} resizeMode="contain" />
           <Text style={styles.slogan}>Erst scannen, dann schlemmen.</Text>
-          <Text style={styles.subtitle}>
-            Fotografiere deinen Kühlschrank, deine Vorratskammer oder den Küchenschrank und lass dir passende
-            Rezepte vorschlagen.
-          </Text>
         </View>
         {/* Note: the logo artwork itself is dark-green-on-transparent, so the
             hero stays on a light surface - a dark-green hero would swallow it. */}
@@ -57,8 +52,8 @@ export default function HomeScreen({ navigation }: Props) {
             onPress={() => navigation.navigate("IngredientsReview", { items: [] })}
             activeOpacity={0.7}
           >
-            <Ionicons name="create-outline" size={18} color={colors.textPrimary} />
-            <Text style={styles.secondaryButtonText}>Zutaten manuell eingeben</Text>
+            <Ionicons name="create-outline" size={15} color={colors.textSecondary} />
+            <Text style={styles.secondaryButtonText}>Zutaten eingeben</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -66,8 +61,8 @@ export default function HomeScreen({ navigation }: Props) {
             onPress={() => navigation.navigate("AddFavoriteRecipe")}
             activeOpacity={0.7}
           >
-            <Ionicons name="book-outline" size={18} color={colors.textPrimary} />
-            <Text style={styles.secondaryButtonText}>Eigenes Rezept hinzufügen</Text>
+            <Ionicons name="book-outline" size={15} color={colors.textSecondary} />
+            <Text style={styles.secondaryButtonText}>Eigenes Rezept</Text>
           </TouchableOpacity>
         </View>
 
@@ -88,7 +83,13 @@ export default function HomeScreen({ navigation }: Props) {
                 onPress={() => navigation.navigate("RecipeDetail", { recipe })}
                 activeOpacity={0.6}
               >
-                <Ionicons name="restaurant-outline" size={16} color={colors.primary} />
+                {recipe.imageUrl ? (
+                  <Image source={{ uri: recipe.imageUrl }} style={styles.recentThumb} />
+                ) : (
+                  <View style={styles.recentThumbFallback}>
+                    <Ionicons name="restaurant-outline" size={16} color={colors.primary} />
+                  </View>
+                )}
                 <Text style={styles.recentRowText} numberOfLines={1}>
                   {recipe.title}
                 </Text>
@@ -121,12 +122,10 @@ export default function HomeScreen({ navigation }: Props) {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.aboutLink} onPress={() => navigation.navigate("About")}>
-          <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} />
-          <Text style={styles.aboutLinkText}>Über Foodicted</Text>
+          <Ionicons name="information-circle-outline" size={13} color={colors.textMuted} />
+          <Text style={styles.aboutLinkText}>Über Foodicted · © {new Date().getFullYear()} Mario Stöffler</Text>
         </TouchableOpacity>
-        <Text style={styles.copyright}>© {new Date().getFullYear()} Mario Stöffler</Text>
       </ScrollView>
-      <VersionBadge />
     </View>
   );
 }
@@ -139,19 +138,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgAlt,
     borderRadius: radius.hero,
     alignItems: "center",
-    paddingVertical: spacing.xxl,
+    paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
-  logo: { width: 190, height: 145 },
-  slogan: { ...t.section, color: colors.primary, textAlign: "center", marginTop: spacing.sm },
-  subtitle: {
-    ...t.body,
-    color: colors.textSecondary,
-    textAlign: "center",
-    marginTop: spacing.sm,
-    lineHeight: 21,
-  },
+  logo: { width: 150, height: 114 },
+  slogan: { ...t.bodyStrong, color: colors.primary, textAlign: "center", marginTop: 2 },
   primaryButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -161,22 +153,23 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     borderRadius: radius.button,
     width: "100%",
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
     ...shadow.button,
   },
   primaryButtonText: { color: colors.textOnDark, fontSize: 17, fontWeight: "700" },
-  secondaryRow: { width: "100%", gap: spacing.sm, marginBottom: spacing.md },
+  secondaryRow: { width: "100%", flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
   secondaryButton: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: spacing.sm,
-    backgroundColor: colors.bgAlt,
-    paddingVertical: spacing.md + 2,
-    borderRadius: radius.button,
-    width: "100%",
+    gap: 6,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radius.control,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  secondaryButtonText: { color: colors.textPrimary, fontSize: 15, fontWeight: "700" },
+  secondaryButtonText: { color: colors.textSecondary, fontSize: 12, fontWeight: "700" },
   card: {
     marginTop: spacing.md,
     width: "100%",
@@ -194,14 +187,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm + 2,
     borderTopWidth: 1,
     borderTopColor: colors.borderAlt,
   },
   recentRowFirst: { borderTopWidth: 0, paddingTop: spacing.xs },
+  recentThumb: { width: 44, height: 44, borderRadius: radius.control, backgroundColor: colors.bgAlt },
+  recentThumbFallback: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.control,
+    backgroundColor: colors.bgAlt,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   recentRowText: { flex: 1, fontSize: 14, color: colors.textPrimary, fontWeight: "600" },
   summaryLine: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.xs, lineHeight: 19 },
-  aboutLink: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: spacing.xl },
-  aboutLinkText: { fontSize: 12, color: colors.textMuted, fontWeight: "600" },
-  copyright: { fontSize: 12, color: colors.textMuted, marginTop: spacing.xs, marginBottom: spacing.xs, fontWeight: "600" },
+  aboutLink: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: spacing.lg, alignSelf: "center" },
+  aboutLinkText: { fontSize: 11, color: colors.textMuted, fontWeight: "600" },
 });

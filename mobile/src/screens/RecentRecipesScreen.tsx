@@ -30,41 +30,39 @@ export default function RecentRecipesScreen({ navigation }: Props) {
       }
       renderItem={({ item }: { item: Recipe }) => {
         const favorite = isFavorite(item);
+        const metaLine = [
+          item.prepTimeMinutes + item.cookTimeMinutes ? `${item.prepTimeMinutes + item.cookTimeMinutes} min` : null,
+          `${item.servings} Port.`,
+          item.nutrition.calories ? `${item.nutrition.calories} kcal` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+
         return (
           <TouchableOpacity
             style={styles.card}
             onPress={() => navigation.navigate("RecipeDetail", { recipe: item })}
             activeOpacity={0.85}
           >
-            <View style={styles.cardHeader}>
-              {!!item.imageUrl && <Image source={{ uri: item.imageUrl }} style={styles.thumbnail} />}
-              <View style={{ flex: 1, marginRight: spacing.sm }}>
-                <Text style={styles.categoryBadge}>{RECIPE_CATEGORY_LABELS[item.category]}</Text>
-                <Text style={styles.title}>{item.title}</Text>
+            {item.imageUrl ? (
+              <Image source={{ uri: item.imageUrl }} style={styles.cardImage} />
+            ) : (
+              <View style={styles.cardImageFallback}>
+                <Ionicons name="restaurant" size={22} color={colors.primary} />
               </View>
-              <TouchableOpacity onPress={() => toggleFavorite(item)} hitSlop={10}>
-                <Ionicons name={favorite ? "heart" : "heart-outline"} size={20} color={favorite ? colors.danger : colors.textMuted} />
-              </TouchableOpacity>
+            )}
+            <View style={styles.cardBody}>
+              <Text style={styles.categoryBadge}>{RECIPE_CATEGORY_LABELS[item.category]}</Text>
+              <Text style={styles.title} numberOfLines={2}>
+                {item.title}
+              </Text>
+              <Text style={styles.metaLine} numberOfLines={1}>
+                {metaLine}
+              </Text>
             </View>
-            <Text style={styles.description} numberOfLines={2}>
-              {item.description}
-            </Text>
-            <View style={styles.metaRow}>
-              <View style={styles.metaItem}>
-                <Ionicons name="time-outline" size={13} color={colors.textSecondary} />
-                <Text style={styles.metaItemText}>{item.prepTimeMinutes + item.cookTimeMinutes} min</Text>
-              </View>
-              <View style={styles.metaItem}>
-                <Ionicons name="restaurant-outline" size={13} color={colors.textSecondary} />
-                <Text style={styles.metaItemText}>{item.servings} Port.</Text>
-              </View>
-              {!!item.nutrition.calories && (
-                <View style={styles.metaItem}>
-                  <Ionicons name="flame-outline" size={13} color={colors.textSecondary} />
-                  <Text style={styles.metaItemText}>{item.nutrition.calories} kcal</Text>
-                </View>
-              )}
-            </View>
+            <TouchableOpacity onPress={() => toggleFavorite(item)} hitSlop={10} style={styles.favoriteButton}>
+              <Ionicons name={favorite ? "heart" : "heart-outline"} size={19} color={favorite ? colors.danger : colors.textMuted} />
+            </TouchableOpacity>
           </TouchableOpacity>
         );
       }}
@@ -87,18 +85,27 @@ const styles = StyleSheet.create({
   emptyTitle: { ...t.section, color: colors.textPrimary, marginBottom: spacing.sm },
   emptyText: { fontSize: 13, color: colors.textMuted, textAlign: "center", lineHeight: 19 },
   card: {
+    flexDirection: "row",
+    alignItems: "flex-start",
     backgroundColor: colors.surface,
     borderRadius: radius.card,
-    padding: spacing.lg,
-    marginBottom: spacing.md + 2,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    gap: spacing.md,
     ...shadow.soft,
   },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  thumbnail: { width: 48, height: 48, borderRadius: radius.control, marginRight: spacing.md, backgroundColor: colors.bgAlt },
+  cardImage: { width: 64, height: 64, borderRadius: radius.control, backgroundColor: colors.bgAlt },
+  cardImageFallback: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.control,
+    backgroundColor: colors.bgAlt,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardBody: { flex: 1 },
+  favoriteButton: { padding: 2 },
   categoryBadge: { fontSize: 11, color: colors.primary, fontWeight: "700", marginBottom: 2, textTransform: "uppercase" },
-  title: { fontSize: 16, fontWeight: "800", color: colors.textPrimary },
-  description: { fontSize: 13, color: colors.textSecondary, marginTop: spacing.sm, lineHeight: 18 },
-  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md, marginTop: spacing.md },
-  metaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
-  metaItemText: { fontSize: 12, color: colors.textSecondary },
+  title: { fontSize: 15, fontWeight: "800", color: colors.textPrimary, lineHeight: 19 },
+  metaLine: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
 });

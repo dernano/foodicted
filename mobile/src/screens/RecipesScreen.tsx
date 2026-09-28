@@ -87,16 +87,17 @@ export default function RecipesScreen({ route, navigation }: Props) {
                 <Ionicons name={favorite ? "heart" : "heart-outline"} size={22} color={favorite ? colors.danger : colors.textMuted} />
               </TouchableOpacity>
             </View>
-            <Text style={styles.description}>{item.description}</Text>
+            <Text style={styles.description} numberOfLines={2}>
+              {item.description}
+            </Text>
             <View style={styles.metaRow}>
               <MetaItem icon="time-outline" value={`${item.prepTimeMinutes + item.cookTimeMinutes} min`} />
               <MetaItem icon="restaurant-outline" value={`${item.servings} Port.`} />
-              <MetaItem icon="flame-outline" value={`${item.nutrition.calories} kcal`} />
-              <MetaItem icon="barbell-outline" value={`${item.nutrition.proteinGrams}g Protein`} />
+              {!!item.nutrition.calories && <MetaItem icon="flame-outline" value={`${item.nutrition.calories} kcal`} />}
             </View>
             {!!item.tags.length && (
               <View style={styles.tagRow}>
-                {item.tags.slice(0, 4).map((tag) => (
+                {item.tags.slice(0, 3).map((tag) => (
                   <View key={tag} style={styles.tag}>
                     <Text style={styles.tagText}>{tag}</Text>
                   </View>
@@ -157,8 +158,8 @@ const styles = StyleSheet.create({
   },
   cardHeader: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md },
   categoryIcon: {
-    width: 38,
-    height: 38,
+    width: 64,
+    height: 64,
     borderRadius: radius.control,
     backgroundColor: colors.bgAlt,
     alignItems: "center",
