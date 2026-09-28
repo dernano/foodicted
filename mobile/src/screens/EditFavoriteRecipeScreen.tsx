@@ -13,8 +13,11 @@ import {
   View,
 } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
+import RecipeImagePicker from "../components/RecipeImagePicker";
 import TagEditor from "../components/TagEditor";
+import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
+import { pickRecipeImage, saveRecipeImage } from "../utils/recipeImage";
 import { RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS, type Recipe } from "../types";
 import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
@@ -83,9 +86,11 @@ function EditableList({
 
 export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
   const { recipe } = route.params;
+  const { household } = useAuth();
   const { updateFavorite } = useFavorites();
 
   const [title, setTitle] = useState(recipe.title);
+  const [imageUri, setImageUri] = useState<string | null>(recipe.imageUrl ?? null);
   const [description, setDescription] = useState(recipe.description);
   const [category, setCategory] = useState(recipe.category);
   const [tags, setTags] = useState<string[]>(recipe.tags);
@@ -99,6 +104,11 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
   const [instructionLines, setInstructionLines] = useState<string[]>(recipe.instructions);
   const [saving, setSaving] = useState(false);
 
+  async function handlePickImage() {
+    const uri = await pickRecipeImage();
+    if (uri) setImageUri(uri);
+  }
+
   async function handleSave() {
     if (!title.trim()) {
       Alert.alert("Titel fehlt", "Gib dem Rezept einen Namen.");
@@ -109,23 +119,29 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
       return;
     }
 
-    const updated: Recipe = {
-      ...recipe,
-      title: title.trim(),
-      description: description.trim(),
-      category,
-      tags,
-      servings: servings || 1,
-      prepTimeMinutes: Number(prepTimeMinutes) || 0,
-      cookTimeMinutes: Number(cookTimeMinutes) || 0,
-      difficulty,
-      ingredients: ingredientLines.map((line) => ({ name: line, amount: "", fromFridge: false })),
-      missingIngredients: recipe.missingIngredients,
-      instructions: instructionLines.length ? instructionLines : ["Keine detaillierte Zubereitung hinterlegt."],
-    };
-
     setSaving(true);
     try {
+      let imageUrl = recipe.imageUrl;
+      if (imageUri !== (recipe.imageUrl ?? null)) {
+        imageUrl = imageUri ? await saveRecipeImage(imageUri, { recipeId: recipe.id, householdId: household?.id }) : undefined;
+      }
+
+      const updated: Recipe = {
+        ...recipe,
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        tags,
+        servings: servings || 1,
+        prepTimeMinutes: Number(prepTimeMinutes) || 0,
+        cookTimeMinutes: Number(cookTimeMinutes) || 0,
+        difficulty,
+        ingredients: ingredientLines.map((line) => ({ name: line, amount: "", fromFridge: false })),
+        missingIngredients: recipe.missingIngredients,
+        instructions: instructionLines.length ? instructionLines : ["Keine detaillierte Zubereitung hinterlegt."],
+        imageUrl,
+      };
+
       await updateFavorite(recipe.id, updated);
       navigation.replace("RecipeDetail", { recipe: updated });
     } catch (err) {
@@ -142,6 +158,8 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
+        <RecipeImagePicker uri={imageUri} onPick={handlePickImage} onRemove={() => setImageUri(null)} />
+
         <Text style={styles.label}>Name</Text>
         <TextInput style={styles.input} value={title} onChangeText={setTitle} />
 

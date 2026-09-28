@@ -38,8 +38,12 @@ create table if not exists favorite_recipes (
   missing_ingredients jsonb not null default '[]',
   instructions jsonb not null default '[]',
   nutrition jsonb not null default '{"calories":0,"proteinGrams":0,"carbsGrams":0,"fatGrams":0}',
+  image_url text,
   created_at timestamptz not null default now()
 );
+
+-- Safe to re-run against an already-deployed database that predates this column.
+alter table favorite_recipes add column if not exists image_url text;
 
 create table if not exists shopping_list_items (
   id uuid primary key default gen_random_uuid(),
@@ -175,3 +179,27 @@ $$;
 
 alter publication supabase_realtime add table favorite_recipes;
 alter publication supabase_realtime add table shopping_list_items;
+
+-- ---------------------------------------------------------------------
+-- Storage (photos users attach to their saved favorite recipes)
+-- ---------------------------------------------------------------------
+
+-- Public bucket - recipe photos aren't sensitive, and a public read URL lets
+-- every household member's app load them directly without extra requests.
+insert into storage.buckets (id, name, public)
+values ('recipe-images', 'recipe-images', true)
+on conflict (id) do nothing;
+
+-- Objects are stored as "<household_id>/<recipe_id>-<timestamp>.jpg" - the
+-- first path segment is used to check household membership for writes.
+create policy "household members can upload recipe images" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'recipe-images' and is_household_member((storage.foldername(name))[1]::uuid));
+
+create policy "household members can update recipe images" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'recipe-images' and is_household_member((storage.foldername(name))[1]::uuid));
+
+create policy "household members can delete recipe images" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'recipe-images' and is_household_member((storage.foldername(name))[1]::uuid));

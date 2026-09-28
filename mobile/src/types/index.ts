@@ -72,6 +72,8 @@ export interface Recipe {
   missingIngredients: string[];
   instructions: string[];
   nutrition: Nutrition;
+  /** Photo of the cooked dish, added by the user after saving as a favorite. Not set for AI suggestions. */
+  imageUrl?: string;
 }
 
 export interface RecipeGenerationResult {

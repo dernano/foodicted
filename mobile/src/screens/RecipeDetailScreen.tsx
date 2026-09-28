@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo } from "react";
-import { Alert, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
 import { usePantry } from "../context/PantryContext";
@@ -80,6 +80,7 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
+      {!!recipe.imageUrl && <Image source={{ uri: recipe.imageUrl }} style={styles.photo} />}
       <View style={styles.hero}>
         <View style={styles.heroTopRow}>
           <Text style={styles.categoryBadge}>{RECIPE_CATEGORY_LABELS[recipe.category]}</Text>
@@ -231,6 +232,7 @@ function NutritionBox({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  photo: { width: "100%", height: 220, backgroundColor: colors.bgAlt },
   hero: {
     backgroundColor: colors.brandDark,
     borderBottomLeftRadius: radius.hero,

@@ -14,9 +14,12 @@ import {
 } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
 import { refineRecipe } from "../api/client";
+import RecipeImagePicker from "../components/RecipeImagePicker";
 import TagEditor from "../components/TagEditor";
+import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
 import { usePreferences } from "../context/PreferencesContext";
+import { pickRecipeImage, saveRecipeImage } from "../utils/recipeImage";
 import { RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS, type Recipe, type RecipeCategory } from "../types";
 import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
@@ -24,9 +27,11 @@ type Props = RootStackScreenProps<"AddFavoriteRecipe">;
 
 export default function AddFavoriteRecipeScreen({ navigation }: Props) {
   const { preferences } = usePreferences();
-  const { toggleFavorite } = useFavorites();
+  const { household } = useAuth();
+  const { toggleFavorite, updateFavorite } = useFavorites();
 
   const [title, setTitle] = useState("");
+  const [imageUri, setImageUri] = useState<string | null>(null);
   const [category, setCategory] = useState<RecipeCategory>("hauptgericht");
   const [tags, setTags] = useState<string[]>([]);
   const [ingredientLines, setIngredientLines] = useState<string[]>([]);
@@ -43,6 +48,26 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
 
   function removeIngredient(index: number) {
     setIngredientLines((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handlePickImage() {
+    const uri = await pickRecipeImage();
+    if (uri) setImageUri(uri);
+  }
+
+  /** Uploads the picked photo (if any) once the favorite has a real id, and
+   * returns the recipe to navigate to with imageUrl included. */
+  async function attachPendingImage(saved: Recipe & { id: string }): Promise<Recipe> {
+    if (!imageUri) return saved;
+    try {
+      const url = await saveRecipeImage(imageUri, { recipeId: saved.id, householdId: household?.id });
+      const withImage = { ...saved, imageUrl: url };
+      await updateFavorite(saved.id, withImage);
+      return withImage;
+    } catch (err) {
+      console.warn("Failed to save recipe image", err);
+      return saved;
+    }
   }
 
   function validate(): boolean {
@@ -75,8 +100,9 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
         )
       );
       const categorized = { ...recipe, category, tags: mergedTags };
-      toggleFavorite(categorized);
-      navigation.replace("RecipeDetail", { recipe: categorized });
+      const created = await toggleFavorite(categorized);
+      const finalRecipe = created ? await attachPendingImage(created) : categorized;
+      navigation.replace("RecipeDetail", { recipe: finalRecipe });
     } catch (err) {
       Alert.alert(
         "Rezept konnte nicht erstellt werden",
@@ -87,7 +113,7 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
     }
   }
 
-  function handleSaveDirectly() {
+  async function handleSaveDirectly() {
     if (!validate()) return;
     const notes = preparationNotes.trim();
     const instructions = notes
@@ -111,8 +137,9 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
       instructions,
       nutrition: { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 },
     };
-    toggleFavorite(recipe);
-    navigation.replace("RecipeDetail", { recipe });
+    const created = await toggleFavorite(recipe);
+    const finalRecipe = created ? await attachPendingImage(created) : recipe;
+    navigation.replace("RecipeDetail", { recipe: finalRecipe });
   }
 
   return (
@@ -127,6 +154,8 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
           daraus ein vollständiges Rezept mit Anleitung und Nährwerten machen lassen. Gespeichert wird direkt in
           deinen Favoriten.
         </Text>
+
+        <RecipeImagePicker uri={imageUri} onPick={handlePickImage} onRemove={() => setImageUri(null)} />
 
         <Text style={styles.label}>Name des Rezepts</Text>
         <TextInput

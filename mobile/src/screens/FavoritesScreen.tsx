@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { MainTabsScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
 import { RECIPE_CATEGORY_LABELS, type FavoriteRecipe, type RecipeCategory } from "../types";
@@ -127,6 +127,7 @@ export default function FavoritesScreen({ navigation }: Props) {
           activeOpacity={0.85}
         >
           <View style={styles.cardHeader}>
+            {!!item.imageUrl && <Image source={{ uri: item.imageUrl }} style={styles.thumbnail} />}
             <View style={{ flex: 1, marginRight: spacing.sm }}>
               <Text style={styles.categoryBadge}>{RECIPE_CATEGORY_LABELS[item.category]}</Text>
               <Text style={styles.title}>{item.title}</Text>
@@ -232,6 +233,7 @@ const styles = StyleSheet.create({
     ...shadow.soft,
   },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  thumbnail: { width: 48, height: 48, borderRadius: radius.control, marginRight: spacing.md, backgroundColor: colors.bgAlt },
   categoryBadge: { fontSize: 11, color: colors.primary, fontWeight: "700", marginBottom: 2, textTransform: "uppercase" },
   title: { fontSize: 16, fontWeight: "800", color: colors.textPrimary },
   description: { fontSize: 13, color: colors.textSecondary, marginTop: spacing.sm, lineHeight: 18 },

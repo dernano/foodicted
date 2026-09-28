@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Alert, SectionList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, SectionList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
 import { useShoppingList } from "../context/ShoppingListContext";
@@ -70,9 +70,13 @@ export default function RecipesScreen({ route, navigation }: Props) {
             activeOpacity={0.85}
           >
             <View style={styles.cardHeader}>
-              <View style={styles.categoryIcon}>
-                <Ionicons name="restaurant" size={16} color={extra ? colors.attention : colors.primary} />
-              </View>
+              {item.imageUrl ? (
+                <Image source={{ uri: item.imageUrl }} style={styles.categoryIcon} />
+              ) : (
+                <View style={styles.categoryIcon}>
+                  <Ionicons name="restaurant" size={16} color={extra ? colors.attention : colors.primary} />
+                </View>
+              )}
               <View style={{ flex: 1, marginRight: spacing.sm }}>
                 <Text style={[styles.categoryBadge, extra && styles.categoryBadgeExtra]}>
                   {RECIPE_CATEGORY_LABELS[item.category]}
