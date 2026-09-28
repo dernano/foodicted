@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo } from "react";
-import { Alert, Image, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ImageBackground, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
 import { useFavorites } from "../context/FavoritesContext";
 import { usePantry } from "../context/PantryContext";
@@ -78,44 +78,58 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipe.title]);
 
+  const heroContent = (
+    <>
+      <View style={styles.heroTopRow}>
+        <Text style={styles.categoryBadge}>{RECIPE_CATEGORY_LABELS[recipe.category]}</Text>
+        <View style={styles.titleActions}>
+          {favoriteEntry && (
+            <TouchableOpacity
+              onPress={() => navigation.navigate("EditFavoriteRecipe", { recipe: favoriteEntry })}
+              hitSlop={10}
+            >
+              <Ionicons name="create-outline" size={22} color={colors.textOnDark} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={() => toggleFavorite(recipe)} hitSlop={10}>
+            <Ionicons name={favorite ? "heart" : "heart-outline"} size={22} color={favorite ? colors.danger : colors.textOnDark} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <Text style={styles.title}>{recipe.title}</Text>
+      <Text style={styles.description}>{recipe.description}</Text>
+
+      {!!recipe.tags.length && (
+        <View style={styles.tagRow}>
+          {recipe.tags.map((tag) => (
+            <View key={tag} style={styles.tagPill}>
+              <Text style={styles.tagPillText}>#{tag}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      <Text style={styles.favoriteHint}>
+        {favorite ? "In deinen Lieblingsrezepten gespeichert" : "Tippe auf das Herz, um es zu speichern"}
+      </Text>
+    </>
+  );
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
-      {!!recipe.imageUrl && <Image source={{ uri: recipe.imageUrl }} style={styles.photo} />}
-      <View style={styles.hero}>
-        <View style={styles.heroTopRow}>
-          <Text style={styles.categoryBadge}>{RECIPE_CATEGORY_LABELS[recipe.category]}</Text>
-          <View style={styles.titleActions}>
-            {favoriteEntry && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate("EditFavoriteRecipe", { recipe: favoriteEntry })}
-                hitSlop={10}
-              >
-                <Ionicons name="create-outline" size={22} color={colors.textOnDark} />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity onPress={() => toggleFavorite(recipe)} hitSlop={10}>
-              <Ionicons name={favorite ? "heart" : "heart-outline"} size={22} color={favorite ? colors.danger : colors.textOnDark} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <Text style={styles.title}>{recipe.title}</Text>
-        <Text style={styles.description}>{recipe.description}</Text>
-
-        {!!recipe.tags.length && (
-          <View style={styles.tagRow}>
-            {recipe.tags.map((tag) => (
-              <View key={tag} style={styles.tagPill}>
-                <Text style={styles.tagPillText}>#{tag}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        <Text style={styles.favoriteHint}>
-          {favorite ? "In deinen Lieblingsrezepten gespeichert" : "Tippe auf das Herz, um es zu speichern"}
-        </Text>
-      </View>
+      {recipe.imageUrl ? (
+        <ImageBackground
+          source={{ uri: recipe.imageUrl }}
+          style={[styles.hero, styles.heroWithPhoto]}
+          imageStyle={styles.heroImage}
+        >
+          <View style={styles.heroScrim} />
+          {heroContent}
+        </ImageBackground>
+      ) : (
+        <View style={styles.hero}>{heroContent}</View>
+      )}
 
       <View style={styles.content}>
         <View style={styles.metaRow}>
@@ -232,7 +246,6 @@ function NutritionBox({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  photo: { width: "100%", height: 220, backgroundColor: colors.bgAlt },
   hero: {
     backgroundColor: colors.brandDark,
     borderBottomLeftRadius: radius.hero,
@@ -240,6 +253,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
+    overflow: "hidden",
+  },
+  heroWithPhoto: { minHeight: 340, justifyContent: "flex-end" },
+  heroImage: { borderBottomLeftRadius: radius.hero, borderBottomRightRadius: radius.hero },
+  heroScrim: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(27,67,50,0.6)",
   },
   heroTopRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   categoryBadge: {
