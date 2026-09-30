@@ -60,7 +60,7 @@ export type RootStackParamList = {
   IngredientMatch: { recipe: Recipe; detectedItems: FridgeItem[] };
   About: undefined;
   CommunityRecipeDetail: { recipe: CommunityRecipe };
-  PublishCommunityRecipe: { recipe?: CommunityRecipe } | undefined;
+  PublishCommunityRecipe: { recipe?: CommunityRecipe; prefill?: Recipe } | undefined;
   CommunityProfile: { authorId: string; authorName: string };
 };
 

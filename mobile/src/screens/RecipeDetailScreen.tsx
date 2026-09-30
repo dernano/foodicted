@@ -179,6 +179,14 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
             <Ionicons name="camera-outline" size={15} color={colors.primary} />
             <Text style={styles.shareListButtonText}>Foto-Abgleich</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.shareListButton}
+            onPress={() => navigation.navigate("PublishCommunityRecipe", { prefill: recipe })}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="compass-outline" size={15} color={colors.primary} />
+            <Text style={styles.shareListButtonText}>In Community teilen</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.ingredientsCard}>

@@ -24,6 +24,10 @@ import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 type Props = RootStackScreenProps<"PublishCommunityRecipe">;
 
+function isRemoteUrl(uri: string): boolean {
+  return uri.startsWith("http://") || uri.startsWith("https://");
+}
+
 const DIFFICULTIES: { value: Recipe["difficulty"]; label: string }[] = [
   { value: "easy", label: "Einfach" },
   { value: "medium", label: "Mittel" },
@@ -85,24 +89,29 @@ function EditableList({
 
 export default function PublishCommunityRecipeScreen({ route, navigation }: Props) {
   const existing = route.params?.recipe;
+  // Publishing an already-saved recipe (favorite or AI suggestion) seeds the
+  // form the same way editing an existing Community post does - just without
+  // an id yet, since it isn't published until "Veröffentlichen" is tapped.
+  const prefill = route.params?.prefill;
+  const seed = existing ?? prefill;
   const { session } = useAuth();
 
-  const [title, setTitle] = useState(existing?.title ?? "");
-  const [description, setDescription] = useState(existing?.description ?? "");
-  const [category, setCategory] = useState<RecipeCategory>(existing?.category ?? "hauptgericht");
-  const [tags, setTags] = useState<string[]>(existing?.tags ?? []);
-  const [servings, setServings] = useState(existing?.servings ?? 2);
-  const [prepTimeMinutes, setPrepTimeMinutes] = useState(String(existing?.prepTimeMinutes ?? ""));
-  const [cookTimeMinutes, setCookTimeMinutes] = useState(String(existing?.cookTimeMinutes ?? ""));
-  const [difficulty, setDifficulty] = useState<Recipe["difficulty"]>(existing?.difficulty ?? "medium");
+  const [title, setTitle] = useState(seed?.title ?? "");
+  const [description, setDescription] = useState(seed?.description ?? "");
+  const [category, setCategory] = useState<RecipeCategory>(seed?.category ?? "hauptgericht");
+  const [tags, setTags] = useState<string[]>(seed?.tags ?? []);
+  const [servings, setServings] = useState(seed?.servings ?? 2);
+  const [prepTimeMinutes, setPrepTimeMinutes] = useState(String(seed?.prepTimeMinutes ?? ""));
+  const [cookTimeMinutes, setCookTimeMinutes] = useState(String(seed?.cookTimeMinutes ?? ""));
+  const [difficulty, setDifficulty] = useState<Recipe["difficulty"]>(seed?.difficulty ?? "medium");
   const [ingredientLines, setIngredientLines] = useState<string[]>(
-    existing?.ingredients.map((ing) => `${ing.amount} ${ing.name}`.trim()) ?? []
+    seed?.ingredients.map((ing) => `${ing.amount} ${ing.name}`.trim()) ?? []
   );
-  const [instructionLines, setInstructionLines] = useState<string[]>(existing?.instructions ?? []);
+  const [instructionLines, setInstructionLines] = useState<string[]>(seed?.instructions ?? []);
   const [nutrition, setNutrition] = useState<Nutrition>(
-    existing?.nutrition ?? { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 }
+    seed?.nutrition ?? { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 }
   );
-  const [imageUri, setImageUri] = useState<string | null>(existing?.imageUrl ?? null);
+  const [imageUri, setImageUri] = useState<string | null>(seed?.imageUrl ?? null);
   const [saving, setSaving] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
 
@@ -182,7 +191,9 @@ export default function PublishCommunityRecipeScreen({ route, navigation }: Prop
         let imageUrl = existing.imageUrl;
         if (imageUri !== (existing.imageUrl ?? null)) {
           imageUrl = imageUri
-            ? await saveCommunityRecipeImage(imageUri, { recipeId: existing.id, authorId: session.user.id })
+            ? isRemoteUrl(imageUri)
+              ? imageUri
+              : await saveCommunityRecipeImage(imageUri, { recipeId: existing.id, authorId: session.user.id })
             : undefined;
         }
         const updated = { ...recipe, imageUrl };
@@ -191,9 +202,16 @@ export default function PublishCommunityRecipeScreen({ route, navigation }: Prop
           recipe: { ...existing, ...updated, imageUrl: imageUrl ?? undefined },
         });
       } else {
-        const created = await publishCommunityRecipe(recipe, session.user.id);
+        // A prefilled favorite/AI recipe may already have a remote (household
+        // Supabase) photo url - reuse it as-is instead of re-uploading it as
+        // if it were a fresh local pick (uploading a http(s) url as a "local
+        // file" would fail).
+        const created = await publishCommunityRecipe(
+          { ...recipe, imageUrl: imageUri && isRemoteUrl(imageUri) ? imageUri : undefined },
+          session.user.id
+        );
         let finalRecipe = created;
-        if (imageUri) {
+        if (imageUri && !isRemoteUrl(imageUri)) {
           try {
             const imageUrl = await saveCommunityRecipeImage(imageUri, { recipeId: created.id, authorId: session.user.id });
             await updateCommunityRecipe(created.id, { ...recipe, imageUrl });
