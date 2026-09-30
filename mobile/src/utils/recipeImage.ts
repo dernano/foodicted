@@ -5,6 +5,12 @@ import { supabase } from "../lib/supabase";
 
 const RECIPE_IMAGES_BUCKET = "recipe-images";
 
+/** True for an already-uploaded Supabase Storage url; false for a local
+ * on-device file uri that still needs to be uploaded somewhere. */
+export function isRemoteUrl(uri: string): boolean {
+  return uri.startsWith("http://") || uri.startsWith("https://");
+}
+
 /** Shows a source picker (camera/gallery), requests the needed permission, and
  * returns the local uri of the picked photo - or null if cancelled/denied. */
 export async function pickRecipeImage(): Promise<string | null> {

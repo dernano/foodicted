@@ -19,15 +19,11 @@ import RecipeImagePicker from "../components/RecipeImagePicker";
 import TagEditor from "../components/TagEditor";
 import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
-import { pickRecipeImage, saveCommunityRecipeImage } from "../utils/recipeImage";
+import { isRemoteUrl, pickRecipeImage, saveCommunityRecipeImage } from "../utils/recipeImage";
 import { RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS, type Nutrition, type Recipe, type RecipeCategory } from "../types";
 import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 type Props = RootStackScreenProps<"PublishCommunityRecipe">;
-
-function isRemoteUrl(uri: string): boolean {
-  return uri.startsWith("http://") || uri.startsWith("https://");
-}
 
 const DIFFICULTIES: { value: Recipe["difficulty"]; label: string }[] = [
   { value: "easy", label: "Einfach" },

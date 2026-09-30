@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { updateCommunityRecipe } from "../api/community";
+import { isRemoteUrl, saveCommunityRecipeImage } from "../utils/recipeImage";
 import { useAuth } from "./AuthContext";
 import type { FavoriteRecipe, Recipe } from "../types";
 
@@ -238,11 +239,20 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   /** Best-effort, non-blocking - a favorite update should never fail just
    * because the linked Community post couldn't be reached/isn't owned by
    * this user (anymore). */
-  function syncToCommunity(communityRecipeId: string | undefined, recipe: Recipe) {
+  async function syncToCommunity(communityRecipeId: string | undefined, recipe: Recipe) {
     if (!communityRecipeId) return;
-    updateCommunityRecipe(communityRecipeId, recipe).catch((err) =>
-      console.warn("Failed to sync favorite update to its Community post", err)
-    );
+    try {
+      let imageUrl = recipe.imageUrl;
+      // A local-only favorite's photo lives purely on this device (never
+      // uploaded anywhere) - the Community post needs an actually
+      // reachable url, since every user has to be able to load it.
+      if (imageUrl && !isRemoteUrl(imageUrl) && session?.user.id) {
+        imageUrl = await saveCommunityRecipeImage(imageUrl, { recipeId: communityRecipeId, authorId: session.user.id });
+      }
+      await updateCommunityRecipe(communityRecipeId, { ...recipe, imageUrl });
+    } catch (err) {
+      console.warn("Failed to sync favorite update to its Community post", err);
+    }
   }
 
   const updateFavorite = useCallback(
