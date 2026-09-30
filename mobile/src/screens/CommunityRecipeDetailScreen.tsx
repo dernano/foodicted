@@ -83,13 +83,7 @@ export default function CommunityRecipeDetailScreen({ route, navigation }: Props
     if (!match.communityRecipeId) {
       linkFavoriteToCommunity(match.id, recipe.id).catch((err) => console.warn("Failed to link favorite", err));
     }
-    // TEMP DEBUG - remove once confirmed working: surfaces the real
-    // success/failure of the sync so we can see what's actually happening.
-    updateCommunityRecipe(recipe.id, match)
-      .then(() => Alert.alert("Debug: Sync ok", `"${recipe.title}" wurde erfolgreich mit dem Favoriten abgeglichen.`))
-      .catch((err) =>
-        Alert.alert("Debug: Sync fehlgeschlagen", err instanceof Error ? err.message : JSON.stringify(err))
-      );
+    updateCommunityRecipe(recipe.id, match).catch((err) => console.warn("Failed to sync community post", err));
   }, [isOwner, favorites, recipe.id, recipe.title, linkFavoriteToCommunity]);
 
   const pantryNames = useMemo(() => pantry.items.map((i) => i.name), [pantry.items]);
