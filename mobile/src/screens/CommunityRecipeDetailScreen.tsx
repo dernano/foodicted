@@ -178,7 +178,10 @@ export default function CommunityRecipeDetailScreen({ route, navigation }: Props
               <Ionicons name="create-outline" size={22} color={colors.textOnDark} />
             </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={() => toggleFavorite(asFavoriteCandidate)} hitSlop={10}>
+          <TouchableOpacity
+            onPress={() => toggleFavorite(asFavoriteCandidate, { communityAuthorId: recipe.authorId })}
+            hitSlop={10}
+          >
             <Ionicons name={favorite ? "heart" : "heart-outline"} size={22} color={favorite ? colors.danger : colors.textOnDark} />
           </TouchableOpacity>
         </View>

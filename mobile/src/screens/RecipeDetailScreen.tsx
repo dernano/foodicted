@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo } from "react";
 import { Alert, ImageBackground, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
+import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
 import { usePantry } from "../context/PantryContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
@@ -49,12 +50,16 @@ async function shareShoppingList(recipe: Recipe, pantryNames: string[]) {
 
 export default function RecipeDetailScreen({ route, navigation }: Props) {
   const { recipe } = route.params;
+  const { session } = useAuth();
   const { favorites, isFavorite, toggleFavorite } = useFavorites();
   const { pantry } = usePantry();
   const { addRecent } = useRecentRecipes();
   const { addItems } = useShoppingList();
   const favorite = isFavorite(recipe);
   const favoriteEntry = favorites.find((f) => sameRecipe(f, recipe));
+  // A favorite saved from someone else's Community recipe isn't ours to
+  // (re-)publish - only offer that once it's genuinely our own creation.
+  const canShareToCommunity = !favoriteEntry?.communityAuthorId || favoriteEntry.communityAuthorId === session?.user.id;
 
   const pantryNames = useMemo(() => pantry.items.map((i) => i.name), [pantry.items]);
   const ingredientChecks = useMemo(
@@ -190,14 +195,16 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
             <Ionicons name="camera-outline" size={15} color={colors.primary} />
             <Text style={styles.shareListButtonText}>Foto-Abgleich</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.shareListButton}
-            onPress={() => navigation.navigate("PublishCommunityRecipe", { prefill: recipe, favoriteId: favoriteEntry?.id })}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="compass-outline" size={15} color={colors.primary} />
-            <Text style={styles.shareListButtonText}>In Community teilen</Text>
-          </TouchableOpacity>
+          {canShareToCommunity && (
+            <TouchableOpacity
+              style={styles.shareListButton}
+              onPress={() => navigation.navigate("PublishCommunityRecipe", { prefill: recipe, favoriteId: favoriteEntry?.id })}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="compass-outline" size={15} color={colors.primary} />
+              <Text style={styles.shareListButtonText}>In Community teilen</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.ingredientsCard}>

@@ -317,6 +317,11 @@ alter table favorite_recipes add column if not exists community_recipe_id uuid r
 alter table favorite_recipes add column if not exists required_equipment jsonb not null default '[]';
 alter table community_recipes add column if not exists required_equipment jsonb not null default '[]';
 
+-- Set when a favorite was saved from someone else's Community recipe (the
+-- original author's id) - lets the app block re-publishing someone else's
+-- recipe as your own. Never set for the user's own creations.
+alter table favorite_recipes add column if not exists community_author_id uuid references auth.users(id) on delete set null;
+
 create table if not exists community_recipe_ratings (
   recipe_id uuid not null references community_recipes(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,

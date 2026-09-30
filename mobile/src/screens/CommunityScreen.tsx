@@ -303,7 +303,7 @@ export default function CommunityScreen({ navigation }: Props) {
               </Text>
             </View>
             <TouchableOpacity
-              onPress={() => toggleFavorite(communityRecipeToRecipe(item))}
+              onPress={() => toggleFavorite(communityRecipeToRecipe(item), { communityAuthorId: item.authorId })}
               hitSlop={10}
               style={styles.favoriteButton}
             >

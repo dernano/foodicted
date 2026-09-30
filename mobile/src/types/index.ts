@@ -89,6 +89,10 @@ export interface FavoriteRecipe extends Recipe {
   /** Set when this favorite was published to the Community - lets later
    * edits here be pushed to that Community post too (one-way sync). */
   communityRecipeId?: string;
+  /** Set when this favorite was saved from someone else's Community recipe -
+   * the id of that recipe's original author. Used to block re-publishing
+   * someone else's recipe as your own; never set for your own creations. */
+  communityAuthorId?: string;
 }
 
 /** A recipe published to the Community - visible to every user, independent

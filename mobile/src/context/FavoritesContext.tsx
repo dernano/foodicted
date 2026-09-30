@@ -17,8 +17,10 @@ interface FavoritesContextValue {
   /** True when favorites are synced to a shared household instead of only stored on this device. */
   shared: boolean;
   isFavorite: (recipe: Recipe) => boolean;
-  /** Returns the created favorite (with its real id) when adding, or null when removing/on failure. */
-  toggleFavorite: (recipe: Recipe) => Promise<FavoriteRecipe | null>;
+  /** Returns the created favorite (with its real id) when adding, or null when removing/on failure.
+   * Pass communityAuthorId when saving someone else's Community recipe, so it's never mistaken
+   * for the user's own and offered back up for (re-)publishing. */
+  toggleFavorite: (recipe: Recipe, meta?: { communityAuthorId?: string }) => Promise<FavoriteRecipe | null>;
   removeFavorite: (id: string) => Promise<void>;
   updateFavorite: (id: string, recipe: Recipe) => Promise<void>;
   /** Remembers that this favorite was published as a Community recipe, so
@@ -54,6 +56,7 @@ interface FavoriteRow {
   image_url: string | null;
   required_equipment: string[] | null;
   community_recipe_id: string | null;
+  community_author_id: string | null;
   created_at: string;
 }
 
@@ -75,14 +78,16 @@ function rowToFavorite(row: FavoriteRow): FavoriteRecipe {
     imageUrl: row.image_url ?? undefined,
     requiredEquipment: row.required_equipment ?? [],
     communityRecipeId: row.community_recipe_id ?? undefined,
+    communityAuthorId: row.community_author_id ?? undefined,
     savedAt: new Date(row.created_at).getTime(),
   };
 }
 
-function favoriteToRow(recipe: Recipe, householdId: string, userId: string | undefined) {
+function favoriteToRow(recipe: Recipe, householdId: string, userId: string | undefined, communityAuthorId?: string) {
   return {
     household_id: householdId,
     added_by: userId ?? null,
+    community_author_id: communityAuthorId ?? null,
     ...favoriteToUpdateRow(recipe),
   };
 }
@@ -171,7 +176,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         if (toUpload.length) {
           const inserted = await supabase
             .from("favorite_recipes")
-            .insert(toUpload.map((f) => favoriteToRow(f, household!.id, session?.user.id)))
+            .insert(toUpload.map((f) => favoriteToRow(f, household!.id, session?.user.id, f.communityAuthorId)))
             .select("*");
           if (!inserted.error && inserted.data && !cancelled) {
             const migratedRows = inserted.data as FavoriteRow[];
@@ -206,7 +211,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const isFavorite = useCallback((recipe: Recipe) => favorites.some((f) => sameRecipe(f, recipe)), [favorites]);
 
   const toggleFavorite = useCallback(
-    async (recipe: Recipe): Promise<FavoriteRecipe | null> => {
+    async (recipe: Recipe, meta?: { communityAuthorId?: string }): Promise<FavoriteRecipe | null> => {
       if (shared && household) {
         const existing = remoteFavorites.find((f) => sameRecipe(f, recipe));
         if (existing) {
@@ -216,7 +221,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         }
         const { data, error } = await supabase
           .from("favorite_recipes")
-          .insert(favoriteToRow(recipe, household.id, session?.user.id))
+          .insert(favoriteToRow(recipe, household.id, session?.user.id, meta?.communityAuthorId))
           .select("*")
           .single();
         if (!error && data) {
@@ -232,7 +237,12 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         persistLocal(localFavorites.filter((f) => !sameRecipe(f, recipe)));
         return null;
       }
-      const favorite: FavoriteRecipe = { ...recipe, id: makeId(), savedAt: Date.now() };
+      const favorite: FavoriteRecipe = {
+        ...recipe,
+        id: makeId(),
+        savedAt: Date.now(),
+        communityAuthorId: meta?.communityAuthorId,
+      };
       persistLocal([favorite, ...localFavorites]);
       return favorite;
     },
