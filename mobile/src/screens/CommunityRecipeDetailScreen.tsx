@@ -23,6 +23,7 @@ import {
   fetchCommunityRecipeStats,
   fetchMyRating,
   setRating,
+  updateCommunityRecipe,
 } from "../api/community";
 import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
@@ -53,7 +54,7 @@ function StarPicker({ value, onChange, size = 26 }: { value: number; onChange: (
 export default function CommunityRecipeDetailScreen({ route, navigation }: Props) {
   const { recipe } = route.params;
   const { session } = useAuth();
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const { favorites, isFavorite, toggleFavorite, linkFavoriteToCommunity } = useFavorites();
   const { pantry } = usePantry();
   const { addItems } = useShoppingList();
 
@@ -68,6 +69,21 @@ export default function CommunityRecipeDetailScreen({ route, navigation }: Props
   const asFavoriteCandidate: Recipe = useMemo(() => communityRecipeToRecipe(recipe), [recipe]);
   const favorite = isFavorite(asFavoriteCandidate);
   const isOwner = session?.user.id === recipe.authorId;
+
+  // Heals recipes published before the favorite<->Community link existed
+  // (or one lost some other way): since we already know this is the
+  // viewer's own post, it's safe to connect it to a same-titled favorite
+  // of theirs that isn't linked yet, and catch it up to that favorite's
+  // current state so edits made there before now aren't stuck unsynced.
+  useEffect(() => {
+    if (!isOwner) return;
+    const match = favorites.find(
+      (f) => !f.communityRecipeId && f.title.trim().toLowerCase() === recipe.title.trim().toLowerCase()
+    );
+    if (!match) return;
+    linkFavoriteToCommunity(match.id, recipe.id).catch((err) => console.warn("Failed to link favorite", err));
+    updateCommunityRecipe(recipe.id, match).catch((err) => console.warn("Failed to catch up community post", err));
+  }, [isOwner, favorites, recipe.id, recipe.title, linkFavoriteToCommunity]);
 
   const pantryNames = useMemo(() => pantry.items.map((i) => i.name), [pantry.items]);
   const ingredientChecks = useMemo(
