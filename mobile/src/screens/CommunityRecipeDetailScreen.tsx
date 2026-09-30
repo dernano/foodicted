@@ -70,19 +70,26 @@ export default function CommunityRecipeDetailScreen({ route, navigation }: Props
   const favorite = isFavorite(asFavoriteCandidate);
   const isOwner = session?.user.id === recipe.authorId;
 
-  // Heals recipes published before the favorite<->Community link existed
-  // (or one lost some other way): since we already know this is the
-  // viewer's own post, it's safe to connect it to a same-titled favorite
-  // of theirs that isn't linked yet, and catch it up to that favorite's
-  // current state so edits made there before now aren't stuck unsynced.
+  // Keeps the Community post in sync with a same-titled favorite of the
+  // owner's whenever they view their own post - establishes the link if
+  // it's still missing (recipe published before the sync feature existed),
+  // and always re-pushes the current data, so a prior sync attempt that
+  // failed (e.g. before a later schema migration was applied) gets retried
+  // instead of being stuck silently unsynced forever.
   useEffect(() => {
     if (!isOwner) return;
-    const match = favorites.find(
-      (f) => !f.communityRecipeId && f.title.trim().toLowerCase() === recipe.title.trim().toLowerCase()
-    );
+    const match = favorites.find((f) => f.title.trim().toLowerCase() === recipe.title.trim().toLowerCase());
     if (!match) return;
-    linkFavoriteToCommunity(match.id, recipe.id).catch((err) => console.warn("Failed to link favorite", err));
-    updateCommunityRecipe(recipe.id, match).catch((err) => console.warn("Failed to catch up community post", err));
+    if (!match.communityRecipeId) {
+      linkFavoriteToCommunity(match.id, recipe.id).catch((err) => console.warn("Failed to link favorite", err));
+    }
+    // TEMP DEBUG - remove once confirmed working: surfaces the real
+    // success/failure of the sync so we can see what's actually happening.
+    updateCommunityRecipe(recipe.id, match)
+      .then(() => Alert.alert("Debug: Sync ok", `"${recipe.title}" wurde erfolgreich mit dem Favoriten abgeglichen.`))
+      .catch((err) =>
+        Alert.alert("Debug: Sync fehlgeschlagen", err instanceof Error ? err.message : JSON.stringify(err))
+      );
   }, [isOwner, favorites, recipe.id, recipe.title, linkFavoriteToCommunity]);
 
   const pantryNames = useMemo(() => pantry.items.map((i) => i.name), [pantry.items]);
