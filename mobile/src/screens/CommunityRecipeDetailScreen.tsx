@@ -16,6 +16,7 @@ import {
 import type { RootStackScreenProps } from "../navigation";
 import {
   addComment,
+  communityRecipeToRecipe,
   deleteComment,
   deleteCommunityRecipe,
   fetchComments,
@@ -64,24 +65,7 @@ export default function CommunityRecipeDetailScreen({ route, navigation }: Props
   const [loadingComments, setLoadingComments] = useState(true);
   const [busy, setBusy] = useState(false);
 
-  const asFavoriteCandidate: Recipe = useMemo(
-    () => ({
-      title: recipe.title,
-      description: recipe.description,
-      category: recipe.category,
-      prepTimeMinutes: recipe.prepTimeMinutes,
-      cookTimeMinutes: recipe.cookTimeMinutes,
-      servings: recipe.servings,
-      difficulty: recipe.difficulty,
-      tags: recipe.tags,
-      ingredients: recipe.ingredients,
-      missingIngredients: [],
-      instructions: recipe.instructions,
-      nutrition: recipe.nutrition,
-      imageUrl: recipe.imageUrl,
-    }),
-    [recipe]
-  );
+  const asFavoriteCandidate: Recipe = useMemo(() => communityRecipeToRecipe(recipe), [recipe]);
   const favorite = isFavorite(asFavoriteCandidate);
   const isOwner = session?.user.id === recipe.authorId;
 

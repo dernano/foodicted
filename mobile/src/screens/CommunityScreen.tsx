@@ -2,8 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Image, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import type { MainTabsScreenProps } from "../navigation";
-import { fetchCommunityRecipes } from "../api/community";
+import { communityRecipeToRecipe, fetchCommunityRecipes } from "../api/community";
 import { useAuth } from "../context/AuthContext";
+import { useFavorites } from "../context/FavoritesContext";
 import { usePantry } from "../context/PantryContext";
 import { matchRatio } from "../utils/ingredientMatch";
 import { RECIPE_CATEGORY_LABELS, type CommunityRecipe, type RecipeCategory } from "../types";
@@ -34,6 +35,7 @@ function StarRating({ value, size = 12 }: { value: number; size?: number }) {
 export default function CommunityScreen({ navigation }: Props) {
   const { session } = useAuth();
   const { pantry } = usePantry();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [recipes, setRecipes] = useState<CommunityRecipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -215,6 +217,7 @@ export default function CommunityScreen({ navigation }: Props) {
         </View>
       }
       renderItem={({ item }) => {
+        const favorite = isFavorite(communityRecipeToRecipe(item));
         const match = pantryNames.length ? Math.round(matchFor(item) * 100) : null;
         const metaLine = [
           item.prepTimeMinutes + item.cookTimeMinutes ? `${item.prepTimeMinutes + item.cookTimeMinutes} min` : null,
@@ -260,6 +263,13 @@ export default function CommunityScreen({ navigation }: Props) {
                 {metaLine}
               </Text>
             </View>
+            <TouchableOpacity
+              onPress={() => toggleFavorite(communityRecipeToRecipe(item))}
+              hitSlop={10}
+              style={styles.favoriteButton}
+            >
+              <Ionicons name={favorite ? "heart" : "heart-outline"} size={19} color={favorite ? colors.danger : colors.textMuted} />
+            </TouchableOpacity>
           </TouchableOpacity>
         );
       }}
@@ -330,6 +340,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   cardBody: { flex: 1 },
+  favoriteButton: { padding: 2 },
   cardTopRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   categoryBadge: { fontSize: 11, color: colors.primary, fontWeight: "700", textTransform: "uppercase" },
   matchBadge: { backgroundColor: colors.bgAlt, borderRadius: radius.pill, paddingVertical: 2, paddingHorizontal: spacing.sm },

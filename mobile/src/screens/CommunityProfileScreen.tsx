@@ -2,7 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
-import { fetchCommunityRecipesByAuthor } from "../api/community";
+import { fetchCommunityRecipesByAuthor, fetchProfileVisibility } from "../api/community";
+import { useAuth } from "../context/AuthContext";
 import { RECIPE_CATEGORY_LABELS, type CommunityRecipe } from "../types";
 import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
@@ -10,20 +11,43 @@ type Props = RootStackScreenProps<"CommunityProfile">;
 
 export default function CommunityProfileScreen({ route, navigation }: Props) {
   const { authorId, authorName } = route.params;
+  const { session } = useAuth();
+  const isOwnProfile = session?.user.id === authorId;
   const [recipes, setRecipes] = useState<CommunityRecipe[]>([]);
+  const [visible, setVisible] = useState<boolean | null>(null);
+  const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchCommunityRecipesByAuthor(authorId)
-      .then(setRecipes)
-      .catch((err) => console.warn("Failed to load profile recipes", err))
-      .finally(() => setLoading(false));
-  }, [authorId]);
+    (async () => {
+      try {
+        const profile = await fetchProfileVisibility(authorId);
+        const canView = isOwnProfile || profile.isPublic;
+        setIsPublic(profile.isPublic);
+        setVisible(canView);
+        if (canView) setRecipes(await fetchCommunityRecipesByAuthor(authorId));
+      } catch (err) {
+        console.warn("Failed to load profile", err);
+        setVisible(isOwnProfile);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [authorId, isOwnProfile]);
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!visible) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Ionicons name="lock-closed-outline" size={32} color={colors.textMuted} />
+        <Text style={styles.privateText}>Dieses Profil ist privat.</Text>
       </View>
     );
   }
@@ -43,6 +67,12 @@ export default function CommunityProfileScreen({ route, navigation }: Props) {
           <Text style={styles.recipeCount}>
             {recipes.length} {recipes.length === 1 ? "Rezept" : "Rezepte"} veröffentlicht
           </Text>
+          {isOwnProfile && !isPublic && (
+            <Text style={styles.ownHint}>
+              Nur du siehst diese Liste gerade - aktiviere "Community-Profil öffentlich" in deinem Konto, damit
+              andere sie auch sehen können.
+            </Text>
+          )}
         </View>
       }
       ListEmptyComponent={
@@ -96,6 +126,8 @@ const styles = StyleSheet.create({
   },
   authorName: { ...t.section, color: colors.textPrimary },
   recipeCount: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  ownHint: { fontSize: 12, color: colors.textMuted, textAlign: "center", marginTop: spacing.sm, paddingHorizontal: spacing.xl, lineHeight: 17 },
+  privateText: { fontSize: 14, color: colors.textMuted, marginTop: spacing.md },
   emptyState: { flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 48 },
   emptyText: { fontSize: 14, color: colors.textMuted },
   card: {

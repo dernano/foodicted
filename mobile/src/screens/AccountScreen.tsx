@@ -1,8 +1,56 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { ActivityIndicator, Alert, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Share, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { fetchProfileVisibility, setProfilePublic } from "../api/community";
 import { useAuth } from "../context/AuthContext";
 import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
+
+/** Toggles whether this user's Community profile page (the "all recipes by
+ * this author" list reachable by tapping their name) can be viewed by other
+ * people. Recipes themselves stay public in the main Community feed either
+ * way - this only controls the aggregated-by-author page. */
+function CommunityVisibilityToggle({ userId }: { userId: string }) {
+  const [isPublic, setIsPublic] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    fetchProfileVisibility(userId).then((p) => setIsPublic(p.isPublic));
+  }, [userId]);
+
+  async function toggle(next: boolean) {
+    setIsPublic(next);
+    setBusy(true);
+    try {
+      await setProfilePublic(userId, next);
+    } catch (err) {
+      setIsPublic(!next);
+      Alert.alert("Fehler", "Einstellung konnte nicht gespeichert werden.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <View style={styles.visibilityCard}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.visibilityTitle}>Community-Profil öffentlich</Text>
+        <Text style={styles.visibilityText}>
+          Andere können dein Profil mit all deinen veröffentlichten Community-Rezepten ansehen.
+        </Text>
+      </View>
+      {isPublic === null ? (
+        <ActivityIndicator color={colors.primary} />
+      ) : (
+        <Switch
+          value={isPublic}
+          onValueChange={toggle}
+          disabled={busy}
+          trackColor={{ true: colors.primary, false: colors.border }}
+        />
+      )}
+    </View>
+  );
+}
 
 export default function AccountScreen() {
   const { configured, loading, session, household, signInWithGoogle, signOut, createHousehold, joinHousehold } =
@@ -97,6 +145,8 @@ export default function AccountScreen() {
           <Text style={styles.secondaryButtonText}>Haushalt beitreten</Text>
         </TouchableOpacity>
 
+        <CommunityVisibilityToggle userId={session.user.id} />
+
         <TouchableOpacity style={styles.plainButton} onPress={() => handle(signOut)}>
           <Text style={styles.plainButtonText}>Abmelden</Text>
         </TouchableOpacity>
@@ -127,6 +177,8 @@ export default function AccountScreen() {
           <Text style={styles.shareButtonText}>Code teilen</Text>
         </TouchableOpacity>
       </View>
+
+      <CommunityVisibilityToggle userId={session.user.id} />
 
       <TouchableOpacity style={styles.plainButton} onPress={() => handle(signOut)}>
         <Text style={styles.plainButtonText}>Abmelden</Text>
@@ -181,6 +233,19 @@ const styles = StyleSheet.create({
   },
   plainButton: { marginTop: spacing.xxl, paddingVertical: spacing.sm + 2 },
   plainButtonText: { color: colors.danger, fontSize: 14, fontWeight: "600" },
+  visibilityCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    width: "100%",
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
+    padding: spacing.lg,
+    marginTop: spacing.xl,
+    ...shadow.soft,
+  },
+  visibilityTitle: { fontSize: 14, fontWeight: "700", color: colors.textPrimary, marginBottom: 2 },
+  visibilityText: { fontSize: 12, color: colors.textSecondary, lineHeight: 17 },
   codeCard: {
     width: "100%",
     backgroundColor: colors.surface,

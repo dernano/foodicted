@@ -226,8 +226,15 @@ create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   display_name text,
   avatar_url text,
+  -- Opt-in: shows/hides the "all recipes by this author" profile page other
+  -- users reach by tapping their name. Never hides the name itself on their
+  -- individual recipes/comments - those are already public either way.
+  is_public boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+-- Safe to re-run against an already-deployed database that predates this column.
+alter table profiles add column if not exists is_public boolean not null default false;
 
 alter table profiles enable row level security;
 

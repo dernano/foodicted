@@ -1,6 +1,27 @@
 import { supabase } from "../lib/supabase";
 import type { CommunityComment, CommunityRecipe, Nutrition, Recipe, RecipeCategory, RecipeIngredient } from "../types";
 
+/** A Community recipe has no missingIngredients (that's a pantry-scan
+ * concept) - this fills it in so the recipe can go through the existing,
+ * unchanged favoriting mechanism (FavoritesContext/toggleFavorite). */
+export function communityRecipeToRecipe(recipe: CommunityRecipe): Recipe {
+  return {
+    title: recipe.title,
+    description: recipe.description,
+    category: recipe.category,
+    prepTimeMinutes: recipe.prepTimeMinutes,
+    cookTimeMinutes: recipe.cookTimeMinutes,
+    servings: recipe.servings,
+    difficulty: recipe.difficulty,
+    tags: recipe.tags,
+    ingredients: recipe.ingredients,
+    missingIngredients: [],
+    instructions: recipe.instructions,
+    nutrition: recipe.nutrition,
+    imageUrl: recipe.imageUrl,
+  };
+}
+
 const FALLBACK_AUTHOR_NAME = "Foodicted-Nutzer";
 
 interface CommunityRecipeRow {
@@ -109,6 +130,29 @@ export async function fetchCommunityRecipesByAuthor(authorId: string): Promise<C
 export async function fetchAuthorProfile(authorId: string): Promise<string> {
   const names = await fetchAuthorNames([authorId]);
   return names.get(authorId) ?? FALLBACK_AUTHOR_NAME;
+}
+
+export interface ProfileVisibility {
+  displayName: string;
+  isPublic: boolean;
+}
+
+/** Whether a user's Community profile page (their aggregated recipe list)
+ * may be shown to other people - opt-in, defaults to false. This never
+ * hides their name on individual recipes/comments (those stay public the
+ * same way the recipe itself is), only the "all recipes by this author"
+ * page reachable by tapping their name. */
+export async function fetchProfileVisibility(authorId: string): Promise<ProfileVisibility> {
+  const { data } = await supabase.from("profiles").select("display_name, is_public").eq("id", authorId).maybeSingle();
+  return {
+    displayName: (data?.display_name as string | null) || FALLBACK_AUTHOR_NAME,
+    isPublic: !!data?.is_public,
+  };
+}
+
+export async function setProfilePublic(userId: string, isPublic: boolean): Promise<void> {
+  const { error } = await supabase.from("profiles").update({ is_public: isPublic }).eq("id", userId);
+  if (error) throw error;
 }
 
 export async function publishCommunityRecipe(recipe: Recipe, authorId: string): Promise<CommunityRecipe> {
