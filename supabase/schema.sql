@@ -312,6 +312,11 @@ create policy "delete own community recipes" on community_recipes
 -- doesn't exist yet at that point in a fresh run of this file.
 alter table favorite_recipes add column if not exists community_recipe_id uuid references community_recipes(id) on delete set null;
 
+-- Kitchen equipment needed to cook a recipe (Pfanne, Ofen, Air Fryer, Ninja
+-- Creami, ...), so Community can be filtered/sorted by it. Safe to re-run.
+alter table favorite_recipes add column if not exists required_equipment jsonb not null default '[]';
+alter table community_recipes add column if not exists required_equipment jsonb not null default '[]';
+
 create table if not exists community_recipe_ratings (
   recipe_id uuid not null references community_recipes(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,

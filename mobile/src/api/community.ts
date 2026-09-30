@@ -19,6 +19,7 @@ export function communityRecipeToRecipe(recipe: CommunityRecipe): Recipe {
     instructions: recipe.instructions,
     nutrition: recipe.nutrition,
     imageUrl: recipe.imageUrl,
+    requiredEquipment: recipe.requiredEquipment,
   };
 }
 
@@ -39,6 +40,7 @@ interface CommunityRecipeRow {
   instructions: string[];
   nutrition: Nutrition;
   image_url: string | null;
+  required_equipment: string[] | null;
   created_at: string;
   avg_rating: number | null;
   rating_count: number | null;
@@ -69,6 +71,7 @@ function rowToCommunityRecipe(row: CommunityRecipeRow, authorName: string): Comm
     instructions: row.instructions ?? [],
     nutrition: row.nutrition ?? { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 },
     imageUrl: row.image_url ?? undefined,
+    requiredEquipment: row.required_equipment ?? [],
     avgRating: Number(row.avg_rating ?? 0),
     ratingCount: Number(row.rating_count ?? 0),
     createdAt: new Date(row.created_at).getTime(),
@@ -100,6 +103,7 @@ function recipeToRow(recipe: Recipe) {
     instructions: recipe.instructions,
     nutrition: recipe.nutrition,
     image_url: recipe.imageUrl ?? null,
+    required_equipment: recipe.requiredEquipment,
   };
 }
 

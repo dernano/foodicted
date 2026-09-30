@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
+import EquipmentEditor from "../components/EquipmentEditor";
 import RecipeImagePicker from "../components/RecipeImagePicker";
 import TagEditor from "../components/TagEditor";
 import { useAuth } from "../context/AuthContext";
@@ -94,6 +95,7 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
   const [description, setDescription] = useState(recipe.description);
   const [category, setCategory] = useState(recipe.category);
   const [tags, setTags] = useState<string[]>(recipe.tags);
+  const [requiredEquipment, setRequiredEquipment] = useState<string[]>(recipe.requiredEquipment ?? []);
   const [servings, setServings] = useState(recipe.servings);
   const [prepTimeMinutes, setPrepTimeMinutes] = useState(String(recipe.prepTimeMinutes || ""));
   const [cookTimeMinutes, setCookTimeMinutes] = useState(String(recipe.cookTimeMinutes || ""));
@@ -140,6 +142,7 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
         missingIngredients: recipe.missingIngredients,
         instructions: instructionLines.length ? instructionLines : ["Keine detaillierte Zubereitung hinterlegt."],
         imageUrl,
+        requiredEquipment,
       };
 
       await updateFavorite(recipe.id, updated);
@@ -180,6 +183,9 @@ export default function EditFavoriteRecipeScreen({ route, navigation }: Props) {
 
         <Text style={styles.label}>Tags</Text>
         <TagEditor tags={tags} onChange={setTags} />
+
+        <Text style={styles.label}>Benötigte Küchengeräte</Text>
+        <EquipmentEditor value={requiredEquipment} onChange={setRequiredEquipment} />
 
         <Text style={styles.label}>Beschreibung</Text>
         <TextInput

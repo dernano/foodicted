@@ -42,6 +42,7 @@ export default function CommunityScreen({ navigation }: Props) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<CategoryFilter>("alle");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [equipmentFilter, setEquipmentFilter] = useState<string[]>([]);
   const [sort, setSort] = useState<SortMode>("neu");
 
   const pantryNames = useMemo(() => pantry.items.map((i) => i.name), [pantry.items]);
@@ -79,8 +80,18 @@ export default function CommunityScreen({ navigation }: Props) {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [recipes]);
 
+  const presentEquipment = useMemo(() => {
+    const set = new Set<string>();
+    recipes.forEach((r) => (r.requiredEquipment ?? []).forEach((item) => set.add(item)));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [recipes]);
+
   function toggleTagFilter(tag: string) {
     setTagFilter((prev) => (prev.includes(tag) ? prev.filter((x) => x !== tag) : [...prev, tag]));
+  }
+
+  function toggleEquipmentFilter(item: string) {
+    setEquipmentFilter((prev) => (prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item]));
   }
 
   const matchFor = useCallback(
@@ -93,8 +104,16 @@ export default function CommunityScreen({ navigation }: Props) {
     let list = recipes.filter((r) => {
       if (category !== "alle" && r.category !== category) return false;
       if (tagFilter.length && !r.tags.some((tag) => tagFilter.includes(tag))) return false;
+      if (equipmentFilter.length && !(r.requiredEquipment ?? []).some((item) => equipmentFilter.includes(item))) return false;
       if (query) {
-        const haystack = [r.title, r.description, r.authorName, ...r.tags, ...r.ingredients.map((i) => i.name)]
+        const haystack = [
+          r.title,
+          r.description,
+          r.authorName,
+          ...r.tags,
+          ...(r.requiredEquipment ?? []),
+          ...r.ingredients.map((i) => i.name),
+        ]
           .join(" ")
           .toLowerCase();
         if (!haystack.includes(query)) return false;
@@ -117,7 +136,7 @@ export default function CommunityScreen({ navigation }: Props) {
       }
     });
     return list;
-  }, [recipes, search, category, tagFilter, sort, matchFor]);
+  }, [recipes, search, category, tagFilter, equipmentFilter, sort, matchFor]);
 
   if (loading) {
     return (
@@ -196,6 +215,26 @@ export default function CommunityScreen({ navigation }: Props) {
                   </Text>
                 </TouchableOpacity>
               ))}
+            </View>
+          )}
+
+          {presentEquipment.length > 0 && (
+            <View style={styles.filterRow}>
+              {presentEquipment.map((item) => {
+                const selected = equipmentFilter.includes(item);
+                return (
+                  <TouchableOpacity
+                    key={item}
+                    style={[styles.equipmentFilterChip, selected && styles.equipmentFilterChipSelected]}
+                    onPress={() => toggleEquipmentFilter(item)}
+                  >
+                    <Ionicons name="construct-outline" size={11} color={selected ? colors.textOnDark : colors.chipInactiveText} />
+                    <Text style={[styles.equipmentFilterChipText, selected && styles.equipmentFilterChipTextSelected]}>
+                      {item}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
 
@@ -301,6 +340,18 @@ const styles = StyleSheet.create({
   tagFilterChipSelected: { backgroundColor: colors.brandDark },
   tagFilterChipText: { color: colors.chipInactiveText, fontSize: 11, fontWeight: "600" },
   tagFilterChipTextSelected: { color: colors.textOnDark },
+  equipmentFilterChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: radius.pill,
+    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.chipInactiveBg,
+  },
+  equipmentFilterChipSelected: { backgroundColor: colors.brandDark },
+  equipmentFilterChipText: { color: colors.chipInactiveText, fontSize: 11, fontWeight: "600" },
+  equipmentFilterChipTextSelected: { color: colors.textOnDark },
   guestNotice: {
     flexDirection: "row",
     alignItems: "center",

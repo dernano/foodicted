@@ -74,6 +74,8 @@ export interface Recipe {
   nutrition: Nutrition;
   /** Photo of the cooked dish, added by the user after saving as a favorite. Not set for AI suggestions. */
   imageUrl?: string;
+  /** Kitchen equipment needed to cook this (Pfanne, Ofen, Air Fryer, ...). */
+  requiredEquipment: string[];
 }
 
 export interface RecipeGenerationResult {
@@ -109,6 +111,7 @@ export interface CommunityRecipe {
   instructions: string[];
   nutrition: Nutrition;
   imageUrl?: string;
+  requiredEquipment: string[];
   avgRating: number;
   ratingCount: number;
   createdAt: number;
@@ -199,4 +202,27 @@ export const DIET_PRESETS = [
   "Pescetarisch",
   "Low-Carb",
   "Keto",
+] as const;
+
+/** Preset kitchen equipment shown as quick-pick chips when tagging a recipe;
+ * users can add their own beyond this list too. */
+export const EQUIPMENT_PRESETS = [
+  "Pfanne",
+  "Topf",
+  "Backofen",
+  "Mikrowelle",
+  "Air Fryer",
+  "Ninja Creami",
+  "Grill",
+  "Standmixer",
+  "Stabmixer",
+  "Küchenmaschine",
+  "Toaster",
+  "Wasserkocher",
+  "Sous-Vide-Gerät",
+  "Dampfgarer",
+  "Slow Cooker",
+  "Brotbackautomat",
+  "Reiskocher",
+  "Waffeleisen",
 ] as const;

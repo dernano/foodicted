@@ -110,6 +110,17 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
         </View>
       )}
 
+      {!!(recipe.requiredEquipment ?? []).length && (
+        <View style={styles.tagRow}>
+          {(recipe.requiredEquipment ?? []).map((item) => (
+            <View key={item} style={styles.equipmentPill}>
+              <Ionicons name="construct-outline" size={11} color={colors.textOnDark} />
+              <Text style={styles.tagPillText}>{item}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
       <Text style={styles.favoriteHint}>
         {favorite ? "In deinen Lieblingsrezepten gespeichert" : "Tippe auf das Herz, um es zu speichern"}
       </Text>
@@ -292,6 +303,15 @@ const styles = StyleSheet.create({
   tagRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs, marginTop: spacing.md },
   tagPill: { backgroundColor: "rgba(255,255,255,0.14)", borderRadius: radius.pill, paddingVertical: 4, paddingHorizontal: spacing.sm },
   tagPillText: { fontSize: 11, color: colors.textOnDark, fontWeight: "600" },
+  equipmentPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderRadius: radius.pill,
+    paddingVertical: 4,
+    paddingHorizontal: spacing.sm,
+  },
   favoriteHint: { fontSize: 12, color: colors.textOnDarkMuted, marginTop: spacing.md, fontStyle: "italic" },
   content: { padding: spacing.xl },
   metaRow: {

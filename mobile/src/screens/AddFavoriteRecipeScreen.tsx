@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import type { RootStackScreenProps } from "../navigation";
 import { refineRecipe } from "../api/client";
+import EquipmentEditor from "../components/EquipmentEditor";
 import RecipeImagePicker from "../components/RecipeImagePicker";
 import TagEditor from "../components/TagEditor";
 import { useAuth } from "../context/AuthContext";
@@ -34,6 +35,7 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [category, setCategory] = useState<RecipeCategory>("hauptgericht");
   const [tags, setTags] = useState<string[]>([]);
+  const [requiredEquipment, setRequiredEquipment] = useState<string[]>([]);
   const [ingredientLines, setIngredientLines] = useState<string[]>([]);
   const [newIngredient, setNewIngredient] = useState("");
   const [preparationNotes, setPreparationNotes] = useState("");
@@ -99,7 +101,7 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
             .filter(Boolean)
         )
       );
-      const categorized = { ...recipe, category, tags: mergedTags };
+      const categorized = { ...recipe, category, tags: mergedTags, requiredEquipment };
       const created = await toggleFavorite(categorized);
       const finalRecipe = created ? await attachPendingImage(created) : categorized;
       navigation.replace("RecipeDetail", { recipe: finalRecipe });
@@ -136,6 +138,7 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
       missingIngredients: [],
       instructions,
       nutrition: { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 },
+      requiredEquipment,
     };
     const created = await toggleFavorite(recipe);
     const finalRecipe = created ? await attachPendingImage(created) : recipe;
@@ -182,6 +185,9 @@ export default function AddFavoriteRecipeScreen({ navigation }: Props) {
 
         <Text style={styles.label}>Tags (optional)</Text>
         <TagEditor tags={tags} onChange={setTags} />
+
+        <Text style={styles.label}>Benötigte Küchengeräte</Text>
+        <EquipmentEditor value={requiredEquipment} onChange={setRequiredEquipment} />
 
         <Text style={[styles.label, { marginTop: 18 }]}>Zutaten</Text>
         {ingredientLines.map((line, index) => (

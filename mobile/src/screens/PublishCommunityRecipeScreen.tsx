@@ -15,6 +15,7 @@ import {
 import type { RootStackScreenProps } from "../navigation";
 import { refineRecipe } from "../api/client";
 import { publishCommunityRecipe, updateCommunityRecipe } from "../api/community";
+import EquipmentEditor from "../components/EquipmentEditor";
 import RecipeImagePicker from "../components/RecipeImagePicker";
 import TagEditor from "../components/TagEditor";
 import { useAuth } from "../context/AuthContext";
@@ -107,6 +108,7 @@ export default function PublishCommunityRecipeScreen({ route, navigation }: Prop
     seed?.ingredients.map((ing) => `${ing.amount} ${ing.name}`.trim()) ?? []
   );
   const [instructionLines, setInstructionLines] = useState<string[]>(seed?.instructions ?? []);
+  const [requiredEquipment, setRequiredEquipment] = useState<string[]>(seed?.requiredEquipment ?? []);
   const [nutrition, setNutrition] = useState<Nutrition>(
     seed?.nutrition ?? { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 }
   );
@@ -184,6 +186,7 @@ export default function PublishCommunityRecipeScreen({ route, navigation }: Prop
         missingIngredients: [],
         instructions: instructionLines.length ? instructionLines : ["Keine detaillierte Zubereitung hinterlegt."],
         nutrition,
+        requiredEquipment,
       };
 
       if (existing) {
@@ -267,6 +270,9 @@ export default function PublishCommunityRecipeScreen({ route, navigation }: Prop
 
         <Text style={styles.label}>Tags</Text>
         <TagEditor tags={tags} onChange={setTags} />
+
+        <Text style={styles.label}>Benötigte Küchengeräte</Text>
+        <EquipmentEditor value={requiredEquipment} onChange={setRequiredEquipment} />
 
         <Text style={styles.label}>Beschreibung</Text>
         <TextInput

@@ -52,6 +52,7 @@ interface FavoriteRow {
   instructions: string[];
   nutrition: { calories: number; proteinGrams: number; carbsGrams: number; fatGrams: number };
   image_url: string | null;
+  required_equipment: string[] | null;
   community_recipe_id: string | null;
   created_at: string;
 }
@@ -72,6 +73,7 @@ function rowToFavorite(row: FavoriteRow): FavoriteRecipe {
     instructions: row.instructions ?? [],
     nutrition: row.nutrition ?? { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 },
     imageUrl: row.image_url ?? undefined,
+    requiredEquipment: row.required_equipment ?? [],
     communityRecipeId: row.community_recipe_id ?? undefined,
     savedAt: new Date(row.created_at).getTime(),
   };
@@ -101,6 +103,7 @@ function favoriteToUpdateRow(recipe: Recipe) {
     instructions: recipe.instructions,
     nutrition: recipe.nutrition,
     image_url: recipe.imageUrl ?? null,
+    required_equipment: recipe.requiredEquipment,
   };
 }
 
