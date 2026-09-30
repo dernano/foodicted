@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Image, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import type { MainTabsScreenProps } from "../navigation";
 import { communityRecipeToRecipe, fetchCommunityRecipes } from "../api/community";
@@ -59,9 +60,15 @@ export default function CommunityScreen({ navigation }: Props) {
     }
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Reload every time this tab gains focus (not just on first mount) - a
+  // bottom-tab screen stays mounted across tab switches, so without this
+  // an edit made on another screen (e.g. adding equipment tags) would
+  // never show up here until the app was restarted.
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
 
   function onRefresh() {
     setRefreshing(true);
