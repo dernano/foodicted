@@ -24,11 +24,11 @@ const HERO_SOURCE_ASPECT = 1672 / 941;
 const HERO_BG_RGB = "242,239,229";
 const HERO_FADE_STEPS = [0.05, 0.14, 0.26, 0.42, 0.6, 0.78, 0.92, 1];
 
-/** Responsive hero height: ~26% of the window, clamped so it stays sensible
+/** Responsive hero height: ~32% of the window, clamped so it stays sensible
  * on very small or very large screens instead of one fixed pixel value. */
 function useHeroHeight(): number {
   const { height } = useWindowDimensions();
-  return Math.min(Math.max(height * 0.26, 196), 298);
+  return Math.min(Math.max(height * 0.32, 220), 320);
 }
 
 function preferenceLines(preferences: ReturnType<typeof usePreferences>["preferences"]): string[] {
@@ -54,7 +54,7 @@ export default function HomeScreen({ navigation }: Props) {
   const heroImageHeight = windowWidth * HERO_SOURCE_ASPECT;
   const heroFadeHeight = heroHeight * 0.64;
   const contentWidth = windowWidth - spacing.xxl * 2;
-  const heroLogoSize = Math.min(Math.max(contentWidth * 0.17, 56), 80);
+  const heroLogoSize = Math.min(Math.max(contentWidth * 0.4, 90), 150);
 
   return (
     <View style={styles.screen}>
@@ -88,7 +88,6 @@ export default function HomeScreen({ navigation }: Props) {
               style={[styles.heroBrandLogo, { width: heroLogoSize, height: heroLogoSize }]}
               resizeMode="contain"
             />
-            <Text style={styles.heroHeadline}>Was können wir heute kochen?</Text>
             <Text style={styles.heroSlogan}>Erst scannen, dann schlemmen.</Text>
           </View>
         </View>
@@ -210,7 +209,6 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
   },
   heroBrandLogo: { marginBottom: spacing.sm },
-  heroHeadline: { ...t.title, fontSize: 22, lineHeight: 27, color: colors.textPrimary, marginBottom: 4 },
   heroSlogan: { ...t.bodyStrong, color: colors.primary },
   primaryButton: {
     flexDirection: "row",
