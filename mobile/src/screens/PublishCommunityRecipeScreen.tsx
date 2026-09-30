@@ -18,6 +18,7 @@ import { publishCommunityRecipe, updateCommunityRecipe } from "../api/community"
 import RecipeImagePicker from "../components/RecipeImagePicker";
 import TagEditor from "../components/TagEditor";
 import { useAuth } from "../context/AuthContext";
+import { useFavorites } from "../context/FavoritesContext";
 import { pickRecipeImage, saveCommunityRecipeImage } from "../utils/recipeImage";
 import { RECIPE_CATEGORIES, RECIPE_CATEGORY_LABELS, type Nutrition, type Recipe, type RecipeCategory } from "../types";
 import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
@@ -93,8 +94,10 @@ export default function PublishCommunityRecipeScreen({ route, navigation }: Prop
   // form the same way editing an existing Community post does - just without
   // an id yet, since it isn't published until "Veröffentlichen" is tapped.
   const prefill = route.params?.prefill;
+  const favoriteId = route.params?.favoriteId;
   const seed = existing ?? prefill;
   const { session } = useAuth();
+  const { linkFavoriteToCommunity } = useFavorites();
 
   const [title, setTitle] = useState(seed?.title ?? "");
   const [description, setDescription] = useState(seed?.description ?? "");
@@ -219,6 +222,11 @@ export default function PublishCommunityRecipeScreen({ route, navigation }: Prop
           } catch (err) {
             console.warn("Failed to attach image to published recipe", err);
           }
+        }
+        if (favoriteId) {
+          linkFavoriteToCommunity(favoriteId, created.id).catch((err) =>
+            console.warn("Failed to link favorite to its new community post", err)
+          );
         }
         navigation.replace("CommunityRecipeDetail", { recipe: finalRecipe });
       }

@@ -181,7 +181,7 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.shareListButton}
-            onPress={() => navigation.navigate("PublishCommunityRecipe", { prefill: recipe })}
+            onPress={() => navigation.navigate("PublishCommunityRecipe", { prefill: recipe, favoriteId: favoriteEntry?.id })}
             activeOpacity={0.7}
           >
             <Ionicons name="compass-outline" size={15} color={colors.primary} />

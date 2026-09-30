@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { updateCommunityRecipe } from "../api/community";
 import { useAuth } from "./AuthContext";
 import type { FavoriteRecipe, Recipe } from "../types";
 
@@ -19,6 +20,9 @@ interface FavoritesContextValue {
   toggleFavorite: (recipe: Recipe) => Promise<FavoriteRecipe | null>;
   removeFavorite: (id: string) => Promise<void>;
   updateFavorite: (id: string, recipe: Recipe) => Promise<void>;
+  /** Remembers that this favorite was published as a Community recipe, so
+   * future updateFavorite calls also push the change to that post. */
+  linkFavoriteToCommunity: (id: string, communityRecipeId: string) => Promise<void>;
 }
 
 const FavoritesContext = createContext<FavoritesContextValue | undefined>(undefined);
@@ -47,6 +51,7 @@ interface FavoriteRow {
   instructions: string[];
   nutrition: { calories: number; proteinGrams: number; carbsGrams: number; fatGrams: number };
   image_url: string | null;
+  community_recipe_id: string | null;
   created_at: string;
 }
 
@@ -66,6 +71,7 @@ function rowToFavorite(row: FavoriteRow): FavoriteRecipe {
     instructions: row.instructions ?? [],
     nutrition: row.nutrition ?? { calories: 0, proteinGrams: 0, carbsGrams: 0, fatGrams: 0 },
     imageUrl: row.image_url ?? undefined,
+    communityRecipeId: row.community_recipe_id ?? undefined,
     savedAt: new Date(row.created_at).getTime(),
   };
 }
@@ -229,6 +235,16 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     [shared, household, remoteFavorites, isFavorite, localFavorites, persistLocal, session]
   );
 
+  /** Best-effort, non-blocking - a favorite update should never fail just
+   * because the linked Community post couldn't be reached/isn't owned by
+   * this user (anymore). */
+  function syncToCommunity(communityRecipeId: string | undefined, recipe: Recipe) {
+    if (!communityRecipeId) return;
+    updateCommunityRecipe(communityRecipeId, recipe).catch((err) =>
+      console.warn("Failed to sync favorite update to its Community post", err)
+    );
+  }
+
   const updateFavorite = useCallback(
     async (id: string, recipe: Recipe) => {
       if (shared) {
@@ -243,13 +259,35 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
           throw error;
         }
         if (data) {
-          setRemoteFavorites((prev) => prev.map((f) => (f.id === id ? rowToFavorite(data as FavoriteRow) : f)));
+          const updated = rowToFavorite(data as FavoriteRow);
+          setRemoteFavorites((prev) => prev.map((f) => (f.id === id ? updated : f)));
+          syncToCommunity(updated.communityRecipeId, recipe);
         }
         return;
       }
+      const existing = localFavorites.find((f) => f.id === id);
       persistLocal(
-        localFavorites.map((f) => (f.id === id ? { ...recipe, id: f.id, savedAt: f.savedAt } : f))
+        localFavorites.map((f) =>
+          f.id === id ? { ...recipe, id: f.id, savedAt: f.savedAt, communityRecipeId: f.communityRecipeId } : f
+        )
       );
+      syncToCommunity(existing?.communityRecipeId, recipe);
+    },
+    [shared, localFavorites, persistLocal]
+  );
+
+  const linkFavoriteToCommunity = useCallback(
+    async (id: string, communityRecipeId: string) => {
+      if (shared) {
+        const { error } = await supabase.from("favorite_recipes").update({ community_recipe_id: communityRecipeId }).eq("id", id);
+        if (error) {
+          console.warn("Failed to link favorite to community recipe", error);
+          return;
+        }
+        setRemoteFavorites((prev) => prev.map((f) => (f.id === id ? { ...f, communityRecipeId } : f)));
+        return;
+      }
+      persistLocal(localFavorites.map((f) => (f.id === id ? { ...f, communityRecipeId } : f)));
     },
     [shared, localFavorites, persistLocal]
   );
@@ -267,8 +305,18 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ favorites, loaded, ready, shared, isFavorite, toggleFavorite, removeFavorite, updateFavorite }),
-    [favorites, loaded, ready, shared, isFavorite, toggleFavorite, removeFavorite, updateFavorite]
+    () => ({
+      favorites,
+      loaded,
+      ready,
+      shared,
+      isFavorite,
+      toggleFavorite,
+      removeFavorite,
+      updateFavorite,
+      linkFavoriteToCommunity,
+    }),
+    [favorites, loaded, ready, shared, isFavorite, toggleFavorite, removeFavorite, updateFavorite, linkFavoriteToCommunity]
   );
 
   return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;

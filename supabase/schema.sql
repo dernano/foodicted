@@ -305,6 +305,13 @@ create policy "update own community recipes" on community_recipes
 create policy "delete own community recipes" on community_recipes
   for delete using (author_id = auth.uid());
 
+-- Links a favorite back to the Community post it was published as (if any),
+-- so later edits to the favorite can be pushed to that post too. Nullable -
+-- most favorites are never published. Declared here (not alongside
+-- favorite_recipes above) since it references community_recipes, which
+-- doesn't exist yet at that point in a fresh run of this file.
+alter table favorite_recipes add column if not exists community_recipe_id uuid references community_recipes(id) on delete set null;
+
 create table if not exists community_recipe_ratings (
   recipe_id uuid not null references community_recipes(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,

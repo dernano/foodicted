@@ -84,6 +84,9 @@ export interface RecipeGenerationResult {
 export interface FavoriteRecipe extends Recipe {
   id: string;
   savedAt: number;
+  /** Set when this favorite was published to the Community - lets later
+   * edits here be pushed to that Community post too (one-way sync). */
+  communityRecipeId?: string;
 }
 
 /** A recipe published to the Community - visible to every user, independent
