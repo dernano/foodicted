@@ -372,7 +372,11 @@ create policy "delete own comment" on community_recipe_comments
 
 -- Recipes with their aggregated rating - lets the app sort/filter by rating
 -- without pulling every individual rating row down to the client.
-create or replace view community_recipes_with_stats as
+-- Dropped and recreated (not "or replace") because cr.* means any column
+-- added to community_recipes later would land in the middle of this view's
+-- column list, which "create or replace view" refuses to do.
+drop view if exists community_recipes_with_stats;
+create view community_recipes_with_stats as
 select
   cr.*,
   coalesce(avg(crr.rating), 0)::numeric(3,2) as avg_rating,
