@@ -308,11 +308,25 @@ create table if not exists community_recipe_ratings (
 
 alter table community_recipe_ratings enable row level security;
 
+-- Authors can't rate their own recipe, even if the app's own UI is bypassed.
+create or replace function is_not_own_community_recipe(target_recipe_id uuid)
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select not exists (
+    select 1 from community_recipes where id = target_recipe_id and author_id = auth.uid()
+  );
+$$;
+
 create policy "select all ratings" on community_recipe_ratings for select using (true);
+drop policy if exists "insert own rating" on community_recipe_ratings;
 create policy "insert own rating" on community_recipe_ratings
-  for insert with check (user_id = auth.uid());
+  for insert with check (user_id = auth.uid() and is_not_own_community_recipe(recipe_id));
+drop policy if exists "update own rating" on community_recipe_ratings;
 create policy "update own rating" on community_recipe_ratings
-  for update using (user_id = auth.uid()) with check (user_id = auth.uid());
+  for update using (user_id = auth.uid()) with check (user_id = auth.uid() and is_not_own_community_recipe(recipe_id));
 create policy "delete own rating" on community_recipe_ratings
   for delete using (user_id = auth.uid());
 

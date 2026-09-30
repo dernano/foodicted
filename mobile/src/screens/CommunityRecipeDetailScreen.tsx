@@ -4,6 +4,8 @@ import {
   ActivityIndicator,
   Alert,
   ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -111,6 +113,7 @@ export default function CommunityRecipeDetailScreen({ route, navigation }: Props
   }, [recipe.id, session?.user.id]);
 
   async function handleRate(value: number) {
+    if (isOwner) return;
     if (!session) {
       Alert.alert("Anmeldung nötig", "Melde dich an, um Rezepte zu bewerten.");
       return;
@@ -216,7 +219,12 @@ export default function CommunityRecipeDetailScreen({ route, navigation }: Props
   );
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+    >
+      <ScrollView contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       {recipe.imageUrl ? (
         <ImageBackground source={{ uri: recipe.imageUrl }} style={[styles.hero, styles.heroWithPhoto]} imageStyle={styles.heroImage}>
           <View style={styles.heroScrim} />
@@ -242,8 +250,14 @@ export default function CommunityRecipeDetailScreen({ route, navigation }: Props
               {avgRating.toFixed(1)} · {ratingCount} {ratingCount === 1 ? "Bewertung" : "Bewertungen"}
             </Text>
           </View>
-          <Text style={styles.rateLabel}>{myRating ? "Deine Bewertung" : "Jetzt bewerten"}</Text>
-          <StarPicker value={myRating ?? 0} onChange={handleRate} />
+          {isOwner ? (
+            <Text style={styles.rateLabel}>Eigene Rezepte kannst du nicht bewerten.</Text>
+          ) : (
+            <>
+              <Text style={styles.rateLabel}>{myRating ? "Deine Bewertung" : "Jetzt bewerten"}</Text>
+              <StarPicker value={myRating ?? 0} onChange={handleRate} />
+            </>
+          )}
         </View>
 
         {hasNutritionData(recipe.nutrition) && (
@@ -334,7 +348,8 @@ export default function CommunityRecipeDetailScreen({ route, navigation }: Props
           </TouchableOpacity>
         )}
       </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
