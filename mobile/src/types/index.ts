@@ -86,6 +86,45 @@ export interface FavoriteRecipe extends Recipe {
   savedAt: number;
 }
 
+/** A recipe published to the Community - visible to every user, independent
+ * of household. Unlike Recipe/FavoriteRecipe it has no missingIngredients
+ * (that's a pantry-scan concept); a match % against the local pantry is
+ * computed client-side instead, see utils/ingredientMatch. */
+export interface CommunityRecipe {
+  id: string;
+  authorId: string;
+  authorName: string;
+  title: string;
+  description: string;
+  category: RecipeCategory;
+  prepTimeMinutes: number;
+  cookTimeMinutes: number;
+  servings: number;
+  difficulty: Recipe["difficulty"];
+  tags: string[];
+  ingredients: RecipeIngredient[];
+  instructions: string[];
+  nutrition: Nutrition;
+  imageUrl?: string;
+  avgRating: number;
+  ratingCount: number;
+  createdAt: number;
+}
+
+export interface CommunityComment {
+  id: string;
+  recipeId: string;
+  userId: string;
+  authorName: string;
+  text: string;
+  createdAt: number;
+}
+
+export interface Profile {
+  id: string;
+  displayName: string;
+}
+
 /** A single entry on the shopping list. */
 export interface ShoppingListItem {
   id: string;

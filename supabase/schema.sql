@@ -209,3 +209,160 @@ create policy "household members can update recipe images" on storage.objects
 create policy "household members can delete recipe images" on storage.objects
   for delete to authenticated
   using (bucket_id = 'recipe-images' and is_household_member((storage.foldername(name))[1]::uuid));
+
+-- =======================================================================
+-- Foodicted Community - recipes any user can publish, rate, comment on
+-- and browse, independent of household. Paste this section alone into the
+-- SQL editor if you're adding Community to a database that already has
+-- everything above (it's safe to re-run this section on its own).
+-- =======================================================================
+
+-- ---------------------------------------------------------------------
+-- Public profiles (households/favorites never needed a public-readable
+-- user identity; Community does, to show an author name on every recipe)
+-- ---------------------------------------------------------------------
+
+create table if not exists profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  display_name text,
+  avatar_url text,
+  created_at timestamptz not null default now()
+);
+
+alter table profiles enable row level security;
+
+create policy "select all profiles" on profiles for select using (true);
+create policy "update own profile" on profiles
+  for update using (id = auth.uid()) with check (id = auth.uid());
+
+-- Auto-creates a profile row for every new signup.
+create or replace function handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, display_name)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', split_part(new.email, '@', 1))
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function handle_new_user();
+
+-- Backfill profiles for accounts that signed up before this table existed.
+insert into profiles (id, display_name)
+select u.id, coalesce(u.raw_user_meta_data->>'full_name', u.raw_user_meta_data->>'name', split_part(u.email, '@', 1))
+from auth.users u
+where not exists (select 1 from profiles p where p.id = u.id);
+
+-- ---------------------------------------------------------------------
+-- Community recipes, ratings, comments
+-- ---------------------------------------------------------------------
+
+create table if not exists community_recipes (
+  id uuid primary key default gen_random_uuid(),
+  author_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  description text not null default '',
+  prep_time_minutes int not null default 0,
+  cook_time_minutes int not null default 0,
+  servings int not null default 2,
+  category text not null default 'sonstiges',
+  difficulty text not null default 'medium',
+  tags jsonb not null default '[]',
+  ingredients jsonb not null default '[]',
+  instructions jsonb not null default '[]',
+  nutrition jsonb not null default '{"calories":0,"proteinGrams":0,"carbsGrams":0,"fatGrams":0}',
+  image_url text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table community_recipes enable row level security;
+
+create policy "select all community recipes" on community_recipes
+  for select using (true);
+create policy "insert own community recipes" on community_recipes
+  for insert with check (author_id = auth.uid());
+create policy "update own community recipes" on community_recipes
+  for update using (author_id = auth.uid()) with check (author_id = auth.uid());
+create policy "delete own community recipes" on community_recipes
+  for delete using (author_id = auth.uid());
+
+create table if not exists community_recipe_ratings (
+  recipe_id uuid not null references community_recipes(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  rating smallint not null check (rating between 1 and 5),
+  created_at timestamptz not null default now(),
+  primary key (recipe_id, user_id)
+);
+
+alter table community_recipe_ratings enable row level security;
+
+create policy "select all ratings" on community_recipe_ratings for select using (true);
+create policy "insert own rating" on community_recipe_ratings
+  for insert with check (user_id = auth.uid());
+create policy "update own rating" on community_recipe_ratings
+  for update using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "delete own rating" on community_recipe_ratings
+  for delete using (user_id = auth.uid());
+
+create table if not exists community_recipe_comments (
+  id uuid primary key default gen_random_uuid(),
+  recipe_id uuid not null references community_recipes(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  text text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table community_recipe_comments enable row level security;
+
+create policy "select all comments" on community_recipe_comments for select using (true);
+create policy "insert own comment" on community_recipe_comments
+  for insert with check (user_id = auth.uid());
+create policy "delete own comment" on community_recipe_comments
+  for delete using (user_id = auth.uid());
+
+-- Recipes with their aggregated rating - lets the app sort/filter by rating
+-- without pulling every individual rating row down to the client.
+create or replace view community_recipes_with_stats as
+select
+  cr.*,
+  coalesce(avg(crr.rating), 0)::numeric(3,2) as avg_rating,
+  count(crr.rating) as rating_count
+from community_recipes cr
+left join community_recipe_ratings crr on crr.recipe_id = cr.id
+group by cr.id;
+
+-- ---------------------------------------------------------------------
+-- Storage (photos attached to published community recipes)
+-- ---------------------------------------------------------------------
+
+insert into storage.buckets (id, name, public)
+values ('community-recipe-images', 'community-recipe-images', true)
+on conflict (id) do nothing;
+
+-- Objects are stored as "<author_id>/<recipe_id>-<timestamp>.jpg".
+create policy "select community recipe images" on storage.objects
+  for select using (bucket_id = 'community-recipe-images');
+
+create policy "authors can upload own community recipe images" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'community-recipe-images' and (storage.foldername(name))[1] = auth.uid()::text);
+
+create policy "authors can update own community recipe images" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'community-recipe-images' and (storage.foldername(name))[1] = auth.uid()::text);
+
+create policy "authors can delete own community recipe images" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'community-recipe-images' and (storage.foldername(name))[1] = auth.uid()::text);

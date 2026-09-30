@@ -68,3 +68,23 @@ export async function saveRecipeImage(
   await source.copy(dest);
   return dest.uri;
 }
+
+const COMMUNITY_RECIPE_IMAGES_BUCKET = "community-recipe-images";
+
+/** Uploads a locally-picked photo for a published Community recipe and
+ * returns its public url. Community always requires an account, so unlike
+ * favorites there's no local-only fallback here. */
+export async function saveCommunityRecipeImage(
+  localUri: string,
+  opts: { recipeId: string; authorId: string }
+): Promise<string> {
+  const source = new File(localUri);
+  const bytes = await source.bytes();
+  const path = `${opts.authorId}/${opts.recipeId}-${Date.now()}.jpg`;
+  const { error } = await supabase.storage
+    .from(COMMUNITY_RECIPE_IMAGES_BUCKET)
+    .upload(path, bytes, { contentType: "image/jpeg", upsert: true });
+  if (error) throw error;
+  const { data } = supabase.storage.from(COMMUNITY_RECIPE_IMAGES_BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+}

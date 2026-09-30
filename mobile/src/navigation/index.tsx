@@ -12,7 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { FridgeItem, Recipe, FavoriteRecipe } from "../types";
+import type { FridgeItem, Recipe, FavoriteRecipe, CommunityRecipe } from "../types";
 import HomeScreen from "../screens/HomeScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
 import CameraScreen from "../screens/CameraScreen";
@@ -27,6 +27,10 @@ import ShoppingListScreen from "../screens/ShoppingListScreen";
 import RecentRecipesScreen from "../screens/RecentRecipesScreen";
 import IngredientMatchScreen from "../screens/IngredientMatchScreen";
 import AboutScreen from "../screens/AboutScreen";
+import CommunityScreen from "../screens/CommunityScreen";
+import CommunityRecipeDetailScreen from "../screens/CommunityRecipeDetailScreen";
+import PublishCommunityRecipeScreen from "../screens/PublishCommunityRecipeScreen";
+import CommunityProfileScreen from "../screens/CommunityProfileScreen";
 import OnboardingScreen, { ONBOARDING_SEEN_KEY } from "../screens/OnboardingScreen";
 import { useAuth } from "../context/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -36,6 +40,7 @@ import { colors, spacing } from "../constants/theme";
 
 export type MainTabsParamList = {
   Start: undefined;
+  Community: undefined;
   Favoriten: undefined;
   Einkaufsliste: undefined;
 };
@@ -54,6 +59,9 @@ export type RootStackParamList = {
   RecentRecipes: undefined;
   IngredientMatch: { recipe: Recipe; detectedItems: FridgeItem[] };
   About: undefined;
+  CommunityRecipeDetail: { recipe: CommunityRecipe };
+  PublishCommunityRecipe: { recipe?: CommunityRecipe } | undefined;
+  CommunityProfile: { authorId: string; authorName: string };
 };
 
 export type MainTabsScreenProps<T extends keyof MainTabsParamList> = CompositeScreenProps<
@@ -102,22 +110,20 @@ function AccountHeaderButton({
   );
 }
 
-/** Account access is available on every tab (not just Start), and Favoriten's
- * "add recipe" action sits alongside it instead of replacing it. */
+/** Account access is available on every tab (not just Start), and Favoriten's/
+ * Community's "add recipe" action sits alongside it instead of replacing it. */
 function TabHeaderRight({
   navigation,
-  showAdd,
+  addRoute,
 }: {
   navigation: BottomTabNavigationProp<MainTabsParamList, keyof MainTabsParamList>;
-  showAdd?: boolean;
+  addRoute?: "AddFavoriteRecipe" | "PublishCommunityRecipe";
 }) {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.lg, marginRight: spacing.lg }}>
-      {showAdd && (
+      {addRoute && (
         <TouchableOpacity
-          onPress={() =>
-            navigation.getParent<NativeStackNavigationProp<RootStackParamList>>()?.navigate("AddFavoriteRecipe")
-          }
+          onPress={() => navigation.getParent<NativeStackNavigationProp<RootStackParamList>>()?.navigate(addRoute)}
           hitSlop={12}
         >
           <Ionicons name="add-circle-outline" size={26} color={colors.textOnDark} />
@@ -169,6 +175,18 @@ function MainTabs() {
         })}
       />
       <Tab.Screen
+        name="Community"
+        component={CommunityScreen}
+        options={({ navigation }) => ({
+          headerTitle: () => <HeaderLogo title="Community" />,
+          tabBarLabel: "Community",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "compass" : "compass-outline"} size={size} color={color} />
+          ),
+          headerRight: () => <TabHeaderRight navigation={navigation} addRoute="PublishCommunityRecipe" />,
+        })}
+      />
+      <Tab.Screen
         name="Favoriten"
         component={FavoritesScreen}
         options={({ navigation }) => ({
@@ -177,7 +195,7 @@ function MainTabs() {
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? "heart" : "heart-outline"} size={size} color={color} />
           ),
-          headerRight: () => <TabHeaderRight navigation={navigation} showAdd />,
+          headerRight: () => <TabHeaderRight navigation={navigation} addRoute="AddFavoriteRecipe" />,
         })}
       />
       <Tab.Screen
@@ -255,6 +273,19 @@ export default function AppNavigator() {
         <Stack.Screen name="RecentRecipes" component={RecentRecipesScreen} options={{ title: "Verlauf" }} />
         <Stack.Screen name="IngredientMatch" component={IngredientMatchScreen} options={{ title: "Zutaten-Check" }} />
         <Stack.Screen name="About" component={AboutScreen} options={{ title: "Über Foodicted" }} />
+        {/* No title text here - same reasoning as RecipeDetail: the recipe's
+            own large title lives in the screen's hero card. */}
+        <Stack.Screen name="CommunityRecipeDetail" component={CommunityRecipeDetailScreen} options={{ title: "" }} />
+        <Stack.Screen
+          name="PublishCommunityRecipe"
+          component={PublishCommunityRecipeScreen}
+          options={({ route }) => ({ title: route.params?.recipe ? "Rezept bearbeiten" : "Rezept veröffentlichen" })}
+        />
+        <Stack.Screen
+          name="CommunityProfile"
+          component={CommunityProfileScreen}
+          options={({ route }) => ({ title: route.params.authorName })}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
