@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo } from "react";
 import { Alert, ImageBackground, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import type { RootStackScreenProps } from "../navigation";
 import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
@@ -133,7 +134,11 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
   );
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
+    <>
+      {/* This screen's hero is always a dark block/photo (global default is
+          now the light-header "dark" style since Phase 2). */}
+      <StatusBar style="light" />
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
       {recipe.imageUrl ? (
         <ImageBackground
           source={{ uri: recipe.imageUrl }}
@@ -248,7 +253,8 @@ export default function RecipeDetailScreen({ route, navigation }: Props) {
           </View>
         ))}
       </View>
-    </ScrollView>
+      </ScrollView>
+    </>
   );
 }
 

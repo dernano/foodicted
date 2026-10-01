@@ -18,7 +18,11 @@ export default function App() {
               <RecentRecipesProvider>
                 <PantryProvider>
                   <AppNavigator />
-                  <StatusBar style="light" />
+                  {/* Dark icons/text by default now that headers are light
+                      (Phase 2) - RecipeDetail/CommunityRecipeDetail locally
+                      override back to "light" since they still have a dark
+                      photo hero under the status bar. */}
+                  <StatusBar style="dark" />
                 </PantryProvider>
               </RecentRecipesProvider>
             </ShoppingListProvider>

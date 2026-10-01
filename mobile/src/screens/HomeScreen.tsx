@@ -21,29 +21,36 @@ const HERO_BG = "#f2efe5";
 const HERO_SOURCE_ASPECT = 1672 / 941;
 
 /** rgb() of HERO_BG, used to fade the photo into the canvas without any
- * gradient library (a stack of increasingly-opaque bands, pure Views). */
+ * gradient library (a stack of increasingly-opaque bands, pure Views). Many
+ * thin bands on an eased curve read as one continuous fade instead of
+ * visible discrete steps. */
 const HERO_BG_RGB = "242,239,229";
-const HERO_FADE_STEPS = [0.05, 0.14, 0.26, 0.42, 0.6, 0.78, 0.92, 1];
+function buildFadeSteps(count: number): number[] {
+  return Array.from({ length: count }, (_, i) => Math.pow((i + 1) / count, 1.6));
+}
+const HERO_FADE_STEPS = buildFadeSteps(28);
 
-/** Responsive hero height: ~32% of the window, clamped so it stays sensible
+/** Responsive hero height: ~36% of the window, clamped so it stays sensible
  * on very small or very large screens instead of one fixed pixel value. */
 function useHeroHeight(): number {
   const { height } = useWindowDimensions();
-  return Math.min(Math.max(height * 0.32, 220), 320);
+  return Math.min(Math.max(height * 0.36, 230), 340);
 }
 
-function preferenceLines(preferences: ReturnType<typeof usePreferences>["preferences"]): string[] {
-  const lines: string[] = [];
-  lines.push(`Ziel: ${preferences.goal || "-"}`);
-  lines.push(`Diät: ${preferences.diet || "-"}`);
-  lines.push(`Portionen: ${preferences.servings ?? 2}`);
-  lines.push(`Rezeptvorschläge: bis zu ${preferences.recipeCount ?? 7}`);
-  if (preferences.maxTimeMinutes) lines.push(`Max. Zubereitungszeit: ${preferences.maxTimeMinutes} min`);
-  if (preferences.allergies?.length) lines.push(`Allergien: ${preferences.allergies.join(", ")}`);
-  if (preferences.dislikedIngredients?.length) lines.push(`Mag nicht: ${preferences.dislikedIngredients.join(", ")}`);
-  if (preferences.cuisines?.length) lines.push(`Küchen: ${preferences.cuisines.join(", ")}`);
-  if (preferences.targetCaloriesPerServing) lines.push(`Ziel-Kalorien: ~${preferences.targetCaloriesPerServing} kcal`);
-  if (preferences.notes) lines.push(`Notizen: ${preferences.notes}`);
+function preferenceLines(
+  preferences: ReturnType<typeof usePreferences>["preferences"]
+): { label: string; value: string }[] {
+  const lines: { label: string; value: string }[] = [];
+  lines.push({ label: "Ziel", value: preferences.goal || "-" });
+  lines.push({ label: "Diät", value: preferences.diet || "-" });
+  lines.push({ label: "Portionen", value: String(preferences.servings ?? 2) });
+  lines.push({ label: "Rezeptvorschläge", value: `bis zu ${preferences.recipeCount ?? 7}` });
+  if (preferences.maxTimeMinutes) lines.push({ label: "Max. Zubereitungszeit", value: `${preferences.maxTimeMinutes} min` });
+  if (preferences.allergies?.length) lines.push({ label: "Allergien", value: preferences.allergies.join(", ") });
+  if (preferences.dislikedIngredients?.length) lines.push({ label: "Mag nicht", value: preferences.dislikedIngredients.join(", ") });
+  if (preferences.cuisines?.length) lines.push({ label: "Küchen", value: preferences.cuisines.join(", ") });
+  if (preferences.targetCaloriesPerServing) lines.push({ label: "Ziel-Kalorien", value: `~${preferences.targetCaloriesPerServing} kcal` });
+  if (preferences.notes) lines.push({ label: "Notizen", value: preferences.notes });
   return lines;
 }
 
@@ -59,8 +66,6 @@ export default function HomeScreen({ navigation }: Props) {
   // its content sits over faded-light photo instead of raw imagery - capped
   // so it never eats most of the hero on short screens.
   const heroTopFadeHeight = Math.min(insets.top + 64, heroHeight * 0.35);
-  const contentWidth = windowWidth - spacing.xxl * 2;
-  const heroLogoSize = Math.min(Math.max(contentWidth * 0.4, 90), 150);
 
   return (
     <View style={styles.screen}>
@@ -93,17 +98,12 @@ export default function HomeScreen({ navigation }: Props) {
               <View key={i} style={{ flex: 1, backgroundColor: `rgba(${HERO_BG_RGB},${alpha})` }} />
             ))}
           </View>
-          {/* Left-aligned, deliberately narrower than the hero so the headline
-              wraps onto two lines well clear of the food on the right. */}
-          <View style={styles.heroTextBlock}>
-            <Image
-              source={require("../../assets/icon-mark.png")}
-              style={[styles.heroBrandLogo, { width: heroLogoSize, height: heroLogoSize }]}
-              resizeMode="contain"
-            />
-            <Text style={styles.heroSlogan}>Erst scannen, dann schlemmen.</Text>
-          </View>
         </View>
+
+        {/* Brand mark lives only in the header now - the hero stays pure
+            photography, with the claim as plain copy below it instead of
+            floating over the image. */}
+        <Text style={styles.claim}>Erst scannen, dann schlemmen.</Text>
 
         <TouchableOpacity
           style={styles.primaryButton}
@@ -137,10 +137,15 @@ export default function HomeScreen({ navigation }: Props) {
         {!!recent.length && (
           <View style={styles.recentSection}>
             <View style={styles.cardHeaderRow}>
-              <Text style={styles.cardTitle}>Zuletzt angesehen</Text>
+              <Text style={styles.recentTitle}>Zuletzt angesehen</Text>
               {recent.length > 5 && (
-                <TouchableOpacity onPress={() => navigation.navigate("RecentRecipes")} hitSlop={8}>
+                <TouchableOpacity
+                  style={styles.cardHeaderLinkRow}
+                  onPress={() => navigation.navigate("RecentRecipes")}
+                  hitSlop={8}
+                >
                   <Text style={styles.cardHeaderLink}>Alle anzeigen</Text>
+                  <Ionicons name="chevron-forward" size={14} color={colors.primary} />
                 </TouchableOpacity>
               )}
             </View>
@@ -199,9 +204,12 @@ export default function HomeScreen({ navigation }: Props) {
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </View>
           {preferenceLines(preferences).map((line, i) => (
-            <Text key={i} style={styles.summaryLine}>
-              {line}
-            </Text>
+            <View key={i} style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>{line.label}</Text>
+              <Text style={styles.summaryValue} numberOfLines={2}>
+                {line.value}
+              </Text>
+            </View>
           ))}
         </TouchableOpacity>
 
@@ -230,27 +238,29 @@ const styles = StyleSheet.create({
   },
   heroFade: { position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "column" },
   heroFadeTop: { position: "absolute", left: 0, right: 0, top: 0, flexDirection: "column" },
-  heroTextBlock: {
-    position: "absolute",
-    left: 0,
-    bottom: 0,
-    width: "64%",
-    paddingLeft: spacing.xxl,
-    paddingBottom: spacing.md,
+  claim: {
+    fontSize: 21,
+    fontWeight: "700",
+    color: colors.brandDark,
+    alignSelf: "flex-start",
+    marginTop: spacing.lg,
+    marginBottom: spacing.lg,
   },
-  heroBrandLogo: { marginBottom: spacing.sm },
-  heroSlogan: { ...t.bodyStrong, color: colors.primary },
   primaryButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.sm,
     backgroundColor: colors.primary,
-    paddingVertical: spacing.lg,
+    paddingVertical: spacing.lg + 2,
     borderRadius: radius.button,
     width: "100%",
     marginBottom: spacing.sm,
-    ...shadow.button,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   primaryButtonText: { color: colors.textOnDark, fontSize: 17, fontWeight: "700" },
   secondaryRow: { width: "100%", flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
@@ -278,8 +288,10 @@ const styles = StyleSheet.create({
   cardHeaderRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.sm },
   cardTitleWithIcon: { flexDirection: "row", alignItems: "center", gap: spacing.xs },
   cardTitle: { ...t.bodyStrong, color: colors.textPrimary },
-  cardHeaderLink: { ...t.label, color: colors.primary },
-  recentSection: { width: "100%", marginTop: spacing.lg },
+  cardHeaderLinkRow: { flexDirection: "row", alignItems: "center", gap: 2 },
+  cardHeaderLink: { fontSize: 14, fontWeight: "600", color: colors.primary },
+  recentTitle: { fontSize: 19, fontWeight: "700", color: colors.textPrimary },
+  recentSection: { width: "100%", marginTop: spacing.xxl },
   recentScrollContent: { gap: spacing.md, paddingRight: spacing.xxl, paddingVertical: spacing.xs },
   recentCard: { width: 128 },
   recentCardImage: { width: 128, height: 112, borderRadius: radius.card, backgroundColor: colors.bgAlt },
@@ -293,7 +305,14 @@ const styles = StyleSheet.create({
   },
   recentCardTitle: { fontSize: 13, fontWeight: "700", color: colors.textPrimary, marginTop: spacing.xs, lineHeight: 17 },
   recentCardMeta: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
-  summaryLine: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.xs, lineHeight: 19 },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.md,
+    paddingVertical: 3,
+  },
+  summaryLabel: { fontSize: 13, color: colors.textMuted },
+  summaryValue: { fontSize: 13, fontWeight: "600", color: colors.textSecondary, flexShrink: 1, textAlign: "right" },
   aboutLink: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: spacing.lg, alignSelf: "center" },
   aboutLinkText: { fontSize: 11, color: colors.textMuted, fontWeight: "600" },
 });

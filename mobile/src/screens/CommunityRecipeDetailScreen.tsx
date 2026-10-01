@@ -25,6 +25,7 @@ import {
   setRating,
   updateCommunityRecipe,
 } from "../api/community";
+import { StatusBar } from "expo-status-bar";
 import { useAuth } from "../context/AuthContext";
 import { useFavorites } from "../context/FavoritesContext";
 import { usePantry } from "../context/PantryContext";
@@ -234,11 +235,15 @@ export default function CommunityRecipeDetailScreen({ route, navigation }: Props
   );
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
+    <>
+      {/* This screen's hero is always a dark block/photo (global default is
+          now the light-header "dark" style since Phase 2). */}
+      <StatusBar style="light" />
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
       <ScrollView contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       {recipe.imageUrl ? (
         <ImageBackground source={{ uri: recipe.imageUrl }} style={[styles.hero, styles.heroWithPhoto]} imageStyle={styles.heroImage}>
@@ -364,7 +369,8 @@ export default function CommunityRecipeDetailScreen({ route, navigation }: Props
         )}
       </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </>
   );
 }
 
