@@ -10,17 +10,18 @@ export const colors = {
   primary: "#2f9e44",
   primaryPressed: "#278a3b",
 
-  bg: "#f9fcf9",
+  bg: "#f8f7f1",
   bgAlt: "#f6fbf6",
   surface: "#ffffff",
+  surfaceSoft: "#eef3ec",
 
-  textPrimary: "#1b4332",
-  textSecondary: "#5c7a6a",
-  textMuted: "#7a8f83",
+  textPrimary: "#1f2d24",
+  textSecondary: "#6b7280",
+  textMuted: "#8a978f",
   textOnDark: "#ffffff",
   textOnDarkMuted: "rgba(255,255,255,0.75)",
 
-  border: "#e6f0e8",
+  border: "#e6ebe6",
   borderAlt: "#eef5ef",
 
   noticeText: "#966b1f",

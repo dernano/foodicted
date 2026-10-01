@@ -2,6 +2,7 @@ import Constants from "expo-constants";
 import * as Updates from "expo-updates";
 import React from "react";
 import { StyleSheet, Text } from "react-native";
+import { colors } from "../constants/theme";
 
 function formatUpdateTime(date: Date | null | undefined): string {
   if (!date) return "";
@@ -25,5 +26,5 @@ export default function VersionBadge() {
 }
 
 const styles = StyleSheet.create({
-  text: { fontSize: 11, color: "#8fa89b", fontWeight: "600", textAlign: "center" },
+  text: { fontSize: 11, color: colors.textMuted, fontWeight: "600", textAlign: "center" },
 });
