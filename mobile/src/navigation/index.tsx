@@ -74,8 +74,12 @@ export type RootStackScreenProps<T extends keyof RootStackParamList> = NativeSta
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabsParamList>();
 
-const THEME_COLOR = colors.brandDark;
+// Premium light header: a flat white bar with dark-green icons/text, instead
+// of the previous solid dark-green block on every main screen. Dark green
+// stays the brand color, just no longer a huge header surface.
+const THEME_COLOR = colors.surface;
 const ACCENT_COLOR = colors.primary;
+const HEADER_TINT = colors.brandDark;
 
 /** Consistent icon + title on every tab's header, so the brand mark is always
  * visible and the header doesn't visually jump between tabs (same layout,
@@ -88,7 +92,7 @@ function HeaderLogo({ title }: { title: string }) {
         style={{ width: 26, height: 26 }}
         resizeMode="contain"
       />
-      <Text style={{ color: colors.textOnDark, fontSize: 18, fontWeight: "800" }}>{title}</Text>
+      <Text style={{ color: HEADER_TINT, fontSize: 18, fontWeight: "800" }}>{title}</Text>
     </View>
   );
 }
@@ -105,7 +109,7 @@ function AccountHeaderButton({
       onPress={() => navigation.getParent<NativeStackNavigationProp<RootStackParamList>>()?.navigate("Account")}
       hitSlop={12}
     >
-      <Ionicons name={iconName} size={24} color={colors.textOnDark} />
+      <Ionicons name={iconName} size={24} color={HEADER_TINT} />
     </TouchableOpacity>
   );
 }
@@ -126,7 +130,7 @@ function TabHeaderRight({
           onPress={() => navigation.getParent<NativeStackNavigationProp<RootStackParamList>>()?.navigate(addRoute)}
           hitSlop={12}
         >
-          <Ionicons name="add-circle-outline" size={26} color={colors.textOnDark} />
+          <Ionicons name="add-circle-outline" size={26} color={HEADER_TINT} />
         </TouchableOpacity>
       )}
       <AccountHeaderButton navigation={navigation} />
@@ -142,7 +146,7 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: THEME_COLOR },
-        headerTintColor: colors.textOnDark,
+        headerTintColor: HEADER_TINT,
         headerShadowVisible: false,
         tabBarActiveTintColor: ACCENT_COLOR,
         tabBarInactiveTintColor: colors.textMuted,
@@ -237,8 +241,8 @@ export default function AppNavigator() {
         initialRouteName={initialRoute}
         screenOptions={{
           headerStyle: { backgroundColor: THEME_COLOR },
-          headerTintColor: colors.textOnDark,
-          headerTitleStyle: { fontWeight: "700" },
+          headerTintColor: HEADER_TINT,
+          headerTitleStyle: { fontWeight: "700", color: HEADER_TINT },
           headerShadowVisible: false,
         }}
       >
