@@ -81,8 +81,11 @@ $$;
 create policy "select own households" on households
   for select using (is_household_member(id));
 
-create policy "select own membership" on household_members
-  for select using (user_id = auth.uid());
+-- Lets every member of a household see who else is in it (not just their
+-- own row) - needed to show a household member list in the app.
+drop policy if exists "select own membership" on household_members;
+create policy "select household membership" on household_members
+  for select using (is_household_member(household_id));
 
 create policy "select household favorites" on favorite_recipes
   for select using (is_household_member(household_id));

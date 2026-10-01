@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Share, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { fetchProfileVisibility, setProfilePublic } from "../api/community";
+import { fetchHouseholdMembers, type HouseholdMember } from "../api/household";
 import { useAuth } from "../context/AuthContext";
 import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
@@ -47,6 +48,46 @@ function CommunityVisibilityToggle({ userId }: { userId: string }) {
           disabled={busy}
           trackColor={{ true: colors.primary, false: colors.border }}
         />
+      )}
+    </View>
+  );
+}
+
+/** Shows everyone currently in this household, with display names resolved
+ * from their Community profile - lets you see at a glance who has joined. */
+function HouseholdMembersList({ householdId, currentUserId }: { householdId: string; currentUserId: string }) {
+  const [members, setMembers] = useState<HouseholdMember[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchHouseholdMembers(householdId)
+      .then((m) => {
+        if (!cancelled) setMembers(m);
+      })
+      .catch((err) => {
+        console.warn("Failed to load household members", err);
+        if (!cancelled) setMembers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [householdId]);
+
+  return (
+    <View style={styles.membersCard}>
+      <Text style={styles.membersTitle}>Mitglieder{members ? ` (${members.length})` : ""}</Text>
+      {members === null ? (
+        <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />
+      ) : (
+        members.map((m) => (
+          <View key={m.userId} style={styles.memberRow}>
+            <Ionicons name="person-circle-outline" size={18} color={colors.textMuted} />
+            <Text style={styles.memberName}>
+              {m.displayName}
+              {m.userId === currentUserId ? " (Du)" : ""}
+            </Text>
+          </View>
+        ))
       )}
     </View>
   );
@@ -178,6 +219,8 @@ export default function AccountScreen() {
         </TouchableOpacity>
       </View>
 
+      <HouseholdMembersList householdId={household.id} currentUserId={session.user.id} />
+
       <CommunityVisibilityToggle userId={session.user.id} />
 
       <TouchableOpacity style={styles.plainButton} onPress={() => handle(signOut)}>
@@ -258,4 +301,15 @@ const styles = StyleSheet.create({
   codeValue: { fontSize: 28, fontWeight: "800", color: colors.textPrimary, letterSpacing: 4, marginBottom: spacing.md + 2 },
   shareButton: { flexDirection: "row", alignItems: "center", gap: 6 },
   shareButtonText: { color: colors.primary, fontSize: 13, fontWeight: "700" },
+  membersCard: {
+    width: "100%",
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
+    padding: spacing.lg,
+    marginTop: spacing.xl,
+    ...shadow.soft,
+  },
+  membersTitle: { fontSize: 14, fontWeight: "700", color: colors.textPrimary, marginBottom: spacing.sm },
+  memberRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingVertical: 4 },
+  memberName: { fontSize: 13, color: colors.textSecondary },
 });
