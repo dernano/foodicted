@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { MainTabsScreenProps } from "../navigation";
 import { usePreferences } from "../context/PreferencesContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
@@ -50,9 +51,14 @@ export default function HomeScreen({ navigation }: Props) {
   const { preferences } = usePreferences();
   const { recent } = useRecentRecipes();
   const { width: windowWidth } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const heroHeight = useHeroHeight();
   const heroImageHeight = windowWidth * HERO_SOURCE_ASPECT;
   const heroFadeHeight = heroHeight * 0.64;
+  // Covers the floating transparent header (status bar + title/icon row) so
+  // its content sits over faded-light photo instead of raw imagery - capped
+  // so it never eats most of the hero on short screens.
+  const heroTopFadeHeight = Math.min(insets.top + 64, heroHeight * 0.35);
   const contentWidth = windowWidth - spacing.xxl * 2;
   const heroLogoSize = Math.min(Math.max(contentWidth * 0.4, 90), 150);
 
@@ -77,6 +83,13 @@ export default function HomeScreen({ navigation }: Props) {
               bands instead of a gradient library (would need a native rebuild). */}
           <View style={[styles.heroFade, { height: heroFadeHeight }]} pointerEvents="none">
             {HERO_FADE_STEPS.map((alpha, i) => (
+              <View key={i} style={{ flex: 1, backgroundColor: `rgba(${HERO_BG_RGB},${alpha})` }} />
+            ))}
+          </View>
+          {/* Same band trick, mirrored at the top - merges the hero into the
+              transparent header floating above it instead of a visible seam. */}
+          <View style={[styles.heroFadeTop, { height: heroTopFadeHeight }]} pointerEvents="none">
+            {HERO_FADE_STEPS.slice().reverse().map((alpha, i) => (
               <View key={i} style={{ flex: 1, backgroundColor: `rgba(${HERO_BG_RGB},${alpha})` }} />
             ))}
           </View>
@@ -122,7 +135,7 @@ export default function HomeScreen({ navigation }: Props) {
         </View>
 
         {!!recent.length && (
-          <View style={styles.card}>
+          <View style={styles.recentSection}>
             <View style={styles.cardHeaderRow}>
               <Text style={styles.cardTitle}>Zuletzt angesehen</Text>
               {recent.length > 5 && (
@@ -131,26 +144,42 @@ export default function HomeScreen({ navigation }: Props) {
                 </TouchableOpacity>
               )}
             </View>
-            {recent.slice(0, 5).map((recipe, i) => (
-              <TouchableOpacity
-                key={`${recipe.title}-${i}`}
-                style={[styles.recentRow, i === 0 && styles.recentRowFirst]}
-                onPress={() => navigation.navigate("RecipeDetail", { recipe })}
-                activeOpacity={0.6}
-              >
-                {recipe.imageUrl ? (
-                  <Image source={{ uri: recipe.imageUrl }} style={styles.recentThumb} />
-                ) : (
-                  <View style={styles.recentThumbFallback}>
-                    <Ionicons name="restaurant-outline" size={16} color={colors.primary} />
-                  </View>
-                )}
-                <Text style={styles.recentRowText} numberOfLines={1}>
-                  {recipe.title}
-                </Text>
-                <Ionicons name="chevron-forward" size={16} color={colors.border} />
-              </TouchableOpacity>
-            ))}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.recentScrollContent}
+            >
+              {recent.slice(0, 8).map((recipe, i) => {
+                const totalMinutes = recipe.prepTimeMinutes + recipe.cookTimeMinutes;
+                const meta = [totalMinutes ? `${totalMinutes} min` : null, recipe.nutrition.calories ? `${recipe.nutrition.calories} kcal` : null]
+                  .filter(Boolean)
+                  .join(" · ");
+                return (
+                  <TouchableOpacity
+                    key={`${recipe.title}-${i}`}
+                    style={styles.recentCard}
+                    onPress={() => navigation.navigate("RecipeDetail", { recipe })}
+                    activeOpacity={0.8}
+                  >
+                    {recipe.imageUrl ? (
+                      <Image source={{ uri: recipe.imageUrl }} style={styles.recentCardImage} />
+                    ) : (
+                      <View style={styles.recentCardImageFallback}>
+                        <Ionicons name="restaurant-outline" size={20} color={colors.primary} />
+                      </View>
+                    )}
+                    <Text style={styles.recentCardTitle} numberOfLines={2}>
+                      {recipe.title}
+                    </Text>
+                    {!!meta && (
+                      <Text style={styles.recentCardMeta} numberOfLines={1}>
+                        {meta}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </View>
         )}
 
@@ -200,6 +229,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   heroFade: { position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "column" },
+  heroFadeTop: { position: "absolute", left: 0, right: 0, top: 0, flexDirection: "column" },
   heroTextBlock: {
     position: "absolute",
     left: 0,
@@ -249,25 +279,20 @@ const styles = StyleSheet.create({
   cardTitleWithIcon: { flexDirection: "row", alignItems: "center", gap: spacing.xs },
   cardTitle: { ...t.bodyStrong, color: colors.textPrimary },
   cardHeaderLink: { ...t.label, color: colors.primary },
-  recentRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderAlt,
-  },
-  recentRowFirst: { borderTopWidth: 0, paddingTop: spacing.xs },
-  recentThumb: { width: 44, height: 44, borderRadius: radius.control, backgroundColor: colors.bgAlt },
-  recentThumbFallback: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.control,
+  recentSection: { width: "100%", marginTop: spacing.lg },
+  recentScrollContent: { gap: spacing.md, paddingRight: spacing.xxl, paddingVertical: spacing.xs },
+  recentCard: { width: 128 },
+  recentCardImage: { width: 128, height: 112, borderRadius: radius.card, backgroundColor: colors.bgAlt },
+  recentCardImageFallback: {
+    width: 128,
+    height: 112,
+    borderRadius: radius.card,
     backgroundColor: colors.bgAlt,
     alignItems: "center",
     justifyContent: "center",
   },
-  recentRowText: { flex: 1, fontSize: 14, color: colors.textPrimary, fontWeight: "600" },
+  recentCardTitle: { fontSize: 13, fontWeight: "700", color: colors.textPrimary, marginTop: spacing.xs, lineHeight: 17 },
+  recentCardMeta: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   summaryLine: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.xs, lineHeight: 19 },
   aboutLink: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: spacing.lg, alignSelf: "center" },
   aboutLinkText: { fontSize: 11, color: colors.textMuted, fontWeight: "600" },
