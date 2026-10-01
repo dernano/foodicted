@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { MainTabsScreenProps } from "../navigation";
 import { usePreferences } from "../context/PreferencesContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
@@ -21,20 +20,21 @@ const HERO_BG = "#f2efe5";
 const HERO_SOURCE_ASPECT = 1672 / 941;
 
 /** rgb() of HERO_BG, used to fade the photo into the canvas without any
- * gradient library (a stack of increasingly-opaque bands, pure Views). Many
- * thin bands on an eased curve read as one continuous fade instead of
- * visible discrete steps. */
+ * gradient library (a stack of increasingly-opaque bands, pure Views). Kept
+ * to a moderate band count - more/thinner bands than this started showing
+ * faint seams between adjacent bands on real devices instead of reading as
+ * one smooth fade. */
 const HERO_BG_RGB = "242,239,229";
 function buildFadeSteps(count: number): number[] {
   return Array.from({ length: count }, (_, i) => Math.pow((i + 1) / count, 1.6));
 }
-const HERO_FADE_STEPS = buildFadeSteps(28);
+const HERO_FADE_STEPS = buildFadeSteps(14);
 
-/** Responsive hero height: ~36% of the window, clamped so it stays sensible
+/** Responsive hero height: ~30% of the window, clamped so it stays sensible
  * on very small or very large screens instead of one fixed pixel value. */
 function useHeroHeight(): number {
   const { height } = useWindowDimensions();
-  return Math.min(Math.max(height * 0.36, 230), 340);
+  return Math.min(Math.max(height * 0.3, 210), 300);
 }
 
 function preferenceLines(
@@ -58,14 +58,9 @@ export default function HomeScreen({ navigation }: Props) {
   const { preferences } = usePreferences();
   const { recent } = useRecentRecipes();
   const { width: windowWidth } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
   const heroHeight = useHeroHeight();
   const heroImageHeight = windowWidth * HERO_SOURCE_ASPECT;
   const heroFadeHeight = heroHeight * 0.64;
-  // Covers the floating transparent header (status bar + title/icon row) so
-  // its content sits over faded-light photo instead of raw imagery - capped
-  // so it never eats most of the hero on short screens.
-  const heroTopFadeHeight = Math.min(insets.top + 64, heroHeight * 0.35);
 
   return (
     <View style={styles.screen}>
@@ -88,13 +83,6 @@ export default function HomeScreen({ navigation }: Props) {
               bands instead of a gradient library (would need a native rebuild). */}
           <View style={[styles.heroFade, { height: heroFadeHeight }]} pointerEvents="none">
             {HERO_FADE_STEPS.map((alpha, i) => (
-              <View key={i} style={{ flex: 1, backgroundColor: `rgba(${HERO_BG_RGB},${alpha})` }} />
-            ))}
-          </View>
-          {/* Same band trick, mirrored at the top - merges the hero into the
-              transparent header floating above it instead of a visible seam. */}
-          <View style={[styles.heroFadeTop, { height: heroTopFadeHeight }]} pointerEvents="none">
-            {HERO_FADE_STEPS.slice().reverse().map((alpha, i) => (
               <View key={i} style={{ flex: 1, backgroundColor: `rgba(${HERO_BG_RGB},${alpha})` }} />
             ))}
           </View>
@@ -237,7 +225,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   heroFade: { position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "column" },
-  heroFadeTop: { position: "absolute", left: 0, right: 0, top: 0, flexDirection: "column" },
   claim: {
     fontSize: 21,
     fontWeight: "700",
