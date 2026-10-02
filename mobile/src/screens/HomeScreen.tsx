@@ -46,15 +46,20 @@ export default function HomeScreen({ navigation }: Props) {
   // would cut into the opaque food area instead of showing the asset's own
   // built-in soft left edge, reintroducing a visible rectangle.
   const heroImageHeight = Math.min(Math.max(windowWidth * 0.58, 210), 250);
-  // Biased to the lower/wider end of the requested 34-38px / 58-62% ranges -
-  // the safer combination for "Erst scannen," / "dann schlemmen." to each
-  // stay on their own line at this column width.
-  const headlineSize = Math.min(Math.max(windowWidth * 0.087, 32), 36);
+  // Confirmed on-device that the previous size/width combo still wrapped
+  // "dann schlemmen." onto its own line - sized down further for a real
+  // safety margin instead of guessing closer to the edge again.
+  const headlineSize = Math.min(Math.max(windowWidth * 0.082, 28), 34);
 
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.heroRow}>
+        {/* width: windowWidth deliberately overflows the ScrollView's own
+            horizontal padding (centered, so it overflows evenly both sides)
+            so the photo can reach the true right screen edge - the text
+            block below compensates with its own left inset to stay aligned
+            with the rest of the page's content margin. */}
+        <View style={[styles.heroRow, { width: windowWidth }]}>
           <Image
             source={require("../../assets/images/foodicted-hero-ingredients.webp")}
             style={[styles.heroImage, { height: heroImageHeight }]}
@@ -218,7 +223,9 @@ const styles = StyleSheet.create({
   heroImage: { width: "100%" },
   heroTextBlock: {
     position: "absolute",
-    left: 0,
+    // Re-adds the page's own content inset, since heroRow itself now
+    // overflows that padding to let the image reach the screen edge.
+    left: spacing.xl,
     top: 0,
     bottom: 0,
     width: "62%",
