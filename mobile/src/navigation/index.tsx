@@ -170,13 +170,11 @@ function MainTabs() {
         name="Start"
         component={HomeScreen}
         options={({ navigation }) => ({
-          // Solid, but matching HomeScreen's own HERO_BG (not the shared
-          // white THEME_COLOR) instead of transparent - a transparent header
-          // over busy photo content (leaves, bowls) made the logo/icon
-          // illegible, so the photo now starts cleanly below the header
-          // instead of running behind it. Same color on both sides of the
-          // seam means it still reads as one continuous canvas.
-          headerStyle: { backgroundColor: "#f2efe5" },
+          // Transparent so the photo hero runs behind the header instead of
+          // stopping below it - HomeScreen fades the top of its hero toward
+          // the same light tone first, so the title/icon stay legible there.
+          headerTransparent: true,
+          headerStyle: { backgroundColor: "transparent" },
           headerTitle: () => <HeaderLogo title="Foodicted" />,
           tabBarLabel: "Start",
           tabBarIcon: ({ color, size, focused }) => (

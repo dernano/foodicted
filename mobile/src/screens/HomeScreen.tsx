@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { MainTabsScreenProps } from "../navigation";
 import { usePreferences } from "../context/PreferencesContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
@@ -20,21 +21,42 @@ const HERO_BG = "#f2efe5";
 const HERO_SOURCE_ASPECT = 1672 / 941;
 
 /** rgb() of HERO_BG, used to fade the photo into the canvas without any
- * gradient library (a stack of increasingly-opaque bands, pure Views). Kept
- * to a moderate band count - more/thinner bands than this started showing
- * faint seams between adjacent bands on real devices instead of reading as
- * one smooth fade. */
+ * gradient library (a stack of increasingly-opaque bands, pure Views). */
 const HERO_BG_RGB = "242,239,229";
 function buildFadeSteps(count: number): number[] {
   return Array.from({ length: count }, (_, i) => Math.pow((i + 1) / count, 1.6));
 }
-const HERO_FADE_STEPS = buildFadeSteps(14);
+const HERO_FADE_STEPS = buildFadeSteps(16);
 
-/** Responsive hero height: ~30% of the window, clamped so it stays sensible
+/** One continuous-looking fade: each band is rendered 1px taller than its
+ * even share of the total height and pulled up by 1px (negative marginTop)
+ * into the previous one. Plain flex:1 bands left any sub-pixel rounding of
+ * a non-integer height as a visible hairline gap between bands on real
+ * devices ("Schlieren") - the deliberate 1px overlap removes that gap
+ * regardless of rounding, without a gradient library. */
+function FadeBand({ height, alphas, anchor }: { height: number; alphas: number[]; anchor: "top" | "bottom" }) {
+  const bandHeight = height / alphas.length;
+  return (
+    <View style={[anchor === "top" ? styles.heroFadeTop : styles.heroFade, { height }]} pointerEvents="none">
+      {alphas.map((alpha, i) => (
+        <View
+          key={i}
+          style={{
+            height: bandHeight + 1,
+            marginTop: i === 0 ? 0 : -1,
+            backgroundColor: `rgba(${HERO_BG_RGB},${alpha})`,
+          }}
+        />
+      ))}
+    </View>
+  );
+}
+
+/** Responsive hero height: ~34% of the window, clamped so it stays sensible
  * on very small or very large screens instead of one fixed pixel value. */
 function useHeroHeight(): number {
   const { height } = useWindowDimensions();
-  return Math.min(Math.max(height * 0.3, 210), 300);
+  return Math.min(Math.max(height * 0.34, 220), 320);
 }
 
 function preferenceLines(
@@ -58,9 +80,15 @@ export default function HomeScreen({ navigation }: Props) {
   const { preferences } = usePreferences();
   const { recent } = useRecentRecipes();
   const { width: windowWidth } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const heroHeight = useHeroHeight();
   const heroImageHeight = windowWidth * HERO_SOURCE_ASPECT;
   const heroFadeHeight = heroHeight * 0.64;
+  // Covers the floating transparent header (status bar + title/icon row) so
+  // its content sits over faded-light photo instead of raw imagery - capped
+  // so it never eats most of the hero on short screens.
+  const heroTopFadeHeight = Math.min(insets.top + 64, heroHeight * 0.35);
+  const heroLogoSize = Math.min(Math.max(windowWidth * 0.22, 90), 150);
 
   return (
     <View style={styles.screen}>
@@ -79,18 +107,22 @@ export default function HomeScreen({ navigation }: Props) {
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           />
-          {/* Soft fade into the canvas color - a stack of increasingly-opaque
-              bands instead of a gradient library (would need a native rebuild). */}
-          <View style={[styles.heroFade, { height: heroFadeHeight }]} pointerEvents="none">
-            {HERO_FADE_STEPS.map((alpha, i) => (
-              <View key={i} style={{ flex: 1, backgroundColor: `rgba(${HERO_BG_RGB},${alpha})` }} />
-            ))}
-          </View>
+          {/* Soft fade into the canvas color at both edges - no gradient
+              library (would need a native rebuild), see FadeBand above. */}
+          <FadeBand height={heroFadeHeight} alphas={HERO_FADE_STEPS} anchor="bottom" />
+          <FadeBand height={heroTopFadeHeight} alphas={HERO_FADE_STEPS.slice().reverse()} anchor="top" />
+          {/* Rendered last (on top of both fades) so it always stays crisp
+              instead of being washed out by the fade underneath it, in the
+              calm bright part of the photo clear of the tomatoes/salt bowl. */}
+          <Image
+            source={require("../../assets/icon-mark.png")}
+            style={[styles.heroBrandLogo, { width: heroLogoSize, height: heroLogoSize, bottom: heroHeight * 0.4 }]}
+            resizeMode="contain"
+          />
         </View>
 
-        {/* Brand mark lives only in the header now - the hero stays pure
-            photography, with the claim as plain copy below it instead of
-            floating over the image. */}
+        {/* This is as far as this pass goes - everything from here down is
+            untouched. */}
         <Text style={styles.claim}>Erst scannen, dann schlemmen.</Text>
 
         <TouchableOpacity
@@ -225,6 +257,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   heroFade: { position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "column" },
+  heroFadeTop: { position: "absolute", left: 0, right: 0, top: 0, flexDirection: "column" },
+  heroBrandLogo: { position: "absolute", left: spacing.xxl },
   claim: {
     fontSize: 21,
     fontWeight: "700",
