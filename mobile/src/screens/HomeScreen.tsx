@@ -15,30 +15,6 @@ type Props = MainTabsScreenProps<"Start">;
  * with itself is still that color, regardless of the fade curve). Scoped to
  * this screen only - every other screen keeps the shared colors.bg. */
 const HOME_BG = "#f5f1e6";
-const HOME_BG_RGB = "245,241,230";
-
-function buildFadeSteps(count: number): number[] {
-  return Array.from({ length: count }, (_, i) => Math.pow((i + 1) / count, 1.6));
-}
-const EDGE_FADE_STEPS = buildFadeSteps(8);
-
-/** Soft top/bottom edge for the hero image - each band is 1px taller than
- * its even share with a 1px overlap into the previous one, which removes
- * any sub-pixel rounding gap between bands ("Schlieren") regardless of the
- * fade height, without a gradient library (would need a native rebuild). */
-function VerticalEdgeFade({ height, alphas, top, bottom }: { height: number; alphas: number[]; top?: number; bottom?: number }) {
-  const bandHeight = height / alphas.length;
-  return (
-    <View style={[styles.edgeFadeV, { height, top, bottom }]} pointerEvents="none">
-      {alphas.map((alpha, i) => (
-        <View
-          key={i}
-          style={{ height: bandHeight + 1, marginTop: i === 0 ? 0 : -1, backgroundColor: `rgba(${HOME_BG_RGB},${alpha})` }}
-        />
-      ))}
-    </View>
-  );
-}
 
 function preferenceLines(
   preferences: ReturnType<typeof usePreferences>["preferences"]
@@ -74,12 +50,6 @@ export default function HomeScreen({ navigation }: Props) {
   // "dann schlemmen." onto its own line - sized down further for a real
   // safety margin instead of guessing closer to the edge again.
   const headlineSize = Math.min(Math.max(windowWidth * 0.082, 28), 34);
-  // Soft top/bottom edges so the photo eases into the page instead of
-  // cutting off sharply - the asset's own alpha only fades left/right, it
-  // has no built-in top/bottom fade. Right edge stays hard on purpose: the
-  // food is meant to reach the true screen edge there, not fade away.
-  const topFadeHeight = Math.min(Math.max(heroImageHeight * 0.26, 40), 60);
-  const bottomFadeHeight = Math.min(Math.max(heroImageHeight * 0.3, 50), 70);
 
   return (
     <View style={styles.screen}>
@@ -90,6 +60,12 @@ export default function HomeScreen({ navigation }: Props) {
             block below compensates with its own left inset to stay aligned
             with the rest of the page's content margin. */}
         <View style={[styles.heroRow, { width: windowWidth }]}>
+          {/* No extra fade overlay: the asset's own alpha channel already
+              fades out smoothly (and irregularly, following its actual
+              content) on every edge, sitting on a background exactly
+              color-matched to its opaque surface tone (HOME_BG). Stacking a
+              second, coarse fade on top of that already-smooth per-pixel
+              alpha was what produced the banding seen on earlier builds. */}
           <Image
             source={require("../../assets/images/foodicted-hero-ingredients.webp")}
             style={[styles.heroImage, { height: heroImageHeight }]}
@@ -97,8 +73,6 @@ export default function HomeScreen({ navigation }: Props) {
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           />
-          <VerticalEdgeFade height={topFadeHeight} alphas={EDGE_FADE_STEPS.slice().reverse()} top={0} />
-          <VerticalEdgeFade height={bottomFadeHeight} alphas={EDGE_FADE_STEPS} bottom={0} />
           <View style={styles.heroTextBlock} pointerEvents="none">
             <Text style={styles.eyebrow}>Aus deinem Vorrat</Text>
             <Text style={[styles.headline, { fontSize: headlineSize, lineHeight: headlineSize * 1.1 }]}>
@@ -253,7 +227,6 @@ const styles = StyleSheet.create({
   },
   heroRow: { width: "100%" },
   heroImage: { width: "100%" },
-  edgeFadeV: { position: "absolute", left: 0, right: 0, flexDirection: "column" },
   heroTextBlock: {
     position: "absolute",
     // Re-adds the page's own content inset, since heroRow itself now
