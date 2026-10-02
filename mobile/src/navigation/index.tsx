@@ -170,11 +170,9 @@ function MainTabs() {
         name="Start"
         component={HomeScreen}
         options={({ navigation }) => ({
-          // Transparent so the photo hero runs behind the header instead of
-          // stopping below it - HomeScreen fades the top of its hero toward
-          // the same light tone first, so the title/icon stay legible there.
-          headerTransparent: true,
-          headerStyle: { backgroundColor: "transparent" },
+          // No hero photo behind the header anymore (compact editorial hero
+          // now lives in the screen's own content) - back to the same plain
+          // header every other tab uses, via the shared screenOptions.
           headerTitle: () => <HeaderLogo title="Foodicted" />,
           tabBarLabel: "Start",
           tabBarIcon: ({ color, size, focused }) => (

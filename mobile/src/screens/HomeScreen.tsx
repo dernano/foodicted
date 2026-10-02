@@ -1,65 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
-import { useHeaderHeight } from "@react-navigation/elements";
 import type { MainTabsScreenProps } from "../navigation";
 import { usePreferences } from "../context/PreferencesContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
 import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 type Props = MainTabsScreenProps<"Start">;
-
-/** Sampled from the calm lower area of the hero photo so the Home canvas
- * reads as one continuous surface instead of a visible image rectangle.
- * Scoped to this screen only - other screens keep the shared `colors.bg`. */
-const HERO_BG = "#f2efe5";
-
-/** height / width of the source asset (941x1672) - a tall background plate
- * with food concentrated near the top, deliberately larger than any hero
- * crop. We scale it to the full device width and let it overflow downward,
- * clipped by the (shorter) hero window - see heroWrap/HomeScreen below. */
-const HERO_SOURCE_ASPECT = 1672 / 941;
-
-/** rgb() of HERO_BG, used to fade the photo into the canvas without any
- * gradient library (a stack of increasingly-opaque bands, pure Views). A
- * short fade (few bands) reads as smooth; a tall one made of many bands
- * started showing faint seams between bands on real devices. */
-const HERO_BG_RGB = "242,239,229";
-function buildFadeSteps(count: number): number[] {
-  return Array.from({ length: count }, (_, i) => Math.pow((i + 1) / count, 1.6));
-}
-const HERO_FADE_STEPS = buildFadeSteps(10);
-
-/** One continuous-looking fade: each band is rendered 1px taller than its
- * even share of the total height and pulled up by 1px (negative marginTop)
- * into the previous one. Plain flex:1 bands left any sub-pixel rounding of
- * a non-integer height as a visible hairline gap between bands on real
- * devices ("Schlieren") - the deliberate 1px overlap removes that gap
- * regardless of rounding, without a gradient library. */
-function FadeBand({ height, alphas, top, bottom }: { height: number; alphas: number[]; top?: number; bottom?: number }) {
-  const bandHeight = height / alphas.length;
-  return (
-    <View style={[styles.fadeBand, { height, top, bottom }]} pointerEvents="none">
-      {alphas.map((alpha, i) => (
-        <View
-          key={i}
-          style={{
-            height: bandHeight + 1,
-            marginTop: i === 0 ? 0 : -1,
-            backgroundColor: `rgba(${HERO_BG_RGB},${alpha})`,
-          }}
-        />
-      ))}
-    </View>
-  );
-}
-
-/** Responsive hero height: ~34% of the window, clamped so it stays sensible
- * on very small or very large screens instead of one fixed pixel value. */
-function useHeroHeight(): number {
-  const { height } = useWindowDimensions();
-  return Math.min(Math.max(height * 0.34, 220), 320);
-}
 
 function preferenceLines(
   preferences: ReturnType<typeof usePreferences>["preferences"]
@@ -82,66 +29,48 @@ export default function HomeScreen({ navigation }: Props) {
   const { preferences } = usePreferences();
   const { recent } = useRecentRecipes();
   const { width: windowWidth } = useWindowDimensions();
-  // Exact rendered height of the transparent header (status bar + title/icon
-  // row), from React Navigation itself - not an approximation, so the solid
-  // backing behind the header content lines up pixel-perfectly on any device.
-  const headerHeight = useHeaderHeight();
-  const heroHeight = useHeroHeight();
-  const heroImageHeight = windowWidth * HERO_SOURCE_ASPECT;
-  // Short, deliberate transitions (not a large faded-out zone): a solid
-  // cream backing exactly behind the header, then ~40-70px easing into the
-  // photo; a similarly short fade back to cream at the very bottom.
-  const topFadeHeight = Math.min(Math.max(windowWidth * 0.14, 40), 70);
-  const bottomFadeHeight = Math.min(Math.max(heroHeight * 0.28, 70), 110);
-  const heroLogoSize = Math.min(Math.max(windowWidth * 0.27, 95), 150);
-  // Centered within the zone that's fully visible photo (below the header
-  // fade, above the bottom fade), a little past its vertical middle.
-  const visibleTop = headerHeight + topFadeHeight;
-  const visibleBottom = heroHeight - bottomFadeHeight;
-  const heroLogoTop = visibleTop + (visibleBottom - visibleTop) * 0.55 - heroLogoSize / 2;
+  // Editorial hero: a compact supporting photo (not a full-bleed background)
+  // whose own alpha channel already fades from transparent on the left to
+  // fully opaque on the right - no fade/gradient code needed, the asset is
+  // purpose-built for sitting behind the left-aligned text column.
+  const heroImageHeight = Math.min(Math.max(windowWidth * 0.5, 170), 220);
+  const headlineSize = Math.min(Math.max(windowWidth * 0.088, 30), 38);
 
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Full-bleed: an explicit windowWidth size, centered by the padded
-            parent, overflows past its padding to reach both screen edges. */}
-        <View style={[styles.heroWrap, { width: windowWidth, height: heroHeight }]}>
-          {/* Scaled to the full device width and top-anchored (default flow
-              position) - the source is much taller than the hero window, so
-              the calm middle/bottom gets clipped instead of the food-forward
-              top. Decorative only; the real, accessible copy is native text. */}
+        <View style={styles.heroRow}>
           <Image
-            source={require("../../assets/images/foodicted-hero-bg.jpg")}
-            style={{ width: windowWidth, height: heroImageHeight }}
+            source={require("../../assets/images/foodicted-hero-ingredients.webp")}
+            style={[styles.heroImage, { height: heroImageHeight }]}
             resizeMode="cover"
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           />
-          {/* Solid backing exactly behind the transparent header's own
-              content (status bar + title/icon row) - zero photo visible
-              there, so the header itself reads as a calm, fully opaque
-              premium bar instead of floating on raw imagery. */}
-          <View style={[styles.heroHeaderBacking, { height: headerHeight }]} pointerEvents="none" />
-          {/* Short, deliberate fade from that solid backing into the photo -
-              and a similarly short one back to cream at the very bottom. No
-              gradient library (would need a native rebuild), see FadeBand. */}
-          <FadeBand height={topFadeHeight} alphas={HERO_FADE_STEPS.slice().reverse()} top={headerHeight} />
-          <FadeBand height={bottomFadeHeight} alphas={HERO_FADE_STEPS} bottom={0} />
-          {/* Rendered last (on top of both fades) so it always stays crisp
-              instead of being washed out by the fade underneath it, exactly
-              horizontally centered via a full-width centered row. */}
-          <View style={[styles.heroLogoRow, { top: heroLogoTop }]} pointerEvents="none">
-            <Image
-              source={require("../../assets/icon-mark.png")}
-              style={{ width: heroLogoSize, height: heroLogoSize }}
-              resizeMode="contain"
-            />
+          <View style={styles.heroTextBlock} pointerEvents="none">
+            <Text style={styles.eyebrow}>Aus deinem Vorrat</Text>
+            <Text style={[styles.headline, { fontSize: headlineSize, lineHeight: headlineSize * 1.15 }]}>
+              Erst scannen,{"\n"}dann schlemmen.
+            </Text>
           </View>
         </View>
 
-        {/* This is as far as this pass goes - everything from here down is
-            untouched. */}
-        <Text style={styles.claim}>Erst scannen, dann schlemmen.</Text>
+        <View style={styles.stepsRow}>
+          <View style={styles.stepItem}>
+            <Ionicons name="camera-outline" size={20} color={colors.brandDark} />
+            <Text style={styles.stepLabel}>Zutaten{"\n"}scannen</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={13} color={colors.textMuted} />
+          <View style={styles.stepItem}>
+            <Ionicons name="restaurant-outline" size={20} color={colors.brandDark} />
+            <Text style={styles.stepLabel}>Rezepte{"\n"}entdecken</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={13} color={colors.textMuted} />
+          <View style={styles.stepItem}>
+            <Ionicons name="heart-outline" size={20} color={colors.brandDark} />
+            <Text style={styles.stepLabel}>Genießen</Text>
+          </View>
+        </View>
 
         <TouchableOpacity
           style={styles.primaryButton}
@@ -261,30 +190,44 @@ export default function HomeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: HERO_BG },
+  screen: { flex: 1, backgroundColor: colors.bg },
   container: {
     flexGrow: 1,
     alignItems: "center",
     paddingHorizontal: spacing.xxl,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
-    backgroundColor: HERO_BG,
+    backgroundColor: colors.bg,
   },
-  heroWrap: {
-    overflow: "hidden",
-    backgroundColor: HERO_BG,
-    marginBottom: spacing.xs,
+  heroRow: { width: "100%" },
+  heroImage: { width: "100%" },
+  heroTextBlock: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: "58%",
+    justifyContent: "center",
   },
-  fadeBand: { position: "absolute", left: 0, right: 0, flexDirection: "column" },
-  heroHeaderBacking: { position: "absolute", left: 0, right: 0, top: 0, backgroundColor: HERO_BG },
-  heroLogoRow: { position: "absolute", left: 0, right: 0, alignItems: "center" },
-  claim: {
-    fontSize: 21,
+  eyebrow: {
+    fontSize: 12,
     fontWeight: "700",
-    color: colors.brandDark,
-    alignSelf: "flex-start",
-    marginTop: spacing.lg,
+    color: colors.primary,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom: spacing.sm,
+  },
+  headline: { fontWeight: "800", color: colors.brandDark },
+  stepsRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: spacing.xl,
     marginBottom: spacing.lg,
   },
+  stepItem: { alignItems: "center", flex: 1, gap: 4 },
+  stepLabel: { fontSize: 11, fontWeight: "600", color: colors.brandDark, textAlign: "center", lineHeight: 14 },
   primaryButton: {
     flexDirection: "row",
     alignItems: "center",
