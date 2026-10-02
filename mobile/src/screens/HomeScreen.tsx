@@ -8,6 +8,14 @@ import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 type Props = MainTabsScreenProps<"Start">;
 
+/** The hero photo's own bright surface measured precisely (averaged over
+ * 367 fully-opaque pixels of its background area) - not just "close to"
+ * colors.bg, but the exact same value, so the image's built-in alpha fade
+ * blends into the page with zero visible seam (any alpha blend of a color
+ * with itself is still that color, regardless of the fade curve). Scoped to
+ * this screen only - every other screen keeps the shared colors.bg. */
+const HOME_BG = "#f5f1e6";
+
 function preferenceLines(
   preferences: ReturnType<typeof usePreferences>["preferences"]
 ): { label: string; value: string }[] {
@@ -197,14 +205,14 @@ export default function HomeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
+  screen: { flex: 1, backgroundColor: HOME_BG },
   container: {
     flexGrow: 1,
     alignItems: "center",
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
-    backgroundColor: colors.bg,
+    backgroundColor: HOME_BG,
   },
   heroRow: { width: "100%" },
   heroImage: { width: "100%" },
