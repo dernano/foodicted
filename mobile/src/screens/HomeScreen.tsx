@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
 import type { MainTabsScreenProps } from "../navigation";
 import { usePreferences } from "../context/PreferencesContext";
 import { useRecentRecipes } from "../context/RecentRecipesContext";
@@ -21,12 +21,14 @@ const HERO_BG = "#f2efe5";
 const HERO_SOURCE_ASPECT = 1672 / 941;
 
 /** rgb() of HERO_BG, used to fade the photo into the canvas without any
- * gradient library (a stack of increasingly-opaque bands, pure Views). */
+ * gradient library (a stack of increasingly-opaque bands, pure Views). A
+ * short fade (few bands) reads as smooth; a tall one made of many bands
+ * started showing faint seams between bands on real devices. */
 const HERO_BG_RGB = "242,239,229";
 function buildFadeSteps(count: number): number[] {
   return Array.from({ length: count }, (_, i) => Math.pow((i + 1) / count, 1.6));
 }
-const HERO_FADE_STEPS = buildFadeSteps(16);
+const HERO_FADE_STEPS = buildFadeSteps(10);
 
 /** One continuous-looking fade: each band is rendered 1px taller than its
  * even share of the total height and pulled up by 1px (negative marginTop)
@@ -34,10 +36,10 @@ const HERO_FADE_STEPS = buildFadeSteps(16);
  * a non-integer height as a visible hairline gap between bands on real
  * devices ("Schlieren") - the deliberate 1px overlap removes that gap
  * regardless of rounding, without a gradient library. */
-function FadeBand({ height, alphas, anchor }: { height: number; alphas: number[]; anchor: "top" | "bottom" }) {
+function FadeBand({ height, alphas, top, bottom }: { height: number; alphas: number[]; top?: number; bottom?: number }) {
   const bandHeight = height / alphas.length;
   return (
-    <View style={[anchor === "top" ? styles.heroFadeTop : styles.heroFade, { height }]} pointerEvents="none">
+    <View style={[styles.fadeBand, { height, top, bottom }]} pointerEvents="none">
       {alphas.map((alpha, i) => (
         <View
           key={i}
@@ -80,15 +82,23 @@ export default function HomeScreen({ navigation }: Props) {
   const { preferences } = usePreferences();
   const { recent } = useRecentRecipes();
   const { width: windowWidth } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
+  // Exact rendered height of the transparent header (status bar + title/icon
+  // row), from React Navigation itself - not an approximation, so the solid
+  // backing behind the header content lines up pixel-perfectly on any device.
+  const headerHeight = useHeaderHeight();
   const heroHeight = useHeroHeight();
   const heroImageHeight = windowWidth * HERO_SOURCE_ASPECT;
-  const heroFadeHeight = heroHeight * 0.64;
-  // Covers the floating transparent header (status bar + title/icon row) so
-  // its content sits over faded-light photo instead of raw imagery - capped
-  // so it never eats most of the hero on short screens.
-  const heroTopFadeHeight = Math.min(insets.top + 64, heroHeight * 0.35);
-  const heroLogoSize = Math.min(Math.max(windowWidth * 0.22, 90), 150);
+  // Short, deliberate transitions (not a large faded-out zone): a solid
+  // cream backing exactly behind the header, then ~40-70px easing into the
+  // photo; a similarly short fade back to cream at the very bottom.
+  const topFadeHeight = Math.min(Math.max(windowWidth * 0.14, 40), 70);
+  const bottomFadeHeight = Math.min(Math.max(heroHeight * 0.28, 70), 110);
+  const heroLogoSize = Math.min(Math.max(windowWidth * 0.27, 95), 150);
+  // Centered within the zone that's fully visible photo (below the header
+  // fade, above the bottom fade), a little past its vertical middle.
+  const visibleTop = headerHeight + topFadeHeight;
+  const visibleBottom = heroHeight - bottomFadeHeight;
+  const heroLogoTop = visibleTop + (visibleBottom - visibleTop) * 0.55 - heroLogoSize / 2;
 
   return (
     <View style={styles.screen}>
@@ -107,18 +117,26 @@ export default function HomeScreen({ navigation }: Props) {
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           />
-          {/* Soft fade into the canvas color at both edges - no gradient
-              library (would need a native rebuild), see FadeBand above. */}
-          <FadeBand height={heroFadeHeight} alphas={HERO_FADE_STEPS} anchor="bottom" />
-          <FadeBand height={heroTopFadeHeight} alphas={HERO_FADE_STEPS.slice().reverse()} anchor="top" />
+          {/* Solid backing exactly behind the transparent header's own
+              content (status bar + title/icon row) - zero photo visible
+              there, so the header itself reads as a calm, fully opaque
+              premium bar instead of floating on raw imagery. */}
+          <View style={[styles.heroHeaderBacking, { height: headerHeight }]} pointerEvents="none" />
+          {/* Short, deliberate fade from that solid backing into the photo -
+              and a similarly short one back to cream at the very bottom. No
+              gradient library (would need a native rebuild), see FadeBand. */}
+          <FadeBand height={topFadeHeight} alphas={HERO_FADE_STEPS.slice().reverse()} top={headerHeight} />
+          <FadeBand height={bottomFadeHeight} alphas={HERO_FADE_STEPS} bottom={0} />
           {/* Rendered last (on top of both fades) so it always stays crisp
-              instead of being washed out by the fade underneath it, in the
-              calm bright part of the photo clear of the tomatoes/salt bowl. */}
-          <Image
-            source={require("../../assets/icon-mark.png")}
-            style={[styles.heroBrandLogo, { width: heroLogoSize, height: heroLogoSize, bottom: heroHeight * 0.4 }]}
-            resizeMode="contain"
-          />
+              instead of being washed out by the fade underneath it, exactly
+              horizontally centered via a full-width centered row. */}
+          <View style={[styles.heroLogoRow, { top: heroLogoTop }]} pointerEvents="none">
+            <Image
+              source={require("../../assets/icon-mark.png")}
+              style={{ width: heroLogoSize, height: heroLogoSize }}
+              resizeMode="contain"
+            />
+          </View>
         </View>
 
         {/* This is as far as this pass goes - everything from here down is
@@ -256,9 +274,9 @@ const styles = StyleSheet.create({
     backgroundColor: HERO_BG,
     marginBottom: spacing.xs,
   },
-  heroFade: { position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "column" },
-  heroFadeTop: { position: "absolute", left: 0, right: 0, top: 0, flexDirection: "column" },
-  heroBrandLogo: { position: "absolute", left: spacing.xxl },
+  fadeBand: { position: "absolute", left: 0, right: 0, flexDirection: "column" },
+  heroHeaderBacking: { position: "absolute", left: 0, right: 0, top: 0, backgroundColor: HERO_BG },
+  heroLogoRow: { position: "absolute", left: 0, right: 0, alignItems: "center" },
   claim: {
     fontSize: 21,
     fontWeight: "700",
