@@ -37,14 +37,15 @@ export default function HomeScreen({ navigation }: Props) {
   const { recent } = useRecentRecipes();
   const { width: windowWidth } = useWindowDimensions();
   // Editorial hero: a compact supporting photo (not a full-bleed background)
-  // whose own alpha channel already fades from transparent on the left to
-  // fully opaque on the right - no fade/gradient code needed, the asset is
-  // purpose-built for sitting behind the left-aligned text column. Image
-  // stays full-width (not cropped into a narrow right-hand box) because
-  // react-native's Image "cover" mode always center-crops - a narrow box
-  // would cut into the opaque food area instead of showing the asset's own
-  // built-in soft left edge, reintroducing a visible rectangle.
-  const heroImageHeight = Math.min(Math.max(windowWidth * 0.58, 210), 250);
+  // whose own alpha channel already fades out smoothly on every edge - no
+  // fade/gradient code needed, the asset is purpose-built for this. Height
+  // is locked to the asset's own aspect ratio (1500x1000 = 1.5) so
+  // resizeMode="cover" never has to crop anything away: at any other
+  // height, "cover" crops its most-transparent top/bottom rows first,
+  // leaving only the already-opaque center visible with hard, cropped-off
+  // edges instead of the asset's actual soft fade.
+  const HERO_ASPECT_RATIO = 1.5;
+  const heroImageHeight = Math.min(Math.max(windowWidth / HERO_ASPECT_RATIO, 220), 300);
   // Confirmed on-device that the previous size/width combo still wrapped
   // "dann schlemmen." onto its own line - sized down further for a real
   // safety margin instead of guessing closer to the edge again.
