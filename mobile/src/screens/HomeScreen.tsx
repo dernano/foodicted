@@ -32,9 +32,16 @@ export default function HomeScreen({ navigation }: Props) {
   // Editorial hero: a compact supporting photo (not a full-bleed background)
   // whose own alpha channel already fades from transparent on the left to
   // fully opaque on the right - no fade/gradient code needed, the asset is
-  // purpose-built for sitting behind the left-aligned text column.
-  const heroImageHeight = Math.min(Math.max(windowWidth * 0.5, 170), 220);
-  const headlineSize = Math.min(Math.max(windowWidth * 0.088, 30), 38);
+  // purpose-built for sitting behind the left-aligned text column. Image
+  // stays full-width (not cropped into a narrow right-hand box) because
+  // react-native's Image "cover" mode always center-crops - a narrow box
+  // would cut into the opaque food area instead of showing the asset's own
+  // built-in soft left edge, reintroducing a visible rectangle.
+  const heroImageHeight = Math.min(Math.max(windowWidth * 0.58, 210), 250);
+  // Biased to the lower/wider end of the requested 34-38px / 58-62% ranges -
+  // the safer combination for "Erst scannen," / "dann schlemmen." to each
+  // stay on their own line at this column width.
+  const headlineSize = Math.min(Math.max(windowWidth * 0.087, 32), 36);
 
   return (
     <View style={styles.screen}>
@@ -49,7 +56,7 @@ export default function HomeScreen({ navigation }: Props) {
           />
           <View style={styles.heroTextBlock} pointerEvents="none">
             <Text style={styles.eyebrow}>Aus deinem Vorrat</Text>
-            <Text style={[styles.headline, { fontSize: headlineSize, lineHeight: headlineSize * 1.15 }]}>
+            <Text style={[styles.headline, { fontSize: headlineSize, lineHeight: headlineSize * 1.1 }]}>
               Erst scannen,{"\n"}dann schlemmen.
             </Text>
           </View>
@@ -57,17 +64,17 @@ export default function HomeScreen({ navigation }: Props) {
 
         <View style={styles.stepsRow}>
           <View style={styles.stepItem}>
-            <Ionicons name="camera-outline" size={20} color={colors.brandDark} />
+            <Ionicons name="camera-outline" size={22} color={colors.brandDark} />
             <Text style={styles.stepLabel}>Zutaten{"\n"}scannen</Text>
           </View>
-          <Ionicons name="chevron-forward" size={13} color={colors.textMuted} />
+          <Ionicons name="chevron-forward" size={12} color={colors.border} />
           <View style={styles.stepItem}>
-            <Ionicons name="restaurant-outline" size={20} color={colors.brandDark} />
+            <Ionicons name="restaurant-outline" size={22} color={colors.brandDark} />
             <Text style={styles.stepLabel}>Rezepte{"\n"}entdecken</Text>
           </View>
-          <Ionicons name="chevron-forward" size={13} color={colors.textMuted} />
+          <Ionicons name="chevron-forward" size={12} color={colors.border} />
           <View style={styles.stepItem}>
-            <Ionicons name="heart-outline" size={20} color={colors.brandDark} />
+            <Ionicons name="heart-outline" size={22} color={colors.brandDark} />
             <Text style={styles.stepLabel}>Genießen</Text>
           </View>
         </View>
@@ -194,7 +201,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     alignItems: "center",
-    paddingHorizontal: spacing.xxl,
+    paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
     backgroundColor: colors.bg,
@@ -206,16 +213,16 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    width: "58%",
+    width: "62%",
     justifyContent: "center",
   },
   eyebrow: {
     fontSize: 12,
     fontWeight: "700",
     color: colors.primary,
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     textTransform: "uppercase",
-    marginBottom: spacing.sm,
+    marginBottom: 12,
   },
   headline: { fontWeight: "800", color: colors.brandDark },
   stepsRow: {
@@ -223,8 +230,8 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     width: "100%",
-    marginTop: spacing.xl,
-    marginBottom: spacing.lg,
+    marginTop: spacing.lg + 2,
+    marginBottom: spacing.md,
   },
   stepItem: { alignItems: "center", flex: 1, gap: 4 },
   stepLabel: { fontSize: 11, fontWeight: "600", color: colors.brandDark, textAlign: "center", lineHeight: 14 },
@@ -239,12 +246,12 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: spacing.sm,
     shadowColor: colors.primary,
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-  primaryButtonText: { color: colors.textOnDark, fontSize: 17, fontWeight: "700" },
+  primaryButtonText: { color: colors.textOnDark, fontSize: 16, fontWeight: "700" },
   secondaryRow: { width: "100%", flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
   secondaryButton: {
     flex: 1,
@@ -252,7 +259,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    paddingVertical: spacing.sm + 2,
+    paddingVertical: spacing.lg,
     borderRadius: radius.control,
     borderWidth: 1,
     borderColor: colors.border,
