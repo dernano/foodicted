@@ -40,21 +40,6 @@ function VerticalEdgeFade({ height, alphas, top, bottom }: { height: number; alp
   );
 }
 
-/** Same idea, horizontal bands for the image's right edge. */
-function HorizontalEdgeFade({ width, alphas, right }: { width: number; alphas: number[]; right?: number }) {
-  const bandWidth = width / alphas.length;
-  return (
-    <View style={[styles.edgeFadeH, { width, right }]} pointerEvents="none">
-      {alphas.map((alpha, i) => (
-        <View
-          key={i}
-          style={{ width: bandWidth + 1, marginLeft: i === 0 ? 0 : -1, backgroundColor: `rgba(${HOME_BG_RGB},${alpha})` }}
-        />
-      ))}
-    </View>
-  );
-}
-
 function preferenceLines(
   preferences: ReturnType<typeof usePreferences>["preferences"]
 ): { label: string; value: string }[] {
@@ -89,10 +74,12 @@ export default function HomeScreen({ navigation }: Props) {
   // "dann schlemmen." onto its own line - sized down further for a real
   // safety margin instead of guessing closer to the edge again.
   const headlineSize = Math.min(Math.max(windowWidth * 0.082, 28), 34);
-  // Soft top/right edges so the photo has no hard boundary anywhere (the
-  // bottom/left are already handled by the asset's own baked-in alpha fade).
+  // Soft top/bottom edges so the photo eases into the page instead of
+  // cutting off sharply - the asset's own alpha only fades left/right, it
+  // has no built-in top/bottom fade. Right edge stays hard on purpose: the
+  // food is meant to reach the true screen edge there, not fade away.
   const topFadeHeight = Math.min(Math.max(heroImageHeight * 0.26, 40), 60);
-  const rightFadeWidth = Math.min(Math.max(windowWidth * 0.14, 40), 70);
+  const bottomFadeHeight = Math.min(Math.max(heroImageHeight * 0.3, 50), 70);
 
   return (
     <View style={styles.screen}>
@@ -111,7 +98,7 @@ export default function HomeScreen({ navigation }: Props) {
             importantForAccessibility="no-hide-descendants"
           />
           <VerticalEdgeFade height={topFadeHeight} alphas={EDGE_FADE_STEPS.slice().reverse()} top={0} />
-          <HorizontalEdgeFade width={rightFadeWidth} alphas={EDGE_FADE_STEPS} right={0} />
+          <VerticalEdgeFade height={bottomFadeHeight} alphas={EDGE_FADE_STEPS} bottom={0} />
           <View style={styles.heroTextBlock} pointerEvents="none">
             <Text style={styles.eyebrow}>Aus deinem Vorrat</Text>
             <Text style={[styles.headline, { fontSize: headlineSize, lineHeight: headlineSize * 1.1 }]}>
@@ -267,7 +254,6 @@ const styles = StyleSheet.create({
   heroRow: { width: "100%" },
   heroImage: { width: "100%" },
   edgeFadeV: { position: "absolute", left: 0, right: 0, flexDirection: "column" },
-  edgeFadeH: { position: "absolute", top: 0, bottom: 0, flexDirection: "row" },
   heroTextBlock: {
     position: "absolute",
     // Re-adds the page's own content inset, since heroRow itself now
