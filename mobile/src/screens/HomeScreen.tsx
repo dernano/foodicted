@@ -8,13 +8,12 @@ import { colors, radius, shadow, spacing, type as t } from "../constants/theme";
 
 type Props = MainTabsScreenProps<"Start">;
 
-/** The hero photo's own bright surface measured precisely (averaged over
- * 367 fully-opaque pixels of its background area) - not just "close to"
- * colors.bg, but the exact same value, so the image's built-in alpha fade
- * blends into the page with zero visible seam (any alpha blend of a color
- * with itself is still that color, regardless of the fade curve). Scoped to
- * this screen only - every other screen keeps the shared colors.bg. */
-const HOME_BG = "#f5f1e6";
+// The hero photo's own bright surface measured precisely (colors.headerBg) -
+// not just "close to" the header color, but the exact same value, so the
+// image's built-in alpha fade blends into both the page and the header with
+// zero visible seam (any alpha blend of a color with itself is still that
+// color, regardless of the fade curve).
+const HOME_BG = colors.headerBg;
 
 function preferenceLines(
   preferences: ReturnType<typeof usePreferences>["preferences"]

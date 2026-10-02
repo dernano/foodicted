@@ -14,6 +14,11 @@ export const colors = {
   bgAlt: "#f6fbf6",
   surface: "#ffffff",
   surfaceSoft: "#eef3ec",
+  // Exact surface tone of the Home hero photo (measured by pixel-sampling
+  // the asset) - used as the header background app-wide so every header
+  // reads as the same warm band instead of Home's cream header sitting
+  // next to every other screen's white one.
+  headerBg: "#f5f1e6",
 
   textPrimary: "#1f2d24",
   textSecondary: "#6b7280",

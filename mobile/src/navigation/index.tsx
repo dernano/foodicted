@@ -74,10 +74,12 @@ export type RootStackScreenProps<T extends keyof RootStackParamList> = NativeSta
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabsParamList>();
 
-// Premium light header: a flat white bar with dark-green icons/text, instead
-// of the previous solid dark-green block on every main screen. Dark green
-// stays the brand color, just no longer a huge header surface.
-const THEME_COLOR = colors.surface;
+// Premium light header: a flat warm-cream bar with dark-green icons/text,
+// instead of the previous solid dark-green block on every main screen. Dark
+// green stays the brand color, just no longer a huge header surface. Uses
+// colors.headerBg (not colors.surface/white) app-wide so every header reads
+// as the same band - this used to be a Home-only override.
+const THEME_COLOR = colors.headerBg;
 const ACCENT_COLOR = colors.primary;
 const HEADER_TINT = colors.brandDark;
 
@@ -170,10 +172,6 @@ function MainTabs() {
         name="Start"
         component={HomeScreen}
         options={({ navigation }) => ({
-          // Matches HomeScreen's own HOME_BG exactly (not the shared white
-          // THEME_COLOR) so the header and the page below it read as one
-          // continuous surface instead of a visible color seam.
-          headerStyle: { backgroundColor: "#f5f1e6" },
           headerTitle: () => <HeaderLogo title="Foodicted" />,
           tabBarLabel: "Start",
           tabBarIcon: ({ color, size, focused }) => (
