@@ -15,6 +15,45 @@ type Props = MainTabsScreenProps<"Start">;
  * with itself is still that color, regardless of the fade curve). Scoped to
  * this screen only - every other screen keeps the shared colors.bg. */
 const HOME_BG = "#f5f1e6";
+const HOME_BG_RGB = "245,241,230";
+
+function buildFadeSteps(count: number): number[] {
+  return Array.from({ length: count }, (_, i) => Math.pow((i + 1) / count, 1.6));
+}
+const EDGE_FADE_STEPS = buildFadeSteps(8);
+
+/** Soft top/bottom edge for the hero image - each band is 1px taller than
+ * its even share with a 1px overlap into the previous one, which removes
+ * any sub-pixel rounding gap between bands ("Schlieren") regardless of the
+ * fade height, without a gradient library (would need a native rebuild). */
+function VerticalEdgeFade({ height, alphas, top, bottom }: { height: number; alphas: number[]; top?: number; bottom?: number }) {
+  const bandHeight = height / alphas.length;
+  return (
+    <View style={[styles.edgeFadeV, { height, top, bottom }]} pointerEvents="none">
+      {alphas.map((alpha, i) => (
+        <View
+          key={i}
+          style={{ height: bandHeight + 1, marginTop: i === 0 ? 0 : -1, backgroundColor: `rgba(${HOME_BG_RGB},${alpha})` }}
+        />
+      ))}
+    </View>
+  );
+}
+
+/** Same idea, horizontal bands for the image's right edge. */
+function HorizontalEdgeFade({ width, alphas, right }: { width: number; alphas: number[]; right?: number }) {
+  const bandWidth = width / alphas.length;
+  return (
+    <View style={[styles.edgeFadeH, { width, right }]} pointerEvents="none">
+      {alphas.map((alpha, i) => (
+        <View
+          key={i}
+          style={{ width: bandWidth + 1, marginLeft: i === 0 ? 0 : -1, backgroundColor: `rgba(${HOME_BG_RGB},${alpha})` }}
+        />
+      ))}
+    </View>
+  );
+}
 
 function preferenceLines(
   preferences: ReturnType<typeof usePreferences>["preferences"]
@@ -50,6 +89,10 @@ export default function HomeScreen({ navigation }: Props) {
   // "dann schlemmen." onto its own line - sized down further for a real
   // safety margin instead of guessing closer to the edge again.
   const headlineSize = Math.min(Math.max(windowWidth * 0.082, 28), 34);
+  // Soft top/right edges so the photo has no hard boundary anywhere (the
+  // bottom/left are already handled by the asset's own baked-in alpha fade).
+  const topFadeHeight = Math.min(Math.max(heroImageHeight * 0.26, 40), 60);
+  const rightFadeWidth = Math.min(Math.max(windowWidth * 0.14, 40), 70);
 
   return (
     <View style={styles.screen}>
@@ -67,6 +110,8 @@ export default function HomeScreen({ navigation }: Props) {
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           />
+          <VerticalEdgeFade height={topFadeHeight} alphas={EDGE_FADE_STEPS.slice().reverse()} top={0} />
+          <HorizontalEdgeFade width={rightFadeWidth} alphas={EDGE_FADE_STEPS} right={0} />
           <View style={styles.heroTextBlock} pointerEvents="none">
             <Text style={styles.eyebrow}>Aus deinem Vorrat</Text>
             <Text style={[styles.headline, { fontSize: headlineSize, lineHeight: headlineSize * 1.1 }]}>
@@ -221,6 +266,8 @@ const styles = StyleSheet.create({
   },
   heroRow: { width: "100%" },
   heroImage: { width: "100%" },
+  edgeFadeV: { position: "absolute", left: 0, right: 0, flexDirection: "column" },
+  edgeFadeH: { position: "absolute", top: 0, bottom: 0, flexDirection: "row" },
   heroTextBlock: {
     position: "absolute",
     // Re-adds the page's own content inset, since heroRow itself now

@@ -170,9 +170,10 @@ function MainTabs() {
         name="Start"
         component={HomeScreen}
         options={({ navigation }) => ({
-          // No hero photo behind the header anymore (compact editorial hero
-          // now lives in the screen's own content) - back to the same plain
-          // header every other tab uses, via the shared screenOptions.
+          // Matches HomeScreen's own HOME_BG exactly (not the shared white
+          // THEME_COLOR) so the header and the page below it read as one
+          // continuous surface instead of a visible color seam.
+          headerStyle: { backgroundColor: "#f5f1e6" },
           headerTitle: () => <HeaderLogo title="Foodicted" />,
           tabBarLabel: "Start",
           tabBarIcon: ({ color, size, focused }) => (
