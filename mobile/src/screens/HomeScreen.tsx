@@ -1,4 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
+import MaskedView from "@react-native-masked-view/masked-view";
+import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import type { MainTabsScreenProps } from "../navigation";
@@ -41,18 +43,18 @@ export default function HomeScreen({ navigation }: Props) {
   // dimensions. The photo is an oversized, absolutely-positioned decorative
   // element anchored top-right (see heroFoodImage below) - the UI dictates
   // how much of it shows, not the other way around.
-  const heroHeight = Math.min(Math.max(windowWidth * 0.74, 260), 310);
+  const heroHeight = Math.min(Math.max(windowWidth * 0.6, 220), 245);
   // Rendered larger than the hero box and shifted past the right edge, so
-  // only its right portion (the actual food) sits over the visible area -
-  // the left portion, where the asset's own alpha already fades to
-  // transparent, runs off past the hero's left edge or shows through to
-  // HOME_BG. Sized at the asset's native aspect ratio (1500x1000) so the
-  // photo itself isn't stretched - that's independent of the hero box's own
+  // only its right portion (the actual food) sits over the visible area.
+  // Sized at the asset's native aspect ratio (1500x1000) so the photo
+  // itself isn't stretched - that's independent of the hero box's own
   // height above.
-  const heroImageWidth = windowWidth * 0.95;
+  const heroImageWidth = windowWidth * 0.82;
   const heroImageHeight = heroImageWidth / 1.5;
-  const heroImageRight = -windowWidth * 0.18;
-  const headlineSize = Math.min(Math.max(windowWidth * 0.092, 30), 38);
+  const heroImageRight = -windowWidth * 0.16;
+  const heroImageTop = 0;
+  const headlineSize = Math.min(Math.max(windowWidth * 0.082, 30), 35);
+  const heroTextTop = heroHeight * 0.34;
 
   return (
     <View style={styles.screen}>
@@ -64,19 +66,36 @@ export default function HomeScreen({ navigation }: Props) {
             with the rest of the page's content margin. overflow: hidden
             clips the oversized, overflowing heroFoodImage. */}
         <View style={[styles.hero, { width: windowWidth, height: heroHeight }]}>
-          <Image
-            source={require("../../assets/images/foodicted-hero-ingredients.webp")}
-            style={[
-              styles.heroFoodImage,
-              { width: heroImageWidth, height: heroImageHeight, right: heroImageRight, top: -heroHeight * 0.04 },
-            ]}
-            resizeMode="contain"
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-          />
-          <View style={styles.heroTextBlock} pointerEvents="none">
+          {/* MaskedView masks the photo's own opacity (black = visible,
+              transparent = invisible) instead of painting a HOME_BG-colored
+              gradient on top of it - the real screen background shows
+              through directly, so there's no color-matching to get wrong
+              and no risk of a visible seam or banding from an overlay. */}
+          <MaskedView
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+            maskElement={
+              <LinearGradient
+                colors={["transparent", "black", "black", "black", "transparent"]}
+                locations={[0, 0.16, 0.68, 0.78, 1]}
+                style={StyleSheet.absoluteFill}
+              />
+            }
+          >
+            <Image
+              source={require("../../assets/images/foodicted-hero-ingredients.webp")}
+              style={[
+                styles.heroFoodImage,
+                { width: heroImageWidth, height: heroImageHeight, right: heroImageRight, top: heroImageTop },
+              ]}
+              resizeMode="contain"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            />
+          </MaskedView>
+          <View style={[styles.heroTextBlock, { top: heroTextTop }]} pointerEvents="none">
             <Text style={styles.eyebrow}>Aus deinem Vorrat</Text>
-            <Text style={[styles.headline, { fontSize: headlineSize, lineHeight: headlineSize * 1.14 }]}>
+            <Text style={[styles.headline, { fontSize: headlineSize, lineHeight: headlineSize * 1.12 }]}>
               Erst scannen,{"\n"}dann schlemmen.
             </Text>
           </View>
@@ -226,22 +245,16 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
     backgroundColor: HOME_BG,
   },
-  hero: { position: "relative", overflow: "hidden" },
+  hero: { position: "relative", overflow: "hidden", backgroundColor: HOME_BG },
   heroFoodImage: { position: "absolute", zIndex: 1 },
   heroTextBlock: {
     position: "absolute",
     zIndex: 2,
     // Re-adds the page's own content inset, since the hero itself overflows
-    // that padding to let the photo reach the screen edge. Anchored to the
-    // bottom (not vertically centered) so the headline sits in the lower
-    // portion of the hero, with the photo occupying the upper-right.
+    // that padding to let the photo reach the screen edge. `top` is set
+    // inline (heroTextTop) rather than anchored to `bottom`.
     left: spacing.xl,
-    bottom: spacing.xl,
-    // Measured against the actual two headline strings at every target
-    // width (360/390/430) - 70% wraps "dann schlemmen." onto a third line
-    // at every breakpoint; 82% keeps a safety margin on real device font
-    // metrics while staying close to the requested proportion.
-    width: "82%",
+    width: "74%",
   },
   eyebrow: {
     fontSize: 12,
