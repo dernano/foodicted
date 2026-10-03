@@ -36,20 +36,23 @@ export default function HomeScreen({ navigation }: Props) {
   const { preferences } = usePreferences();
   const { recent } = useRecentRecipes();
   const { width: windowWidth } = useWindowDimensions();
-  // Editorial hero: a compact supporting photo (not a full-bleed background)
-  // whose own alpha channel already fades out smoothly on every edge - no
-  // fade/gradient code needed, the asset is purpose-built for this. Height
-  // is locked to the asset's own aspect ratio (1500x1000 = 1.5) so
-  // resizeMode="cover" never has to crop anything away: at any other
-  // height, "cover" crops its most-transparent top/bottom rows first,
-  // leaving only the already-opaque center visible with hard, cropped-off
-  // edges instead of the asset's actual soft fade.
-  const HERO_ASPECT_RATIO = 1.5;
-  const heroImageHeight = Math.min(Math.max(windowWidth / HERO_ASPECT_RATIO, 220), 300);
-  // Confirmed on-device that the previous size/width combo still wrapped
-  // "dann schlemmen." onto its own line - sized down further for a real
-  // safety margin instead of guessing closer to the edge again.
-  const headlineSize = Math.min(Math.max(windowWidth * 0.082, 28), 34);
+  // The hero is a composed cream surface, not a rectangular photo banner:
+  // its height is chosen by the layout, independent of the food photo's own
+  // dimensions. The photo is an oversized, absolutely-positioned decorative
+  // element anchored top-right (see heroFoodImage below) - the UI dictates
+  // how much of it shows, not the other way around.
+  const heroHeight = Math.min(Math.max(windowWidth * 0.74, 260), 310);
+  // Rendered larger than the hero box and shifted past the right edge, so
+  // only its right portion (the actual food) sits over the visible area -
+  // the left portion, where the asset's own alpha already fades to
+  // transparent, runs off past the hero's left edge or shows through to
+  // HOME_BG. Sized at the asset's native aspect ratio (1500x1000) so the
+  // photo itself isn't stretched - that's independent of the hero box's own
+  // height above.
+  const heroImageWidth = windowWidth * 0.95;
+  const heroImageHeight = heroImageWidth / 1.5;
+  const heroImageRight = -windowWidth * 0.18;
+  const headlineSize = Math.min(Math.max(windowWidth * 0.092, 30), 38);
 
   return (
     <View style={styles.screen}>
@@ -58,24 +61,22 @@ export default function HomeScreen({ navigation }: Props) {
             horizontal padding (centered, so it overflows evenly both sides)
             so the photo can reach the true right screen edge - the text
             block below compensates with its own left inset to stay aligned
-            with the rest of the page's content margin. */}
-        <View style={[styles.heroRow, { width: windowWidth }]}>
-          {/* No extra fade overlay: the asset's own alpha channel already
-              fades out smoothly (and irregularly, following its actual
-              content) on every edge, sitting on a background exactly
-              color-matched to its opaque surface tone (HOME_BG). Stacking a
-              second, coarse fade on top of that already-smooth per-pixel
-              alpha was what produced the banding seen on earlier builds. */}
+            with the rest of the page's content margin. overflow: hidden
+            clips the oversized, overflowing heroFoodImage. */}
+        <View style={[styles.hero, { width: windowWidth, height: heroHeight }]}>
           <Image
             source={require("../../assets/images/foodicted-hero-ingredients.webp")}
-            style={[styles.heroImage, { height: heroImageHeight }]}
-            resizeMode="cover"
+            style={[
+              styles.heroFoodImage,
+              { width: heroImageWidth, height: heroImageHeight, right: heroImageRight, top: -heroHeight * 0.04 },
+            ]}
+            resizeMode="contain"
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           />
           <View style={styles.heroTextBlock} pointerEvents="none">
             <Text style={styles.eyebrow}>Aus deinem Vorrat</Text>
-            <Text style={[styles.headline, { fontSize: headlineSize, lineHeight: headlineSize * 1.1 }]}>
+            <Text style={[styles.headline, { fontSize: headlineSize, lineHeight: headlineSize * 1.14 }]}>
               Erst scannen,{"\n"}dann schlemmen.
             </Text>
           </View>
@@ -86,12 +87,12 @@ export default function HomeScreen({ navigation }: Props) {
             <Ionicons name="camera-outline" size={22} color={colors.brandDark} />
             <Text style={styles.stepLabel}>Zutaten{"\n"}scannen</Text>
           </View>
-          <Ionicons name="chevron-forward" size={12} color={colors.border} />
+          <Ionicons name="arrow-forward-outline" size={14} color={colors.textMuted} />
           <View style={styles.stepItem}>
             <Ionicons name="restaurant-outline" size={22} color={colors.brandDark} />
             <Text style={styles.stepLabel}>Rezepte{"\n"}entdecken</Text>
           </View>
-          <Ionicons name="chevron-forward" size={12} color={colors.border} />
+          <Ionicons name="arrow-forward-outline" size={14} color={colors.textMuted} />
           <View style={styles.stepItem}>
             <Ionicons name="heart-outline" size={22} color={colors.brandDark} />
             <Text style={styles.stepLabel}>Genießen</Text>
@@ -225,17 +226,22 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
     backgroundColor: HOME_BG,
   },
-  heroRow: { width: "100%" },
-  heroImage: { width: "100%" },
+  hero: { position: "relative", overflow: "hidden" },
+  heroFoodImage: { position: "absolute", zIndex: 1 },
   heroTextBlock: {
     position: "absolute",
-    // Re-adds the page's own content inset, since heroRow itself now
-    // overflows that padding to let the image reach the screen edge.
+    zIndex: 2,
+    // Re-adds the page's own content inset, since the hero itself overflows
+    // that padding to let the photo reach the screen edge. Anchored to the
+    // bottom (not vertically centered) so the headline sits in the lower
+    // portion of the hero, with the photo occupying the upper-right.
     left: spacing.xl,
-    top: 0,
-    bottom: 0,
-    width: "62%",
-    justifyContent: "center",
+    bottom: spacing.xl,
+    // Measured against the actual two headline strings at every target
+    // width (360/390/430) - 70% wraps "dann schlemmen." onto a third line
+    // at every breakpoint; 82% keeps a safety margin on real device font
+    // metrics while staying close to the requested proportion.
+    width: "82%",
   },
   eyebrow: {
     fontSize: 12,
@@ -262,13 +268,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: spacing.sm,
     backgroundColor: colors.primary,
-    paddingVertical: spacing.lg + 2,
-    borderRadius: radius.button,
+    paddingVertical: spacing.lg + 4,
+    borderRadius: 16,
     width: "100%",
     marginBottom: spacing.sm,
     shadowColor: colors.primary,
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
